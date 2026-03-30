@@ -34,18 +34,10 @@ const scrollOpacityOptions = computed<ScrollOpacityOptions | null>(() => {
   switch (route.path) {
     case '/':
       return {
-        maxScroll: 500,   // Opacité complète après 500px
-        offset: 200,      // Commence après 200px
+        maxScroll: 500,
+        offset: 200,
         scrollContainer: 'main'
       }
-    case '/portfolio':
-      return {
-        maxScroll: 400,
-        offset: 100,
-        scrollContainer: 'main'
-      }
-    // case '/contact':
-    //   return null  // Pas d'effet de scroll
     default:
       return null
   }
