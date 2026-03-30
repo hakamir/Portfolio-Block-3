@@ -6,7 +6,35 @@ interface WaveOptions {
   delayOut?: number
   scale?: number
 }
-
+/**
+ * v-wave
+ *
+ * A Vue 3 directive that creates a sequential wave animation effect on text,
+ * animating each letter individually on hover.
+ *
+ * @example
+ * ```vue
+ * <!-- Basic usage with default options -->
+ * <h1 v-wave>Hover me!</h1>
+ *
+ * <!-- Custom options -->
+ * <h1 v-wave="{ y: 10, delayIn: 20, delayOut: 10, scale: 1.2 }">
+ *   Custom animation
+ * </h1>
+ * ```
+ *
+ * @param {WaveOptions} options - Animation configuration options
+ * @param {number} [options.y=5] - Vertical translation distance in pixels
+ * @param {number} [options.delayIn=15] - Delay in milliseconds between each letter when hovering in
+ * @param {number} [options.delayOut=5] - Delay in milliseconds between each letter when hovering out
+ * @param {number} [options.scale=1.15] - Scale factor applied to letters during animation
+ *
+ * @remarks
+ * - Splits text content into individual characters, wrapping each (except spaces) in a `<span>`
+ * - Uses CSS transitions (300ms duration) for smooth animations
+ * - Automatically cleans up event listeners and timeouts on unmount
+ * - Preserves spaces in the original text
+ */
 export const vWave: Directive<HTMLElement, WaveOptions> = {
   mounted(el: HTMLElement, binding: DirectiveBinding<WaveOptions>) {
     const options = {

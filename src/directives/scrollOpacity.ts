@@ -1,5 +1,3 @@
-// src/directives/scrollOpacity.ts
-
 /**
  * Vue directive that progressively changes the background opacity of an element
  * based on scroll position within a container.
@@ -25,7 +23,7 @@ import type { Directive, DirectiveBinding } from 'vue'
 /**
  * Configuration options for the scroll opacity directive
  */
-interface ScrollOpacityOptions {
+export interface ScrollOpacityOptions {
   /**
    * Maximum scroll distance (in pixels) to reach full opacity (1.0)
    * @default 500
@@ -86,7 +84,6 @@ export const vScrollOpacity: Directive<HTMLElement, ScrollOpacityOptions> = {
     }
 
     // Get the current computed background color of the element
-    // This works with Tailwind classes like 'bg-black', 'bg-white', etc.
     const bgColor = window.getComputedStyle(el).backgroundColor
 
     // Default to black if no color is detected
@@ -129,24 +126,28 @@ export const vScrollOpacity: Directive<HTMLElement, ScrollOpacityOptions> = {
       el.style.backgroundColor = `rgba(${rgb}, ${opacity})`
     }
 
-    // Apply the initial opacity state on the mount
-    updateOpacity()
+    // Apply the initial opacity state and attach the listener after the next frame
+    // This ensures the scroll container is fully mounted and scroll position is properly detected
+    requestAnimationFrame(() => {
+      // Find the element to listen for scroll events
+      // Falls back to the window if the selector doesn't match anything
+      const scrollElement = document.querySelector(options.scrollContainer) || window
 
-    // Find the element to listen for scroll events
-    // Falls back to the window if the selector doesn't match anything
-    const scrollElement = document.querySelector(options.scrollContainer) || window
+      // Attach a scroll listener to update opacity on every scroll event
+      scrollElement.addEventListener('scroll', updateOpacity)
 
-    // Attach a scroll listener to update opacity on every scroll event
-    scrollElement.addEventListener('scroll', updateOpacity)
+      // Apply the initial opacity state
+      updateOpacity()
 
-    // Store handler data on the element for later access in updated/unmounted hooks
-    // Using type assertion to bypass TypeScript's index signature restriction
-    ;(el as any)._scrollOpacityHandler = {
-      updateOpacity,
-      scrollElement,
-      options,
-      rgb
-    } as ScrollOpacityHandler
+      // Store handler data on the element for later access in updated/unmounted hooks
+      // Using type assertion to bypass TypeScript's index signature restriction
+      ;(el as any)._scrollOpacityHandler = {
+        updateOpacity,
+        scrollElement,
+        options,
+        rgb
+      } as ScrollOpacityHandler
+    })
   },
 
   /**
@@ -211,10 +212,10 @@ export const vScrollOpacity: Directive<HTMLElement, ScrollOpacityOptions> = {
       const scrollElement = document.querySelector(newOptions.scrollContainer) || window
 
       // Attach new scroll listener
-      scrollElement.addEventListener('scroll', updateOpacity)
+      scrollElement.addEventListener('scroll', updateOpacity);
 
       // Update stored handler with new values
-      ;(el as any)._scrollOpacityHandler = {
+      (el as any)._scrollOpacityHandler = {
         updateOpacity,
         scrollElement,
         options: newOptions,

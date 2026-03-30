@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import Logo from "./Logo.vue";
 import Navbar from "./Navbar.vue";
 import MobileMenu from "./MobileMenu.vue";
-import { vScrollOpacity, ScrollOpacityOptions } from "../../../directives/scrollOpacity.ts";
+import { vScrollOpacity, type ScrollOpacityOptions } from "../../../directives/scrollOpacity.ts";
 
 const route = useRoute()
 
