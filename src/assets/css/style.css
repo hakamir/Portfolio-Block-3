@@ -1,0 +1,222 @@
+@import 'tailwindcss';
+
+@theme {
+    --font-unbounded: 'Unbounded', sans-serif;
+    --color-success: #28a745;
+    --color-primary-50: #fbffe0;
+    --color-primary-100: #f6ffc2;
+    --color-primary-200: #efff85;
+    --color-primary-300: #eaff4d;
+    --color-primary-400: #e6ff1f;
+    --color-primary-500: #e3ff04;
+    --color-primary-600: #c7e300;
+    --color-primary-700: #9db300;
+    --color-primary-800: #748200;
+    --color-primary-900: #4c5500;
+    --color-primary:var(--color-primary-500)
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 400;
+}
+
+/* Hide native scrollbar on all scrollable elements */
+* {
+    /* Hide native scrollbar - Firefox */
+    scrollbar-width: none;
+}
+
+/* Hide native scrollbar - Chrome/Safari/Edge */
+*::-webkit-scrollbar {
+    display: none;
+}
+
+
+/* -------- CUSTOM SCROLLBAR --------- */
+.custom-scrollbar {
+    @apply fixed right-0 top-0 h-full w-3 bg-transparent z-100;
+}
+
+.custom-scrollbar-thumb {
+    @apply absolute right-0 w-full bg-white/20 border border-black/20 rounded-full cursor-pointer transition-colors
+    duration-200;
+}
+
+.custom-scrollbar-thumb:hover {
+    @apply bg-white/80;
+}
+
+
+p {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+}
+
+button {
+    @apply cursor-pointer;
+}
+
+
+/* Menu button design */
+.menu-button {
+    @apply rounded-full p-2 border-2 border-white h-12 w-12 transition-all duration-300;
+}
+
+/* Menu button line design */
+.menu-button .line {
+    @apply bg-white mb-1 block h-0.5 w-4 m-auto rounded-full;
+}
+
+/*No border on last line*/
+.menu-button .line:last-child {
+    @apply mb-0;
+}
+
+.menu-button:hover {
+    @apply border-2 border-white/50 shadow-[0_0_10px_0px_rgba(255,255,255,0.40)];
+}
+
+.menu-button .line {
+    @apply transition-transform duration-300;
+}
+
+.menu-button:hover .line:nth-child(odd) {
+    @apply scale-125;
+}
+
+.btn-primary {
+    @apply px-7 py-5 font-unbounded font-semibold;
+}
+
+.link-btn {
+    @apply relative inline-flex items-center gap-2 font-unbounded font-semibold text-sm uppercase;
+}
+
+.link-btn::after {
+    @apply absolute left-0 bottom-0 h-0.5 w-0 bg-black transition-all duration-300;
+    content: '';
+    bottom: -2px;
+}
+
+.link-btn:hover::after {
+    @apply w-full;
+}
+
+.nav-item {
+    @apply px-4 py-2 text-lg;
+}
+
+.nav-item.selected {
+    @apply text-success;
+}
+
+.nav-item:hover {
+    @apply text-shadow-lg/10 text-shadow-white;
+}
+
+.search-button {
+    @apply px-3 py-2 border-2 rounded-full border-transparent transition-all duration-300;
+}
+
+.search-button:hover {
+    @apply border-2 border-white/50;
+}
+
+.search-button.sb-black:hover {
+    @apply border-black/50;
+}
+
+/* Hero title */
+.hero-title {
+    @apply text-3xl font-semibold sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl;
+}
+
+.hero-title span {
+    @apply block;
+}
+
+.hero-title span:last-child {
+    @apply lg:ml-40;
+}
+
+/* Table */
+.table {
+    @apply w-full table-auto border border-neutral-200;
+}
+
+.table thead th {
+    @apply bg-primary px-4 py-2 text-left font-semibold uppercase font-unbounded;
+}
+
+.table tbody tr {
+    @apply border-b border-neutral-200 transition-colors;
+}
+
+.table tbody tr:hover {
+    @apply bg-primary-50;
+}
+
+.table tbody td {
+    @apply border border-neutral-200;
+}
+
+.tooltip {
+    @apply absolute -top-8 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-300
+    bg-gray-700 text-white text-xs px-1 py-1 rounded whitespace-nowrap;
+}
+
+.checkbox {
+    @apply relative appearance-none shrink-0 w-4 h-4 border border-gray-500 rounded-sm mt-1 bg-white
+    focus:outline-none focus:ring-offset-0 focus:ring-2 focus:ring-primary
+    checked:bg-black checked:border-0;
+}
+
+.checkbox::after {
+    content: '✓';
+    @apply absolute inset-0 flex items-center justify-center text-white text-xs font-bold opacity-0;
+}
+
+.checkbox:checked::after {
+    @apply opacity-100;
+}
+
+/* Social links */
+.social-link {
+    @apply rounded-full p-2 border-2 border-transparent transition-all duration-100;
+}
+
+.social-link:hover {
+    @apply border-2 border-primary/50 bg-primary/10;
+}
+
+.social-link:focus {
+    @apply border-primary/50 bg-primary/20 outline-none;
+}
+
+.social-link svg {
+    @apply transition-all duration-300;
+}
+
+.social-link:hover svg, .social-link:focus svg {
+    @apply fill-primary;
+}
+
+.social-link span {
+    @apply transition-all duration-300;
+}
+
+.social-link:hover span, .social-link:focus span {
+    @apply text-primary;
+}
+
+/* -------- FONTS --------- */
+
+/* UNBOUNDED */
+@font-face {
+    font-family: 'Unbounded';
+    src: url('/public/fonts/Unbounded/Unbounded-VariableFont_wght.woff2') format('woff2');
+    font-weight: 300 700;
+    font-style: normal;
+    font-display: swap;
+}
