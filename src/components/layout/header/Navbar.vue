@@ -9,6 +9,7 @@ import { vTilt } from '../../../directives/tilt'
         <li>
           <RouterLink
             to="/"
+            active-class="selected"
             class="nav-item font-unbounded"
             v-tilt
           >
@@ -18,6 +19,7 @@ import { vTilt } from '../../../directives/tilt'
         <li>
           <RouterLink
             to="/portfolio"
+            active-class="selected"
             class="nav-item font-unbounded"
             v-tilt
           >
@@ -27,6 +29,7 @@ import { vTilt } from '../../../directives/tilt'
         <li>
           <RouterLink
             to="/contact"
+            active-class="selected"
             class="nav-item font-unbounded"
             v-tilt
           >

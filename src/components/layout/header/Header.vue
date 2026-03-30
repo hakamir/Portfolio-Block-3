@@ -6,7 +6,7 @@ import MobileMenu from "./MobileMenu.vue";
 </script>
 
 <template>
-  <header>
+  <header id="header" class="fixed top-0 z-50 w-full ">
     <div class="py-4">
       <div class="mx-auto px-4">
         <div class="flex items-center md:px-10 md:py-4">
