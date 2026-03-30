@@ -1,18 +1,69 @@
 <script setup lang="ts">
-
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import Logo from "./Logo.vue";
 import Navbar from "./Navbar.vue";
 import MobileMenu from "./MobileMenu.vue";
+import { vScrollOpacity, ScrollOpacityOptions } from "../../../directives/scrollOpacity.ts";
+
+const route = useRoute()
+
+const headerClasses = computed(() => {
+  switch (route.path) {
+    case '/':
+      return 'bg-black text-white'
+    case '/portfolio':
+      return 'bg-white text-black'
+    case '/contact':
+      return 'bg-white text-black'
+    default:
+      return 'bg-white text-black'
+  }
+})
+
+const textColor = computed(() => {
+  switch (route.path) {
+    case '/':
+      return 'white'
+    default:
+      return 'black'
+  }
+})
+
+const scrollOpacityOptions = computed<ScrollOpacityOptions | null>(() => {
+  switch (route.path) {
+    case '/':
+      return {
+        maxScroll: 500,   // Opacité complète après 500px
+        offset: 200,      // Commence après 200px
+        scrollContainer: 'main'
+      }
+    case '/portfolio':
+      return {
+        maxScroll: 400,
+        offset: 100,
+        scrollContainer: 'main'
+      }
+    // case '/contact':
+    //   return null  // Pas d'effet de scroll
+    default:
+      return null
+  }
+})
+
 </script>
 
 <template>
-  <header id="header" class="fixed top-0 z-50 w-full ">
+  <header id="header"
+          :class="['fixed top-0 z-50 w-full', headerClasses]"
+          v-scroll-opacity="scrollOpacityOptions"
+  >
     <div class="py-4">
       <div class="mx-auto px-4">
         <div class="flex items-center md:px-10 md:py-4">
-          <Logo></Logo>
-          <Navbar></Navbar>
-          <MobileMenu></MobileMenu>
+          <Logo :color="textColor" />
+          <Navbar :color="textColor" />
+          <MobileMenu :color="textColor" />
         </div>
       </div>
     </div>

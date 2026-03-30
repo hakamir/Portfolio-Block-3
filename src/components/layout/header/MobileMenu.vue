@@ -1,5 +1,5 @@
 <script setup lang="ts">
-
+  defineProps<{ color: "white" | "black" }>()
 </script>
 
 <template>

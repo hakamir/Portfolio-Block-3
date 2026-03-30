@@ -104,7 +104,7 @@ button {
 }
 
 .nav-item {
-    @apply px-4 py-2 text-lg;
+    @apply px-4 py-2 text-lg font-unbounded;
 }
 
 .nav-item.selected {
@@ -215,7 +215,7 @@ button {
 /* UNBOUNDED */
 @font-face {
     font-family: 'Unbounded';
-    src: url('/public/fonts/Unbounded/Unbounded-VariableFont_wght.woff2') format('woff2');
+    src: url('../fonts/Unbounded/Unbounded-VariableFont_wght.woff2') format('woff2');
     font-weight: 300 700;
     font-style: normal;
     font-display: swap;
