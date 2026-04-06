@@ -4,5 +4,7 @@ import Header from "./components/layout/header/Header.vue";
 
 <template>
   <Header></Header>
-  <RouterView />
+  <main class="h-screen overflow-y-scroll scroll-smooth">
+    <RouterView/>
+  </main>
 </template>
