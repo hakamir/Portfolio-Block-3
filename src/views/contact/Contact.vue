@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import {reactive} from 'vue';
-import Footer from "../layout/footer/Footer.vue";
+import {reactive, ref} from 'vue';
+import Footer from "@components/layout/footer/Footer.vue";
+import {TriangleAlert, LoaderCircle} from "@lucide/vue";
 
 interface ContactForm {
   name: string;
@@ -20,14 +21,23 @@ const formData = reactive<ContactForm>({
   trashed: false
 })
 
+const status = ref<'idle' | 'loading' | 'submitted' | 'error'>('idle')
+
 const handleSubmit = async () => {
-  await fetch('http://localhost:3001/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(formData),
-  })
+  status.value = 'loading';
+  try {
+    await fetch('http://localhost:3001/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    })
+    status.value = 'submitted';
+  } catch (error) {
+    console.error('Error sending message:', error)
+    status.value = 'error';
+  }
 }
 </script>
 
@@ -42,7 +52,7 @@ const handleSubmit = async () => {
             <p class="pt-4">Feel free to reach out to me for any inquiries, collaborations, or just to say hello.
               I'm always open to new opportunities and excited to hear from you!</p>
           </div>
-          <form id="form-contact" class="flex flex-col gap-4" @submit.prevent="handleSubmit">
+          <form v-if="status !== 'submitted'" id="form-contact" class="flex flex-col gap-4" @submit.prevent="handleSubmit">
             <div>
               <label for="name" class="block text-lg font-bold mb-2">Name</label>
               <input id="name" type="text" placeholder="Name" v-model="formData.name"
@@ -58,13 +68,30 @@ const handleSubmit = async () => {
               <textarea id="message" placeholder="Message" v-model="formData.message"
                         class="border border-gray-300 rounded px-4 py-2 w-full" required></textarea>
             </div>
-            <div class="flex justify-end">
+            <div class="flex flex-col justify-end">
               <button id="submit-button" type="submit"
-                      class="bg-black text-white px-6 py-3 font-unbounded rounded transition-all duration-300 hover:bg-neutral-700">
-                Send Message
+                      class="bg-black text-white px-6 py-3 font-unbounded rounded transition-all duration-300 hover:bg-neutral-700 flex items-center justify-center">
+                <span v-if="status !== 'loading'">Send Message</span>
+                <LoaderCircle v-else class="animate-spin"/>
               </button>
+              <div v-if="status === 'error'" class="flex justify-center mt-2">
+                <span class="px-3 py-2 rounded-xl text-red-500 bg-red-100 text-sm flex items-center">
+                  <TriangleAlert class="inline-block mr-2"/>
+                  An error occurred while sending your message. Please try again later.
+                </span>
+              </div>
             </div>
           </form>
+          <div v-else>
+            <h2 class="text-2xl font-unbounded">Thank you for your message!</h2>
+            <p class="pt-4">I will get back to you soon.</p>
+            <button
+                @click="status = 'idle'"
+                id="new-message"
+                    class="bg-black text-white px-6 py-3 font-unbounded rounded transition-all duration-300 hover:bg-neutral-700 mt-4">
+              New message
+            </button>
+          </div>
         </div>
       </section>
     </div>

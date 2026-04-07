@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { vWave } from "../../directives/wave.ts";
+import { vWave } from "@directives/wave.js";
 </script>
 
 <template>

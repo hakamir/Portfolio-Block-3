@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@lucide/vue": "^1.7.0",
     "@tailwindcss/vite": "^4.2.2",
     "tailwindcss": "^4.2.2",
     "vue": "^3.5.30",
