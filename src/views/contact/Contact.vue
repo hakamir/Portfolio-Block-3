@@ -1,44 +1,11 @@
 <script setup lang="ts">
-import {reactive, ref} from 'vue';
 import Footer from "@components/layout/footer/Footer.vue";
 import {TriangleAlert, LoaderCircle} from "@lucide/vue";
+import {useMessagesStore} from "@stores";
+import {storeToRefs} from "pinia";
 
-interface ContactForm {
-  name: string;
-  email: string;
-  message: string;
-  date: Date;
-  read: boolean;
-  trashed: boolean;
-}
-
-const formData = reactive<ContactForm>({
-  name: '',
-  email: '',
-  message: '',
-  date: new Date(),
-  read: false,
-  trashed: false
-})
-
-const status = ref<'idle' | 'loading' | 'submitted' | 'error'>('idle')
-
-const handleSubmit = async () => {
-  status.value = 'loading';
-  try {
-    await fetch('http://localhost:3001/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData),
-    })
-    status.value = 'submitted';
-  } catch (error) {
-    console.error('Error sending message:', error)
-    status.value = 'error';
-  }
-}
+const store = useMessagesStore()
+const { formData, status } = storeToRefs(store)
 </script>
 
 <template>
@@ -52,7 +19,7 @@ const handleSubmit = async () => {
             <p class="pt-4">Feel free to reach out to me for any inquiries, collaborations, or just to say hello.
               I'm always open to new opportunities and excited to hear from you!</p>
           </div>
-          <form v-if="status !== 'submitted'" id="form-contact" class="flex flex-col gap-4" @submit.prevent="handleSubmit">
+          <form v-if="status !== 'submitted'" id="form-contact" class="flex flex-col gap-4" @submit.prevent="store.sendMessage">
             <div>
               <label for="name" class="block text-lg font-bold mb-2">Name</label>
               <input id="name" type="text" placeholder="Name" v-model="formData.name"
@@ -86,7 +53,7 @@ const handleSubmit = async () => {
             <h2 class="text-2xl font-unbounded">Thank you for your message!</h2>
             <p class="pt-4">I will get back to you soon.</p>
             <button
-                @click="status = 'idle'"
+                @click="store.resetForm"
                 id="new-message"
                     class="bg-black text-white px-6 py-3 font-unbounded rounded transition-all duration-300 hover:bg-neutral-700 mt-4">
               New message

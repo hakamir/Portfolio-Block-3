@@ -55,7 +55,7 @@
       <div class="flex justify-center mt-4 gap-8 mb-16 md:mb-0">
         <p>Copyright © 2026 Taylor Spark</p>
         <p class="hidden md:block">|</p>
-        <a class="hover:underline hidden md:block" href="/block1-frontend/pages/signin">Admin</a>
+        <RouterLink class="hover:underline hidden md:block" to="/login">Admin</RouterLink>
       </div>
     </div>
   </footer>

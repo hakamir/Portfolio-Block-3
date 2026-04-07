@@ -1,0 +1,66 @@
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from flask_pymongo import PyMongo
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required
+from bson import ObjectId
+from datetime import timedelta, datetime
+import bcrypt
+
+app = Flask(__name__)
+app.config['MONGO_URI'] = 'mongodb://localhost:27017/Portfolio'
+app.config['JWT_SECRET_KEY'] = 'secret'
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=8)
+
+CORS(app)
+mongo = PyMongo(app)
+jwt = JWTManager(app)
+
+messages_col = mongo.db.messages
+
+def serialize(doc):
+    doc['_id'] = str(doc['_id'])
+    return doc
+
+# --- Auth --- #
+
+@app.route('/auth/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    user = mongo.db.users.find_one({'email': data['email']})
+
+    if not user or not bcrypt.checkpw(data.get('pwd', '').encode('utf-8'), user['password'].encode('utf-8')):
+        return jsonify({'error': 'Invalid credentials'}), 401
+
+    token = create_access_token(identity=str(user['_id']))
+    return jsonify({'token': token})
+
+# --- Messages --- #
+
+@app.route('/messages', methods=['GET'])
+@jwt_required()
+def get_messages():
+    messages = [serialize(message) for message in messages_col.find()]
+    return jsonify(messages)
+
+@app.route('/messages', methods=['POST'])
+def create_message():
+    data = request.get_json()
+    if 'date' in data and isinstance(data['date'], str):
+        data['date'] = datetime.fromisoformat(data['date'].replace('Z', '+00:00'))
+    result = messages_col.insert_one(data)
+    return jsonify({'inserted_id': str(result.inserted_id)}), 201
+
+@app.route('/messages/<id>', methods=['PATCH'])
+@jwt_required()
+def update_message(id):
+    data = request.get_json()
+    messages_col.update_one({'_id': ObjectId(id)}, {'$set': data})
+    return jsonify({'updated': id}), 200
+
+@app.route('/messages/<id>', methods=['DELETE'])
+@jwt_required()
+def delete_message(id):
+    messages_col.delete_one({'_id': ObjectId(id)})
+    return jsonify({'deleted': id}), 200
+if __name__ == '__main__':
+    app.run(debug=True)
