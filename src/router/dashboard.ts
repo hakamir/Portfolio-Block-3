@@ -24,7 +24,17 @@ export default {
         {
             path: 'biography',
             name: 'dashboard-biography',
-            component: () => import('@views/dashboard/biography/BiographyLayout.vue'),
+            component: () => import('@views/dashboard/biography/BiographyView.vue'),
+        },
+        {
+            path: 'works',
+            name: 'dashboard-works',
+            component: () => import('@views/dashboard/works/WorksView.vue'),
+        },
+        {
+            path: 'settings',
+            name: 'dashboard-settings',
+            component: () => import('@views/dashboard/settings/SettingsView.vue'),
         }
     ]
 }

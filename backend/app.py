@@ -1,5 +1,4 @@
 import os
-
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flask_pymongo import PyMongo
@@ -22,6 +21,7 @@ messages_col = mongo.db.messages
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
 
+# --- Helpers --- #
 def handle_db_timeout(fn):
     def wrapper(*args, **kwargs):
         try:
@@ -30,19 +30,17 @@ def handle_db_timeout(fn):
             return jsonify({'error': 'Cannot connect to database'}), 500
     return wrapper
 
-
 def serialize(doc):
     doc['_id'] = str(doc['_id'])
     return doc
 
-# --- Auth --- #
 
+# --- Auth --- #
 @handle_db_timeout
 @app.route('/auth/login', methods=['POST'])
 def login():
     data = request.get_json()
     user = mongo.db.users.find_one({'email': data['email']})
-
 
     if not user or not bcrypt.checkpw(data.get('pwd', '').encode('utf-8'), user['password'].encode('utf-8')):
         return jsonify({'error': 'Invalid credentials'}), 401
@@ -50,8 +48,8 @@ def login():
     token = create_access_token(identity=str(user['_id']))
     return jsonify({'token': token})
 
-# --- Messages --- #
 
+# --- Messages --- #
 @handle_db_timeout
 @app.route('/messages', methods=['GET'])
 @jwt_required()
@@ -83,6 +81,7 @@ def delete_message(id):
     messages_col.delete_one({'_id': ObjectId(id)})
     return jsonify({'deleted': id}), 200
 
+
 # --- Biography --- #
 @handle_db_timeout
 @app.route('/biography', methods=['GET'])
@@ -90,6 +89,16 @@ def get_biography():
     biography = mongo.db.biography.find_one()
     return jsonify({'biography': biography})
 
+@handle_db_timeout
+@app.route('/biography', methods=['PUT'])
+def update_biography():
+    data = request.get_json()
+    data.pop('_id', None)
+    mongo.db.biography.update_one({}, {'$set': data})
+    return jsonify({'updated': True}), 200
+
+
+# --- Upload --- #
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
