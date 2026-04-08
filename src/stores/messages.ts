@@ -1,6 +1,7 @@
 import {defineStore} from "pinia";
-import {computed, reactive, ref} from "vue";
-import { useAuthStore } from "./auth";
+import {computed, ref} from "vue";
+import {instance} from "../api/axios.ts";
+import messageApi from "../api/messages.ts"
 
 interface Message {
     _id?: string;
@@ -13,50 +14,40 @@ interface Message {
 }
 
 export type Tab = 'inbox' | 'trash'
-type Status = 'idle' | 'loading' | 'submitted' | 'error'
 
 export const useMessagesStore = defineStore('messages', () => {
-    const authStore = useAuthStore()
     const allMessages = ref<Message[]>([])
     const currentTab = ref<Tab>('inbox')
     const fetchStatus = ref<'idle' | 'loading' | 'error'>('idle')
 
+    // filter messages based on the current tab
     const filteredMessages = computed(() =>
         allMessages.value
             .filter(m => currentTab.value === 'inbox' ? !m.trashed : m.trashed)
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     )
 
+    // truncate a message to a maximum length
     function truncateMessage(text: string, maxLength = 50) {
         return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
     }
 
+    // load messages from API
     const loadMessages = async () => {
         fetchStatus.value = 'loading'
         try {
-            const res = await fetch('http://localhost:5000/messages', {
-                headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                },
-            })
-            if (!res.ok) throw new Error('Failed to fetch messages')
-            allMessages.value = await res.json()
+            const res = await instance.get(messageApi.getMessages)
+            allMessages.value = res.data
             fetchStatus.value = 'idle'
         } catch (error) {
             fetchStatus.value = 'error'
         }
     }
 
+    // mark a message as read
     const markAsRead = async (messageId: string, bool: boolean) => {
         try {
-            await fetch(`http://localhost:5000/messages/${messageId}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authStore.token}`,
-                },
-                body: JSON.stringify({read: bool}),
-            })
+            await instance.patch(messageApi.updateMessage(messageId), {read: bool})
             const message = allMessages.value.find(m => m._id === messageId)
             if (message) message.read = bool
         } catch (error) {
@@ -64,16 +55,10 @@ export const useMessagesStore = defineStore('messages', () => {
         }
     }
 
+    // trash a message
     const trashMessage = async (messageId: string, bool: boolean) => {
         try {
-            await fetch(`http://localhost:5000/messages/${messageId}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authStore.token}`,
-                },
-                body: JSON.stringify({trashed: bool}),
-            })
+            await instance.patch(messageApi.updateMessage(messageId), {trashed: bool})
             const message = allMessages.value.find(m => m._id === messageId)
             if (message) message.trashed = bool
         } catch (error) {
@@ -81,63 +66,23 @@ export const useMessagesStore = defineStore('messages', () => {
         }
     }
 
+    // delete a message
     const deleteMessage = async (messageId: string) => {
         try {
-            await fetch(`http://localhost:5000/messages/${messageId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authStore.token}`,
-                },
-            })
+            await instance.delete(messageApi.deleteMessage(messageId))
             allMessages.value = allMessages.value.filter(m => m._id !== messageId)
         } catch (error) {
             console.error('Failed to delete message:', error)
         }
     }
 
+    // apply an action to selected messages
     const applyToSelected = async (ids: string[], action: (id: string) => Promise<void>) => {
         await Promise.all(ids.map(id => action(id)))
     }
 
-    const formData = reactive<Message>({
-        name: '',
-        email: '',
-        message: '',
-        date: new Date(),
-        read: false,
-        trashed: false
-    })
-
-    const status = ref<Status>('idle')
-
-    const resetForm = () => {
-        formData.name = ''
-        formData.email = ''
-        formData.message = ''
-        formData.date = new Date()
-        status.value = 'idle'
-    }
-
-    const sendMessage = async () => {
-        status.value = 'loading'
-        try {
-            const res = await fetch('http://localhost:5000/messages', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData),
-            })
-            if (!res.ok) throw new Error('Failed to send message')
-            status.value = 'submitted'
-        } catch (error) {
-            status.value = 'error'
-        }
-    }
-
     return {
-        formData, status, sendMessage, resetForm, allMessages, currentTab, fetchStatus, filteredMessages,
+        allMessages, currentTab, fetchStatus, filteredMessages,
         truncateMessage, loadMessages, markAsRead, trashMessage, deleteMessage, applyToSelected
     }
 })

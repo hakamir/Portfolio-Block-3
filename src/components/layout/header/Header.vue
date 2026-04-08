@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, ref} from 'vue'
+import {computed, nextTick, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import Logo from "./Logo.vue";
 import Navbar from "./Navbar.vue";
@@ -15,7 +15,7 @@ const headerClasses = computed(() => {
     case '/':
       return 'bg-black text-white'
     default:
-      return 'bg-white text-black'
+      return 'bg-white text-black border-b border-gray-200'
   }
 })
 
@@ -39,17 +39,26 @@ const scrollOpacityOptions = computed(() => {
   }
 })
 
-// Use scroll opacity composable if scroll opacity options are defined
-const scrollOpacity = scrollOpacityOptions.value ? useScrollOpacity(headerRef, scrollOpacityOptions.value) : null
-
-// Dynamic header style based on scroll opacity
-const headerStyle = computed(() => {
-  if (scrollOpacity) {
-    return { backgroundColor: scrollOpacity.backgroundColor.value }
-  }
-  return {}
+// Init scroll opacity
+const {backgroundColor, extractRGB} = useScrollOpacity(headerRef, {
+  get maxScroll() {
+    return scrollOpacityOptions.value?.maxScroll
+  },
+  get offset() {
+    return scrollOpacityOptions.value?.offset
+  },
 })
 
+// Extract RGB values on route change
+watch(() => route.path, () => {
+  nextTick(() => extractRGB())
+})
+
+// Header style per scroll opacity
+const headerStyle = computed(() => {
+  if (!scrollOpacityOptions.value) return {}
+  return {backgroundColor: backgroundColor.value}
+})
 </script>
 
 <template>

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import Footer from "@components/layout/footer/Footer.vue";
 import {TriangleAlert, LoaderCircle} from "@lucide/vue";
-import {useMessagesStore} from "@stores";
+import {useContactStore} from "@stores";
 import {storeToRefs} from "pinia";
 
-const store = useMessagesStore()
+const store = useContactStore()
 const { formData, status } = storeToRefs(store)
 </script>
 

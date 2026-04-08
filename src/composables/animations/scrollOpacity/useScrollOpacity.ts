@@ -21,9 +21,13 @@ export default (elementRef: Ref<HTMLElement | null>, options: UseScrollOpacityOp
     }
 
     const scrollPosition = useScrollPosition(options.scrollContainer ?? 'main');
+
+    const maxScroll = computed(() => options.maxScroll)
+    const offset = computed(() => options.offset)
+
     const opacity = useOpacityCalculator(
         scrollPosition,
-        {maxScroll: options.maxScroll, offset: options.offset}
+        {maxScroll: maxScroll.value, offset: offset.value}
     );
 
     const backgroundColor = computed(() => {
