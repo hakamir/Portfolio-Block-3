@@ -14,6 +14,8 @@ const headerClasses = computed(() => {
   switch (route.path) {
     case '/':
       return 'bg-black text-white'
+    case '/portfolio':
+      return 'text-white backdrop-blur-3xl border-b border-white/30 bg-linear-0 from-black/0 to-black/70 text-shadow-[0_0_20px_rgba(0,0,0,1)]'
     default:
       return 'bg-white text-black border-b border-gray-200'
   }
@@ -23,6 +25,8 @@ const headerClasses = computed(() => {
 const textColor = computed(() => {
   switch (route.path) {
     case '/':
+      return 'white'
+    case '/portfolio':
       return 'white'
     default:
       return 'black'
