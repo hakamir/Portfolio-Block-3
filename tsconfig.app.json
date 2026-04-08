@@ -11,7 +11,8 @@
       "@directives/*": ["src/directives/*"],
       "@assets/*": ["src/assets/*"],
       "@stores/*": ["src/stores/*"],
-      "@stores": ["src/stores/index.ts"]
+      "@stores": ["src/stores/index.ts"],
+      "@views/*": ["src/views/*"],
     },
 
     /* Linting */

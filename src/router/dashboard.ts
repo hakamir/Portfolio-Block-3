@@ -1,9 +1,9 @@
-import {useAuthStore} from "../stores";
+import {useAuthStore} from "@stores";
 
 export default {
     path: '/dashboard',
     name: 'dashboard',
-    component: () => import('../views/dashboard/DashboardLayout.vue'),
+    component: () => import('@views/dashboard/DashboardLayout.vue'),
     meta: {requiresAuth: true},
     beforeEnter: () => {
         const authStore = useAuthStore()
@@ -19,7 +19,12 @@ export default {
         {
             path: 'messages',
             name: 'dashboard-messages',
-            component: () => import('../views/dashboard/messages/MessagesView.vue'),
+            component: () => import('@views/dashboard/messages/MessagesView.vue'),
+        },
+        {
+            path: 'biography',
+            name: 'dashboard-biography',
+            component: () => import('@views/dashboard/biography/BiographyLayout.vue'),
         }
     ]
 }

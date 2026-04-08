@@ -14,6 +14,7 @@ export default defineConfig({
       '@directives': path.resolve(__dirname, './src/directives'),
       '@assets': path.resolve(__dirname, './src/assets'),
       '@stores': path.resolve(__dirname, './src/stores'),
+      '@views': path.resolve(__dirname, './src/views'),
     }
   }
 })
