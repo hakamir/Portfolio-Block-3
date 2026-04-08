@@ -1,4 +1,6 @@
-from flask import Flask, jsonify, request
+import os
+
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flask_pymongo import PyMongo
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required
@@ -17,6 +19,8 @@ mongo = PyMongo(app)
 jwt = JWTManager(app)
 
 messages_col = mongo.db.messages
+
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
 
 def handle_db_timeout(fn):
     def wrapper(*args, **kwargs):
@@ -78,5 +82,17 @@ def update_message(id):
 def delete_message(id):
     messages_col.delete_one({'_id': ObjectId(id)})
     return jsonify({'deleted': id}), 200
+
+# --- Biography --- #
+@handle_db_timeout
+@app.route('/biography', methods=['GET'])
+def get_biography():
+    biography = mongo.db.biography.find_one()
+    return jsonify({'biography': biography})
+
+@app.route('/uploads/<path:filename>')
+def uploaded_file(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
+
 if __name__ == '__main__':
     app.run(debug=True)

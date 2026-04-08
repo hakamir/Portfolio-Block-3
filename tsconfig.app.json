@@ -13,6 +13,7 @@
       "@stores/*": ["src/stores/*"],
       "@stores": ["src/stores/index.ts"],
       "@views/*": ["src/views/*"],
+      "@api/*": ["src/api/*"],
     },
 
     /* Linting */
