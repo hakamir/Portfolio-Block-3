@@ -2,8 +2,7 @@
 import Footer from "@components/layout/footer/Footer.vue";
 import {LoaderCircle, TriangleAlert} from "@lucide/vue";
 import {reactive, ref} from "vue";
-import router from "../../router";
-import {useAuthStore} from "../../stores";
+import {useAuthStore} from "@stores";
 
 
 interface LoginForm {
@@ -35,7 +34,7 @@ const handleSubmit = async () => {
 <template>
   <div class="flex flex-col min-h-screen">
     <div class="flex flex-1 justify-center">
-      <section class="pt-28 pb-16 md:pt-48 container w-1/3 mx-auto px-8 md:px-32">
+      <section class="pt-28 pb-16 md:pt-48 container xl:w-4/5 2xl:w-2/3 mx-auto px-8 md:px-32">
         <h1 class="text-4xl font-bold font-unbounded text-center mb-4">Login</h1>
         <div class="flex justify-center">
           <span class="text-gray-500 font-light text-md">Please enter your email and password to login.</span>

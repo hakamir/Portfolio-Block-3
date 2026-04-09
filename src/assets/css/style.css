@@ -60,12 +60,12 @@ button {
 
 /* Menu button design */
 .menu-button {
-    @apply rounded-full p-2 border-2 border-white h-12 w-12 transition-all duration-300;
+    @apply rounded-full p-2 border-2 h-12 w-12 transition-all duration-300;
 }
 
 /* Menu button line design */
 .menu-button .line {
-    @apply bg-white mb-1 block h-0.5 w-4 m-auto rounded-full;
+    @apply mb-1 block h-0.5 w-4 m-auto rounded-full;
 }
 
 /*No border on last line*/

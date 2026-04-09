@@ -13,7 +13,7 @@
               <ul>
                 <li class="py-2"><a class="hover:underline" href="/terms-of-service">Terms of service</a></li>
                 <li class="py-2"><a class="hover:underline" href="/privacy-policy">Privacy policy</a></li>
-                <li class="py-2"><a class="hover:underline block md:hidden" href="/pages/signin">Admin</a></li>
+                <li class="py-2"><RouterLink class="hover:underline block md:hidden" to="/login">Admin</RouterLink></li>
               </ul>
             </div>
           </div>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {vTilt} from '@directives/tilt'
-import { LogOut } from "@lucide/vue";
+import {LogOut} from "@lucide/vue";
 import {useAuthStore} from "@stores";
 
 const store = useAuthStore()
@@ -56,7 +56,7 @@ const store = useAuthStore()
               @click="store.logout"
               class="nav-item"
               v-tilt>
-            <LogOut />
+            <LogOut/>
           </button>
         </li>
       </ul>
