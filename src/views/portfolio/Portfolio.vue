@@ -5,6 +5,7 @@ import Card from "@views/portfolio/components/Card.vue";
 import {useAudioStore} from "@stores/audio.ts";
 import {onMounted} from "vue";
 import {LoaderCircle} from "@lucide/vue";
+import ProgressiveImage from "@components/ProgressiveImage.vue";
 
 const apiUrl = import.meta.env.VITE_API_URL
 const audioStore = useAudioStore();
@@ -15,8 +16,12 @@ onMounted(async () => {
 
 <template>
   <div class="relative min-h-screen flex flex-col">
-    <img src="../../assets/img/gallery_0001.webp" alt="Portfolio Image"
-         class="fixed inset-0 w-full h-full object-cover -z-20">
+    <ProgressiveImage src512="./src/assets/img/gallery/background/gallery_0001-512.webp"
+                      src1024="./src/assets/img/gallery/background/gallery_0001-1024.webp"
+                      src2048="./src/assets/img/gallery/background/gallery_0001-2048.webp"
+                      alt="Portfolio Background"
+                      class="fixed inset-0 w-full h-full object-cover -z-20"
+    />
     <div class="fixed inset-0 bg-linear-180 from-black/0 to-black -z-10"></div>
 
     <section class="flex-1 pt-28 pb-16 md:pt-48 px-8 md:px-32 text-white">
