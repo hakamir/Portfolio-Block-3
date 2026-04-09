@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref} from 'vue'
 import { Play, Pause } from '@lucide/vue'
+import {useAudioPlayerStore} from "@stores";
 
 const props = defineProps<{
   src: string
   title: string
   subtitle: string
 }>()
+
+const playerStore = useAudioPlayerStore()
 
 const audioRef = ref<HTMLAudioElement | null>(null)
 const isPlaying = ref(false)
@@ -24,9 +27,25 @@ const formatTime = (seconds: number) => {
 // Toggle play/pause
 const togglePlay = () => {
   if (!audioRef.value) return
-  isPlaying.value ? audioRef.value.pause() : audioRef.value.play()
-  isPlaying.value = !isPlaying.value
+  if (isPlaying.value) {
+    playerStore.pause(audioRef.value)
+    isPlaying.value = false
+  } else {
+    playerStore.play(audioRef.value)
+    isPlaying.value = true
+  }
 }
+
+const onPause = () => {
+  isPlaying.value = false
+}
+
+onMounted(() => {
+  audioRef.value?.addEventListener('pause', onPause)
+})
+onBeforeUnmount(() => {
+  audioRef.value?.removeEventListener('pause', onPause)
+})
 
 // Calculate progress in percentage
 const onTimeUpdate = () => {
@@ -61,8 +80,8 @@ const seek = (event: MouseEvent) => {
     <div class="flex flex-col gap-1 flex-1">
       <span class="text-sm font-unbounded">{{ title }}</span>
       <span class="text-sm text-white/70">{{ subtitle }}</span>
-      <div class="relative h-1 bg-white/30 rounded cursor-pointer" @click="seek">
-        <div class="h-full bg-white rounded transition-all"
+      <div class="relative h-1 bg-white/30 rounded cursor-pointer hover:scale-y-250 transition" @click="seek">
+        <div class="h-full bg-white rounded-full transition-all"
              :style="{ width: `${progress}%` }" />
       </div>
     </div>
