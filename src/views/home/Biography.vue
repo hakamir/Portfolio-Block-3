@@ -2,6 +2,7 @@
 import {useBiographyStore} from "@stores/biography.ts";
 import {onMounted} from "vue";
 import {storeToRefs} from "pinia";
+import ProgressiveImage from "@components/ProgressiveImage.vue";
 
 const store = useBiographyStore()
 let {biography} = storeToRefs(store)
@@ -17,12 +18,10 @@ onMounted(async () => {
   <section v-if="biography" class="relative sm:min-h-screen bg-neutral-300 sm:snap-start">
     <div class="grid grid-cols-1 md:grid-cols-2 min-h-screen">
       <div class="sm:sticky sm:top-0 sm:h-screen sm:w-full">
-        <picture>
-          <source media="(max-width: 640px)" :srcset="`${baseURL}/uploads${biography.image.sm}`">
-          <source media="(max-width: 1280px)" :srcset="`${baseURL}/uploads${biography.image.md}`">
-          <img :src="`${baseURL}/uploads${biography.image.lg}`" :alt="biography.title"
-               class="w-full h-full object-cover">
-        </picture>
+        <ProgressiveImage :src512="`${baseURL}/uploads${biography.image.sm}`"
+                          :src1024="`${baseURL}/uploads${biography.image.md}`"
+                          :src2048="`${baseURL}/uploads${biography.image.lg}`" :alt="biography.title"
+                          class="w-full h-full object-cover"/>
         <div
             class="hidden sm:block absolute top-0 right-0 h-full w-0.5 bg-linear-to-r from-neutral-300/0 to-neutral-300"></div>
       </div>

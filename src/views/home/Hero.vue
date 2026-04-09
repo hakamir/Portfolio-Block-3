@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { vWave } from "@directives/wave.js";
+import {vWave} from "@directives/wave.js";
+import ProgressiveImage from "@components/ProgressiveImage.vue";
 </script>
 
 <template>
@@ -7,13 +8,10 @@ import { vWave } from "@directives/wave.js";
       class="grid grid-rows-2 sm:relative bg-black text-white overflow-hidden min-h-screen h-screen sm:flex sm:items-center sm:snap-start">
     <!-- Hero Image -->
     <div class="sm:absolute sm:right-0 sm:top-0 sm:w-2/3 sm:h-full z-0">
-      <picture>
-        <source media="(max-width: 640px)" srcset="../../assets/img/hero/hero-1/hero-1-512.webp">
-        <source media="(max-width: 1280px)" srcset="../../assets/img/hero/hero-1/hero-1-1024.webp">
-        <img src="../../assets/img/hero/hero-1/hero-1-2048.webp"
-             alt="Block1 Logo"
-             class="w-full h-full object-cover">
-      </picture>
+      <ProgressiveImage src512="./src/assets/img/hero/hero-1/hero-1-512.webp"
+                        src1024="./src/assets/img/hero/hero-1/hero-1-1024.webp"
+                        src2048="./src/assets/img/hero/hero-1/hero-1-2048.webp" alt="Block1 Logo"
+                        class="w-full h-full object-cover"/>
       <div class="hidden sm:block absolute top-0 left-0 h-full w-50 bg-linear-to-l from-black/0 to-black"></div>
     </div>
     <!-- Hero -->

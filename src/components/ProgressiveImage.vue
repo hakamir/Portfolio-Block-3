@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, useTemplateRef } from 'vue'
 
 const props = defineProps<{
   src512: string
@@ -7,39 +7,46 @@ const props = defineProps<{
   src2048: string
   alt: string
   class?: string
+  responsive?: boolean
 }>()
 
-const currentSrc = ref(props.src512)
 const isLoaded = ref(false)
-
-function loadImage(src: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => resolve()
-    img.onerror = () => reject()
-    img.src = src
-    if (img.complete) resolve()
-  })
-}
+const imgRef = useTemplateRef('imgRef')
 
 onMounted(async () => {
   try {
-    await loadImage(props.src1024)
-    currentSrc.value = props.src1024
-    await loadImage(props.src2048)
-    currentSrc.value = props.src2048
-    isLoaded.value = true
-  } catch (e) {
+    if (imgRef.value?.complete) {
+      isLoaded.value = true
+      return
+    }
+    imgRef.value?.addEventListener('load', () => {
+      isLoaded.value = true
+    })
+  } catch {
     isLoaded.value = true
   }
 })
 </script>
 
 <template>
+  <picture v-if="responsive">
+    <source media="(max-width: 640px)" :srcset="src512">
+    <source media="(max-width: 1280px)" :srcset="src1024">
+    <img
+      ref="imgRef"
+      :src="src2048"
+      :alt="alt"
+      :class="[props.class, { 'blur-sm scale-105': !isLoaded, 'blur-0 scale-100': isLoaded }]"
+      class="transition-all duration-700 ease-in-out"
+    />
+  </picture>
+
   <img
-    :src="currentSrc"
+    v-else
+    ref="imgRef"
+    :src="src2048"
     :alt="alt"
-    :class="[props.class, { 'blur-lg scale-105': !isLoaded, 'blur-0 scale-100': isLoaded }]"
+    :class="[props.class, { 'blur-sm scale-105': !isLoaded, 'blur-0 scale-100': isLoaded }]"
     class="transition-all duration-700 ease-in-out"
   />
 </template>
