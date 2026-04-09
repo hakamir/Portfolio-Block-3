@@ -17,8 +17,9 @@ onMounted(async () => {
 
 <template>
   <article>
-    <h2 class="font-unbounded text-3xl md:text-5xl mb-8 text-shadow-[0_0_20px_rgba(0,0,0,1)]">Discover my
-      albums</h2>
+    <h2 class="font-unbounded text-3xl md:text-5xl mb-8 text-shadow-[0_0_20px_rgba(0,0,0,1)]">
+      Discover my albums
+    </h2>
 
     <!-- Loading -->
     <template v-if="audioStore.fetchStatus === 'loading'">

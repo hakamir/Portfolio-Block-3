@@ -2,6 +2,7 @@
 import Footer from "@components/layout/footer/Footer.vue";
 import ProgressiveImage from "@components/ProgressiveImage.vue";
 import Albums from "@views/portfolio/components/Albums.vue";
+import Gallery from "@views/portfolio/components/Gallery.vue";
 
 
 
@@ -26,6 +27,7 @@ import Albums from "@views/portfolio/components/Albums.vue";
           <span>Horizon</span>
         </h1>
         <Albums />
+        <Gallery />
       </div>
     </section>
     <Footer/>
