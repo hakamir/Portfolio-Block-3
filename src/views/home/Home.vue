@@ -18,7 +18,7 @@ import Footer from "@components/layout/footer/Footer.vue";
         </RouterLink>
       </div>
     </div>
-    <Footer></Footer>
+    <Footer customClass="bg-black" />
   </section>
 </template>
 

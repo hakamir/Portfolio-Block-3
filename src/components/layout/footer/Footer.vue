@@ -1,10 +1,12 @@
 <script setup lang="ts">
-
+defineProps({
+  customClass: String
+})
 </script>
 
 <template>
   <footer id="footer">
-    <div class="bg-black text-white pt-8 pb-4 md:pt-16">
+    <div :class="`${customClass} text-white pt-8 pb-4 md:pt-16`">
       <div class="container mx-auto grid grid-cols-2 gap-4">
         <div>
           <div class="pl-4">

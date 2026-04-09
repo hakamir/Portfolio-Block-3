@@ -62,7 +62,7 @@ const { formData, status } = storeToRefs(store)
         </div>
       </section>
     </div>
-    <Footer></Footer>
+    <Footer customClass="bg-black"/>
   </div>
 </template>
 
