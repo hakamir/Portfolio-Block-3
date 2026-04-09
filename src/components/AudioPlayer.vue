@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref} from 'vue'
-import { Play, Pause } from '@lucide/vue'
+import {onBeforeUnmount, onMounted, ref} from 'vue'
+import {Play, Pause} from '@lucide/vue'
 import {useAudioPlayerStore} from "@stores";
 
 const props = defineProps<{
@@ -16,6 +16,8 @@ const isPlaying = ref(false)
 const progress = ref(0) // Progress in percentage
 const currentTime = ref('0:00')
 const duration = ref('0:00')
+const isDragging = ref(false)
+const barRef = ref<HTMLDivElement | null>(null)
 
 // Format time in mm:ss format
 const formatTime = (seconds: number) => {
@@ -42,9 +44,13 @@ const onPause = () => {
 
 onMounted(() => {
   audioRef.value?.addEventListener('pause', onPause)
+  document.addEventListener('mousemove', onMouseMove)
+  document.addEventListener('mouseup', stopDrag)
 })
 onBeforeUnmount(() => {
   audioRef.value?.removeEventListener('pause', onPause)
+  document.removeEventListener('mousemove', onMouseMove)
+  document.removeEventListener('mouseup', stopDrag)
 })
 
 // Calculate progress in percentage
@@ -67,22 +73,54 @@ const seek = (event: MouseEvent) => {
   const ratio = event.offsetX / bar.offsetWidth
   audioRef.value.currentTime = ratio * audioRef.value.duration
 }
+
+const updateSeek = (clientX: number) => {
+  if (!audioRef.value || !barRef.value) return;
+
+  const rect = barRef.value.getBoundingClientRect();
+  const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+  const ratio = x / rect.width;
+  audioRef.value.currentTime = ratio * audioRef.value.duration;
+}
+
+const startDrag = (event: MouseEvent) => {
+  isDragging.value = true;
+  updateSeek(event.clientX);
+}
+
+const onMouseMove = (event: MouseEvent) => {
+  if (!isDragging.value) return;
+  updateSeek(event.clientX)
+}
+
+const stopDrag = () => {
+  isDragging.value = false;
+}
+
 </script>
 
 <template>
   <div class="flex items-center gap-4">
     <button @click="togglePlay"
             class="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:bg-neutral-200 transition">
-      <Play v-if="!isPlaying" class="w-5 h-5 ml-0.5" />
-      <Pause v-else class="w-5 h-5" />
+      <Play v-if="!isPlaying" class="w-5 h-5 ml-0.5"/>
+      <Pause v-else class="w-5 h-5"/>
     </button>
 
     <div class="flex flex-col gap-1 flex-1">
       <span class="text-sm font-unbounded">{{ title }}</span>
       <span class="text-sm text-white/70">{{ subtitle }}</span>
-      <div class="relative h-1 bg-white/30 rounded cursor-pointer hover:scale-y-250 transition" @click="seek">
-        <div class="h-full bg-white rounded-full transition-all"
-             :style="{ width: `${progress}%` }" />
+
+      <div ref="barRef" class="relative h-8 cursor-pointer group flex items-center" @mousedown="startDrag">
+        <div class="relative w-full h-1 bg-white/30 rounded-full" @click="seek">
+          <div class="h-full bg-white rounded-full"
+               :style="{ width: `${progress}%` }"/>
+          <div class="absolute top-1/2 w-3 h-3 bg-white rounded-full opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100"
+              :style="{
+                 left: `${progress}%`,
+                 transform: 'translate(-50%, -50%)'
+               }"/>
+        </div>
       </div>
     </div>
 
@@ -91,6 +129,6 @@ const seek = (event: MouseEvent) => {
     <audio ref="audioRef" :src="props.src"
            preload="metadata"
            @timeupdate="onTimeUpdate"
-           @loadedmetadata="onLoaded" />
+           @loadedmetadata="onLoaded"/>
   </div>
 </template>
