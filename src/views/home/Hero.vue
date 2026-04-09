@@ -28,9 +28,9 @@ import ProgressiveImage from "@components/ProgressiveImage.vue";
             show.</p>
         </div>
         <div class="pt-6">
-          <button class="btn-primary wave-btn bg-primary text-black group" v-wave>
+          <RouterLink to="/portfolio" class="btn-primary wave-btn bg-primary text-black group" v-wave>
             Listen now
-          </button>
+          </RouterLink>
         </div>
       </div>
     </div>
