@@ -11,6 +11,7 @@ import ProgressiveImage from "@components/ProgressiveImage.vue";
       <ProgressiveImage src512="./src/assets/img/hero/hero-1/hero-1-512.webp"
                         src1024="./src/assets/img/hero/hero-1/hero-1-1024.webp"
                         src2048="./src/assets/img/hero/hero-1/hero-1-2048.webp" alt="Block1 Logo"
+                        blur
                         class="w-full h-full object-cover"/>
       <div class="hidden sm:block absolute top-0 left-0 h-full w-50 bg-linear-to-l from-black/0 to-black"></div>
     </div>

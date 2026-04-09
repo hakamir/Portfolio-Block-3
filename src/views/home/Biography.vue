@@ -20,7 +20,8 @@ onMounted(async () => {
       <div class="sm:sticky sm:top-0 sm:h-screen sm:w-full">
         <ProgressiveImage :src512="`${baseURL}/uploads${biography.image.sm}`"
                           :src1024="`${baseURL}/uploads${biography.image.md}`"
-                          :src2048="`${baseURL}/uploads${biography.image.lg}`" :alt="biography.title"
+                          :src2048="`${baseURL}/uploads${biography.image.lg}`"
+                          :alt="biography.title"
                           class="w-full h-full object-cover"/>
         <div
             class="hidden sm:block absolute top-0 right-0 h-full w-0.5 bg-linear-to-r from-neutral-300/0 to-neutral-300"></div>

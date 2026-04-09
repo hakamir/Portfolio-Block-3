@@ -8,6 +8,8 @@ const props = defineProps<{
   alt: string
   class?: string
   responsive?: boolean
+  blur?: boolean
+  scale?: boolean
 }>()
 
 const isLoaded = ref(false)
@@ -36,8 +38,14 @@ onMounted(async () => {
       ref="imgRef"
       :src="src2048"
       :alt="alt"
-      :class="[props.class, { 'blur-sm scale-105': !isLoaded, 'blur-0 scale-100': isLoaded }]"
-      class="transition-all duration-700 ease-in-out"
+      :class="[props.class, {
+        'blur-sm': blur && !isLoaded,
+        'blur-none': blur && isLoaded,
+        'scale-105': scale && !isLoaded,
+        'scale-100': scale && isLoaded,
+        'transition-[filter, transform]': blur || scale,
+        'duration-700 ease-in-out': blur || scale,
+      }]"
     />
   </picture>
 
@@ -46,7 +54,13 @@ onMounted(async () => {
     ref="imgRef"
     :src="src2048"
     :alt="alt"
-    :class="[props.class, { 'blur-sm scale-105': !isLoaded, 'blur-0 scale-100': isLoaded }]"
-    class="transition-all duration-700 ease-in-out"
+    :class="[props.class, {
+      'blur-sm': blur && !isLoaded,
+      'blur-none': blur && isLoaded,
+      'scale-105': scale && !isLoaded,
+      'scale-100': scale && isLoaded,
+      'transition-[filter, transform]': blur || scale,
+      'duration-700 ease-in-out': blur || scale,
+    }]"
   />
 </template>

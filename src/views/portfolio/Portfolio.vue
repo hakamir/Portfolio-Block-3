@@ -20,6 +20,7 @@ onMounted(async () => {
                       src1024="./src/assets/img/gallery/background/gallery_0001-1024.webp"
                       src2048="./src/assets/img/gallery/background/gallery_0001-2048.webp"
                       alt="Portfolio Background"
+                      blur scale
                       class="fixed inset-0 w-full h-full object-cover -z-20"
     />
     <div class="fixed inset-0 bg-linear-180 from-black/0 to-black -z-10"></div>
