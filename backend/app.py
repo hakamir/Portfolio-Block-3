@@ -18,6 +18,7 @@ mongo = PyMongo(app)
 jwt = JWTManager(app)
 
 messages_col = mongo.db.messages
+artists_col = mongo.db.artists
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
 
@@ -97,6 +98,11 @@ def update_biography():
     mongo.db.biography.update_one({}, {'$set': data})
     return jsonify({'updated': True}), 200
 
+@handle_db_timeout
+@app.route('/artists', methods=['GET'])
+def get_artists():
+    artists = [serialize(artist) for artist in artists_col.find()]
+    return jsonify(artists)
 
 # --- Upload --- #
 @app.route('/uploads/<path:filename>')

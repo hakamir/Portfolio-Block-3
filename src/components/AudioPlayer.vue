@@ -70,6 +70,7 @@ const seek = (event: MouseEvent) => {
     <span class="text-sm text-white/70 tabular-nums select-none">{{ currentTime }} / {{ duration }}</span>
 
     <audio ref="audioRef" :src="props.src"
+           preload="metadata"
            @timeupdate="onTimeUpdate"
            @loadedmetadata="onLoaded" />
   </div>
