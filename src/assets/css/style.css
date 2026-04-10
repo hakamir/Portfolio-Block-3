@@ -13,7 +13,7 @@
     --color-primary-700: #9db300;
     --color-primary-800: #748200;
     --color-primary-900: #4c5500;
-    --color-primary:var(--color-primary-500)
+    --color-primary: var(--color-primary-500)
 }
 
 body {
@@ -208,6 +208,47 @@ button {
 
 .social-link:hover span, .social-link:focus span {
     @apply text-primary;
+}
+
+/* -------- DASHBOARD / WORKS --------- */
+.work-label-base {
+    @apply border border-gray-300 px-4 py-2 font-semibold flex items-center gap-2 cursor-grab select-none
+}
+
+.work-label-artist {
+    @apply bg-primary-200/50 border border-gray-300 px-4 py-2 font-semibold flex items-center gap-2 cursor-grab select-none;
+}
+
+.work-label-album {
+    @apply border border-gray-300 px-4 py-2 font-semibold flex items-center gap-2 cursor-grab select-none bg-yellow-200/50;
+}
+
+.work-label-track {
+    @apply border border-gray-300 px-4 py-2 font-semibold flex items-center gap-2 cursor-grab select-none bg-orange-200/50;
+}
+
+.work-input-artist {
+    @apply bg-white border border-gray-300 px-4 py-2 w-full font-semibold hover:bg-gray-50 focus:outline-none focus:bg-primary-200/20 transition-colors duration-300;
+}
+
+.work-input-album {
+    @apply bg-white border border-gray-300 px-4 py-2 w-full font-semibold hover:bg-gray-50 focus:outline-none focus:bg-yellow-200/20 transition-colors duration-300;
+}
+
+.work-input-track {
+    @apply bg-white border border-gray-300 px-4 py-2 w-full font-semibold hover:bg-gray-50 focus:outline-none focus:bg-orange-200/20;
+}
+
+.work-upload-btn {
+    @apply bg-gray-200/50 border border-gray-300 px-4 py-2 font-semibold flex items-center gap-2;
+}
+
+.work-add-album-btn {
+    @apply bg-gray-200/50 border border-gray-300 px-4 py-2 font-semibold flex items-center gap-1 cursor-pointer select-none transition-transform duration-300;
+}
+
+.work-add-track-btn {
+    @apply bg-gray-200/50 border border-gray-300 px-4 py-2 font-semibold flex items-center gap-2 cursor-pointer select-none hover:translate-x-2 transition-transform duration-300;
 }
 
 /* -------- FONTS --------- */

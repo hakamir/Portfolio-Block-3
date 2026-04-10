@@ -6,7 +6,6 @@ import {X, Trash2, ListPlus, LayersPlus, Save, LoaderCircle, Check} from '@lucid
 
 const store = useBiographyStore()
 const {biography} = storeToRefs(store)
-const baseURL = import.meta.env.VITE_API_URL
 const saveStatus = ref<'idle' | 'loading' | 'saved' | 'error'>('idle')
 
 
