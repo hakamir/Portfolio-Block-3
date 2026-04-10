@@ -1,16 +1,24 @@
 <script setup lang="ts">
-import { GripVertical, Upload } from "@lucide/vue"
-import type {Track} from "@stores";
+import {GripVertical, Upload} from "@lucide/vue"
+import {onMounted, ref} from "vue";
+import {useAudioStore} from "@stores";
+import AudioPlayerMini from "@components/AudioPlayerMini.vue";
 
-defineProps<{
+const props = defineProps<{
   type: 'artist' | 'album' | 'track'
   placeholder: string
-  track?: Track
+  src?: string
 }>()
 
-const model = defineModel<string>({ required: true })
+const apiUrl = import.meta.env.VITE_API_URL
+const fileExists = ref(false)
+const audioStore = useAudioStore()
+const model = defineModel<string>({required: true})
+const emit = defineEmits<{ upload: [src: string | undefined] }>()
 
-const emit = defineEmits<{ upload: [item: void | Track | undefined] }>()
+onMounted(async () => {
+  fileExists.value = await audioStore.checkAudioExists(props.src)
+})
 
 const labelClass = {
   artist: 'work-label-artist',
@@ -37,14 +45,19 @@ const labelText = {
     {{ labelText[type] }}
   </label>
 
-  <button v-if="type === 'track'" @click="emit('upload', track)" class="work-upload-btn group">
-    <Upload class="text-gray-600 group-hover:text-gray-800 group-hover:translate-x-1 transition"/>
-  </button>
-
+  <div v-if="type==='track'">
+    <button v-if="!fileExists" @click="emit('upload', src)"
+            class="work-upload-btn group min-w-16 flex items-center justify-center">
+      <Upload class="text-gray-600 group-hover:text-gray-800 group-hover:translate-x-1 transition"/>
+    </button>
+    <div v-else>
+      <AudioPlayerMini className="work-upload-btn min-w-16 group flex items-center justify-center" :src="`${apiUrl}/uploads/audio/${src}`"/>
+    </div>
+  </div>
   <input
-    type="text"
-    :class="[inputClass[type], 'placeholder:text-gray-400 placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75']"
-    :placeholder="placeholder"
-    v-model="model"
+      type="text"
+      :class="[inputClass[type], 'placeholder:text-gray-400 placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75']"
+      :placeholder="placeholder"
+      v-model="model"
   />
 </template>

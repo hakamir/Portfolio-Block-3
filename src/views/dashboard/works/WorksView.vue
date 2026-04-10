@@ -67,11 +67,12 @@ const toggleAlbumCollapse = (slug: string) => {
   collapsedAlbums.value.has(slug) ? collapsedAlbums.value.delete(slug) : collapsedAlbums.value.add(slug);
 }
 
-const handleUpload = (track: void | Track | undefined) => console.log(track)
+const handleUpload = (src: string | undefined) => console.log(src)
 
 </script>
 
 <template>
+
   <section class="pt-8 pb-16 md:pt-16 container mx-auto px-8 md:px-32">
     <h1 class="text-4xl font-bold font-unbounded mb-8">Works</h1>
     <div class="border border-gray-200 bg-gray-50 rounded-xl p-6 flex flex-col">
@@ -129,7 +130,7 @@ const handleUpload = (track: void | Track | undefined) => console.log(track)
                   <div v-for="track in album.tracks">
                     <div class="flex items-center">
                       <!-- Track Input -->
-                      <WorkInput type="track" placeholder="Track title" v-model="track.title" @upload="handleUpload" :track="track" />
+                      <WorkInput type="track" placeholder="Track title" v-model="track.title" @upload="handleUpload" :src="`${artist.slug}/${album.slug}/${track.src}`" />
                       <!-- Delete track button -->
                       <DeleteButton @delete="deleteTrack(album, track)" assignedFor="track"/>
                     </div>

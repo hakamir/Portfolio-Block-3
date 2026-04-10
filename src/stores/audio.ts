@@ -67,5 +67,27 @@ export const useAudioStore = defineStore('audio', () => {
         }
     }
 
-    return {artists, sortedArtists, loading, fetchStatus, fetchAudios}
+    const checkAudioExists = async (src: string | undefined) => {
+        if (!src) return false
+        try {
+            await instance.head(audiosApi.checkTrack(`/uploads/audio/${src}`))
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    const uploadTrack = async (file: File, albumSlug: string, track: Track) => {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('albumSlug', albumSlug)
+        formData.append('trackSrc', track.src)
+        try {
+            await instance.post(audiosApi.uploadAudio, formData)
+        } catch (err) {
+            console.error('Error uploading track:', err)
+        }
+    }
+
+    return {artists, sortedArtists, loading, fetchStatus, fetchAudios, checkAudioExists, uploadTrack}
 })

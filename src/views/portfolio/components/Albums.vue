@@ -41,12 +41,12 @@ onMounted(async () => {
     <!-- Success -->
     <template v-else>
       <template v-for="artist in audioStore.sortedArtists">
-        <Card v-for="album in artist.albums" :title="`${artist.artist} - ${album.title}`">
+        <Card v-for="album in artist.albums" :title="`${artist.title} - ${album.title}`">
           <AudioPlayer
               v-for="track in album.tracks"
               :title="track.title"
               :src="`${apiUrl}/uploads/audio/${artist.slug}/${album.slug}/${track.src}`"
-              :subtitle="`${artist.artist} - ${album.title}`"
+              :subtitle="`${artist.title} - ${album.title}`"
           />
         </Card>
       </template>
