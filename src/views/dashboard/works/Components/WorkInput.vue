@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { GripVertical, Upload } from "@lucide/vue"
+import type {Track} from "@stores";
 
 defineProps<{
   type: 'artist' | 'album' | 'track'
   placeholder: string
+  track?: Track
 }>()
 
 const model = defineModel<string>({ required: true })
 
-const emit = defineEmits<{ upload: [] }>()
+const emit = defineEmits<{ upload: [item: void | Track | undefined] }>()
 
 const labelClass = {
   artist: 'work-label-artist',
@@ -35,7 +37,7 @@ const labelText = {
     {{ labelText[type] }}
   </label>
 
-  <button v-if="type === 'track'" @click="emit('upload')" class="work-upload-btn group">
+  <button v-if="type === 'track'" @click="emit('upload', track)" class="work-upload-btn group">
     <Upload class="text-gray-600 group-hover:text-gray-800 group-hover:translate-x-1 transition"/>
   </button>
 

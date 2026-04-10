@@ -18,7 +18,7 @@ export interface Album {
 
 export interface Artist {
     _id: string
-    artist: string
+    title: string
     slug: string
     order: number
     albums: Album[]
@@ -33,7 +33,7 @@ export const useAudioStore = defineStore('audio', () => {
 
     watch(() => artists.value, (artists) => {
         artists.forEach(artist => {
-            artist.slug = toSlug(artist.artist)
+            artist.slug = toSlug(artist.title)
             artist.albums.forEach(album => {
                 album.slug = toSlug(album.title)
                 album.tracks.forEach(track => {

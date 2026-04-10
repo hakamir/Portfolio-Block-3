@@ -18,7 +18,7 @@ const addArtist = () => {
   audioStore.artists.push({
     _id: '',
     slug: uuidv4(),
-    artist: '',
+    title: '',
     order: audioStore.artists.length + 1,
     albums: []
   });
@@ -67,7 +67,7 @@ const toggleAlbumCollapse = (slug: string) => {
   collapsedAlbums.value.has(slug) ? collapsedAlbums.value.delete(slug) : collapsedAlbums.value.add(slug);
 }
 
-const handleUpload = () => console.log('Upload triggered')
+const handleUpload = (track: void | Track | undefined) => console.log(track)
 
 </script>
 
@@ -93,7 +93,7 @@ const handleUpload = () => console.log('Upload triggered')
             <CollapseButton :collapsed="collapsedArtists.has(artist.slug)" @toggle="toggleArtistCollapse(artist.slug)"
                             color="bg-primary-300/30"/>
             <!-- Artist input -->
-            <WorkInput type="artist" placeholder="Artist name" v-model="artist.artist" />
+            <WorkInput type="artist" placeholder="Artist name" v-model="artist.title" />
           </div>
           <!-- Add album button -->
           <button
@@ -129,7 +129,7 @@ const handleUpload = () => console.log('Upload triggered')
                   <div v-for="track in album.tracks">
                     <div class="flex items-center">
                       <!-- Track Input -->
-                      <WorkInput type="track" placeholder="Track title" v-model="track.title" @upload="handleUpload" />
+                      <WorkInput type="track" placeholder="Track title" v-model="track.title" @upload="handleUpload" :track="track" />
                       <!-- Delete track button -->
                       <DeleteButton @delete="deleteTrack(album, track)" assignedFor="track"/>
                     </div>
