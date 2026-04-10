@@ -1,8 +1,9 @@
 <script setup lang="ts">
 
 import {useAudioStore, type Artist, type Album, type Track} from "@stores";
-import {onMounted} from "vue";
-import {GripVertical, Upload, Plus, ListChevronsDownUp, Trash2} from "@lucide/vue";
+import {onMounted, ref} from "vue";
+import {GripVertical, Upload, Plus, ListChevronsDownUp, ListChevronsUpDown, Trash2} from "@lucide/vue";
+import { v4 as uuidv4 } from 'uuid';
 
 const audioStore = useAudioStore();
 
@@ -12,7 +13,7 @@ onMounted(async () => {
 
 const addArtist = () => {
   audioStore.artists.push({
-    _id: '',
+    _id: uuidv4(),
     artist: '',
     albums: []
   });
@@ -20,7 +21,7 @@ const addArtist = () => {
 
 const addAlbum = (artist: Artist) => {
   artist.albums.push({
-    slug: '',
+    slug: uuidv4(),
     title: '',
     order: artist.albums.length + 1,
     tracks: []
@@ -50,6 +51,17 @@ const deleteTrack = (album: Album, track: Track) => {
   album.tracks.splice(index, 1);
 }
 
+const collapsedArtists = ref<Set<string>>(new Set());
+const collapsedAlbums = ref<Set<string>>(new Set());
+
+const toggleArtistCollapse = (id: string) => {
+  collapsedArtists.value.has(id) ? collapsedArtists.value.delete(id) : collapsedArtists.value.add(id);
+}
+
+const toggleAlbumCollapse = (slug: string) => {
+  collapsedAlbums.value.has(slug) ? collapsedAlbums.value.delete(slug) : collapsedAlbums.value.add(slug);
+}
+
 </script>
 
 <template>
@@ -67,11 +79,13 @@ const deleteTrack = (album: Album, track: Track) => {
         </button>
       </div>
       <!-- ARTISTS -->
-      <div v-for="artist in audioStore.artists" class="">
+      <div v-for="artist in audioStore.artists" class="mt-2">
         <div class="flex items-center justify-between">
           <div class="flex grow items-center">
-            <button class="bg-primary-200/50 px-3 py-2 border-l border-y border-gray-300 rounded-l-full group">
-              <ListChevronsDownUp class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
+            <button @click="toggleArtistCollapse(artist._id)"
+                class="bg-primary-200/50 px-3 py-2 border-l border-y border-gray-300 rounded-l-full group">
+              <ListChevronsDownUp v-if="!collapsedArtists.has(artist._id)" class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
+              <ListChevronsUpDown v-else class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
             </button>
             <label
                 class="work-label-artist group">
@@ -96,15 +110,16 @@ const deleteTrack = (album: Album, track: Track) => {
           </button>
         </div>
 
-        <div class="flex">
+        <div v-show="!collapsedArtists.has(artist._id)" class="flex">
           <div class="w-2 bg-primary-200/30 border-x border-b border-gray-400/30 mx-4 mb-1 rounded-b-full"/>
           <div class="flex flex-col grow">
             <!-- ALBUMS -->
             <div v-for="album in artist.albums">
               <div class="flex items-center mt-2">
-                <button class="bg-yellow-200/50 px-3 py-2 border-l border-y border-gray-300 rounded-l-full group">
-                  <ListChevronsDownUp
-                      class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
+                <button @click="toggleAlbumCollapse(album.slug)"
+                    class="bg-yellow-200/50 px-3 py-2 border-l border-y border-gray-300 rounded-l-full group">
+                  <ListChevronsDownUp v-if="!collapsedAlbums.has(album.slug)" class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
+                  <ListChevronsUpDown v-else class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
                 </button>
                 <label class="work-label-album group">
                   <GripVertical class="text-gray-400 group-hover:text-gray-500 transition"/>
@@ -118,7 +133,7 @@ const deleteTrack = (album: Album, track: Track) => {
                   <Trash2 class="text-red-700/60 group-hover:text-red-700 group-hover:scale-105 transition"/>
                 </button>
               </div>
-              <div class="flex">
+              <div v-show="!collapsedAlbums.has(album.slug)" class="flex">
                 <div class="w-2 bg-yellow-200/30 border-x border-b border-gray-400/30 mx-4 mb-1 rounded-b-full"/>
                 <div class="flex flex-col grow">
                   <!-- TRACKS -->
