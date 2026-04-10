@@ -3,20 +3,20 @@ import {instance} from "@api/axios.ts";
 import {computed, ref} from "vue";
 import audiosApi from "@api/audios.ts";
 
-interface Track {
+export interface Track {
     trackNumber: number
     title: string
     src: string
 }
 
-interface Album {
+export interface Album {
     slug: string
     title: string
     order: number
     tracks: Track[]
 }
 
-interface Artist {
+export interface Artist {
     _id: string
     artist: string
     albums: Album[]

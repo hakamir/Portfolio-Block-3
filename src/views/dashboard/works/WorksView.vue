@@ -1,14 +1,55 @@
 <script setup lang="ts">
 
-import {useAudioStore} from "@stores";
+import {useAudioStore, type Artist, type Album, type Track} from "@stores";
 import {onMounted} from "vue";
-import {GripVertical, Upload, Plus, ListChevronsDownUp} from "@lucide/vue";
+import {GripVertical, Upload, Plus, ListChevronsDownUp, Trash2} from "@lucide/vue";
 
 const audioStore = useAudioStore();
 
 onMounted(async () => {
   await audioStore.fetchAudios();
 })
+
+const addArtist = () => {
+  audioStore.artists.push({
+    _id: '',
+    artist: '',
+    albums: []
+  });
+}
+
+const addAlbum = (artist: Artist) => {
+  artist.albums.push({
+    slug: '',
+    title: '',
+    order: artist.albums.length + 1,
+    tracks: []
+  });
+}
+
+const addTrack = (album: Album) => {
+  album.tracks.push({
+    trackNumber: album.tracks.length + 1,
+    title: '',
+    src: '',
+  });
+}
+
+const deleteArtist = (artist: Artist) => {
+  const index = audioStore.artists.indexOf(artist);
+  audioStore.artists.splice(index, 1);
+}
+
+const deleteAlbum = (artist: Artist, album: Album) => {
+  const index = artist.albums.indexOf(album);
+  artist.albums.splice(index, 1);
+}
+
+const deleteTrack = (album: Album, track: Track) => {
+  const index = album.tracks.indexOf(track);
+  album.tracks.splice(index, 1);
+}
+
 </script>
 
 <template>
@@ -19,6 +60,7 @@ onMounted(async () => {
         <h2 class="text-2xl font-semibold mb-4">Audio</h2>
         <!-- Add artist button -->
         <button
+            @click="addArtist"
             class="px-2 py-1 rounded-xl text-sm text-blue-600 hover:bg-blue-100 self-start transition flex justify-center items-center gap-2">
           <Plus/>
           New artist
@@ -42,10 +84,15 @@ onMounted(async () => {
           </div>
           <!-- Add album button -->
           <button
+              @click="addAlbum(artist)"
               class="work-add-album-btn group">
             <Plus class="text-blue-400 group-hover:text-blue-600 group-hover:scale-120 transition"/>
             <span
                 class="text-sm text-blue-600 group-hover:text-blue-700 group-hover:translate-x-1 transition">New album</span>
+          </button>
+          <button @click="deleteArtist(artist)"
+              class="bg-gray-200/50 border-y border-r border-gray-300 px-4 py-2 font-semibold flex items-center gap-1 cursor-pointer select-none transition-transform duration-300 group rounded-r-full">
+            <Trash2 class="text-red-700/60 group-hover:text-red-700 group-hover:scale-105 transition"/>
           </button>
         </div>
 
@@ -66,6 +113,10 @@ onMounted(async () => {
                 <input type="text"
                        class="work-input-album"
                        :value="album.title">
+                <button @click="deleteAlbum(artist, album)"
+                    class="bg-gray-200/50 border-y border-r border-gray-300 px-4 py-2 font-semibold flex items-center gap-1 cursor-pointer select-none transition-transform duration-300 group">
+                  <Trash2 class="text-red-700/60 group-hover:text-red-700 group-hover:scale-105 transition"/>
+                </button>
               </div>
               <div class="flex">
                 <div class="w-2 bg-yellow-200/30 border-x border-b border-gray-400/30 mx-4 mb-1 rounded-b-full"/>
@@ -85,11 +136,16 @@ onMounted(async () => {
                       <input type="text"
                              class="work-input-track"
                              :value="track.title">
+                      <button @click="deleteTrack(album, track)"
+                          class="bg-gray-200/50 border-b border-r border-gray-300 px-4 py-2 font-semibold flex items-center gap-1 cursor-pointer select-none transition-transform duration-300 group">
+                        <Trash2 class="text-red-700/60 group-hover:text-red-700 group-hover:scale-105 transition"/>
+                      </button>
                     </div>
                   </div>
                   <!-- Add track button -->
                   <div>
                     <button
+                        @click="addTrack(album)"
                         class="work-add-track-btn group">
                       <Plus class="text-gray-400 group-hover:text-gray-600 group-hover:scale-110 transition"/>
                       <span class="text-sm text-gray-600">Add track</span>
