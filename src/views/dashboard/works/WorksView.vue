@@ -2,10 +2,11 @@
 
 import {useAudioStore, type Artist, type Album, type Track} from "@stores";
 import {onMounted, ref} from "vue";
-import {GripVertical, Upload, Plus} from "@lucide/vue";
+import {Plus} from "@lucide/vue";
 import {v4 as uuidv4} from 'uuid';
 import DeleteButton from "@views/dashboard/works/Components/DeleteButton.vue";
 import CollapseButton from "@views/dashboard/works/Components/CollapseButton.vue";
+import WorkInput from "@views/dashboard/works/Components/WorkInput.vue";
 
 const audioStore = useAudioStore();
 
@@ -66,6 +67,8 @@ const toggleAlbumCollapse = (slug: string) => {
   collapsedAlbums.value.has(slug) ? collapsedAlbums.value.delete(slug) : collapsedAlbums.value.add(slug);
 }
 
+const handleUpload = () => console.log('Upload triggered')
+
 </script>
 
 <template>
@@ -89,17 +92,8 @@ const toggleAlbumCollapse = (slug: string) => {
             <!-- Collapse button -->
             <CollapseButton :collapsed="collapsedArtists.has(artist.slug)" @toggle="toggleArtistCollapse(artist.slug)"
                             color="bg-primary-300/30"/>
-            <!-- Artist label -->
-            <label
-                class="work-label-artist group">
-              <GripVertical class="text-gray-400 group-hover:text-gray-500 transition"/>
-              Artist
-            </label>
             <!-- Artist input -->
-            <input type="text"
-                   class="work-input-artist placeholder:text-gray-400 placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75"
-                   placeholder="Artist name"
-                   v-model="artist.artist">
+            <WorkInput type="artist" placeholder="Artist name" v-model="artist.artist" />
           </div>
           <!-- Add album button -->
           <button
@@ -110,8 +104,7 @@ const toggleAlbumCollapse = (slug: string) => {
                 class="text-sm text-blue-600 group-hover:text-blue-700 group-hover:translate-x-1 transition">New album</span>
           </button>
           <!-- Delete artist button -->
-          <DeleteButton @delete="deleteArtist(artist)" customClass="rounded-r-full"/>
-
+          <DeleteButton @delete="deleteArtist(artist)" customClass="rounded-r-full" assignedFor="artist"/>
         </div>
 
         <!-- ALBUMS -->
@@ -123,18 +116,10 @@ const toggleAlbumCollapse = (slug: string) => {
                 <!-- Collapse button -->
                 <CollapseButton :collapsed="collapsedAlbums.has(album.slug)" @toggle="toggleAlbumCollapse(album.slug)"
                                 color="bg-yellow-300/30"/>
-                <!-- Album label -->
-                <label class="work-label-album group">
-                  <GripVertical class="text-gray-400 group-hover:text-gray-500 transition"/>
-                  Album
-                </label>
                 <!-- Album input -->
-                <input type="text"
-                       class="work-input-album placeholder:text-gray-400 placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75"
-                       placeholder="Album title"
-                       v-model="album.title">
+                <WorkInput type="album" placeholder="Album title" v-model="album.title" />
                 <!-- Delete album button -->
-                <DeleteButton @delete="deleteAlbum(artist, album)"/>
+                <DeleteButton @delete="deleteAlbum(artist, album)" assignedFor="album"/>
               </div>
 
               <!-- TRACKS -->
@@ -143,24 +128,10 @@ const toggleAlbumCollapse = (slug: string) => {
                 <div class="flex flex-col grow">
                   <div v-for="track in album.tracks">
                     <div class="flex items-center">
-                      <!-- Track Label -->
-                      <label
-                          class="work-label-track group">
-                        <GripVertical class="text-gray-400 group-hover:text-gray-500 transition"/>
-                        Track
-                      </label>
-                      <!-- Upload track button -->
-                      <button
-                          class="work-upload-btn group">
-                        <Upload class="text-gray-600 group-hover:text-gray-800 group-hover:translate-x-1 transition"/>
-                      </button>
-                      <!-- Track input -->
-                      <input type="text"
-                             class="work-input-track placeholder:text-gray-400 placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75"
-                             placeholder="Track title"
-                             v-model="track.title">
+                      <!-- Track Input -->
+                      <WorkInput type="track" placeholder="Track title" v-model="track.title" @upload="handleUpload" />
                       <!-- Delete track button -->
-                      <DeleteButton @delete="deleteTrack(album, track)"/>
+                      <DeleteButton @delete="deleteTrack(album, track)" assignedFor="track"/>
                     </div>
                   </div>
                   <!-- Add track button -->

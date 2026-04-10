@@ -29,7 +29,7 @@ export const useAudioStore = defineStore('audio', () => {
     const loading = ref(false)
     const fetchStatus = ref<'idle' | 'loading' | 'error'>('idle')
 
-    const toSlug = (str: string) => str.toLowerCase().replace(/\s+/g, '_')
+    const toSlug = (str: string) => str.toLowerCase().trim().replace(/\s+/g, '_')
 
     watch(() => artists.value, (artists) => {
         artists.forEach(artist => {
