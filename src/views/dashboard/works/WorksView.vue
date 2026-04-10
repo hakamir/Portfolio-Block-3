@@ -2,9 +2,10 @@
 
 import {useAudioStore, type Artist, type Album, type Track} from "@stores";
 import {onMounted, ref} from "vue";
-import {GripVertical, Upload, Plus, ListChevronsDownUp, ListChevronsUpDown} from "@lucide/vue";
+import {GripVertical, Upload, Plus} from "@lucide/vue";
 import {v4 as uuidv4} from 'uuid';
 import DeleteButton from "@views/dashboard/works/Components/DeleteButton.vue";
+import CollapseButton from "@views/dashboard/works/Components/CollapseButton.vue";
 
 const audioStore = useAudioStore();
 
@@ -86,13 +87,8 @@ const toggleAlbumCollapse = (slug: string) => {
         <div class="flex items-center justify-between">
           <div class="flex grow items-center">
             <!-- Collapse button -->
-            <button @click="toggleArtistCollapse(artist.slug)"
-                    class="bg-primary-200/50 px-3 py-2 border-l border-y border-gray-300 rounded-l-full group">
-              <ListChevronsDownUp v-if="!collapsedArtists.has(artist.slug)"
-                                  class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
-              <ListChevronsUpDown v-else
-                                  class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
-            </button>
+            <CollapseButton :collapsed="collapsedArtists.has(artist.slug)" @toggle="toggleArtistCollapse(artist.slug)"
+                            color="bg-primary-300/30"/>
             <!-- Artist label -->
             <label
                 class="work-label-artist group">
@@ -125,13 +121,8 @@ const toggleAlbumCollapse = (slug: string) => {
             <div v-for="album in artist.albums">
               <div class="flex items-center mt-2">
                 <!-- Collapse button -->
-                <button @click="toggleAlbumCollapse(album.slug)"
-                        class="bg-yellow-200/50 px-3 py-2 border-l border-y border-gray-300 rounded-l-full group">
-                  <ListChevronsDownUp v-if="!collapsedAlbums.has(album.slug)"
-                                      class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
-                  <ListChevronsUpDown v-else
-                                      class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
-                </button>
+                <CollapseButton :collapsed="collapsedAlbums.has(album.slug)" @toggle="toggleAlbumCollapse(album.slug)"
+                                color="bg-yellow-300/30"/>
                 <!-- Album label -->
                 <label class="work-label-album group">
                   <GripVertical class="text-gray-400 group-hover:text-gray-500 transition"/>
