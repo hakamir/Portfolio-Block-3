@@ -1,6 +1,6 @@
 import {defineStore} from "pinia";
 import {instance} from "@api/axios.ts";
-import {computed, ref} from "vue";
+import {computed, ref, watch} from "vue";
 import audiosApi from "@api/audios.ts";
 
 export interface Track {
@@ -28,6 +28,20 @@ export const useAudioStore = defineStore('audio', () => {
     const artists = ref<Artist[]>([])
     const loading = ref(false)
     const fetchStatus = ref<'idle' | 'loading' | 'error'>('idle')
+
+    const toSlug = (str: string) => str.toLowerCase().replace(/\s+/g, '_')
+
+    watch(() => artists.value, (artists) => {
+        artists.forEach(artist => {
+            artist.slug = toSlug(artist.artist)
+            artist.albums.forEach(album => {
+                album.slug = toSlug(album.title)
+                album.tracks.forEach(track => {
+                    track.src = `${toSlug(track.title)}.mp3`
+                })
+            })
+        })
+    }, {deep: true})
 
     const sortedArtists = computed<Artist[]>(() => artists.value.map((artist: Artist) => ({
         ...artist,

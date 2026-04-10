@@ -2,8 +2,9 @@
 
 import {useAudioStore, type Artist, type Album, type Track} from "@stores";
 import {onMounted, ref} from "vue";
-import {GripVertical, Upload, Plus, ListChevronsDownUp, ListChevronsUpDown, Trash2} from "@lucide/vue";
-import { v4 as uuidv4 } from 'uuid';
+import {GripVertical, Upload, Plus, ListChevronsDownUp, ListChevronsUpDown} from "@lucide/vue";
+import {v4 as uuidv4} from 'uuid';
+import DeleteButton from "@views/dashboard/works/Components/DeleteButton.vue";
 
 const audioStore = useAudioStore();
 
@@ -84,20 +85,25 @@ const toggleAlbumCollapse = (slug: string) => {
       <div v-for="artist in audioStore.artists" class="mt-2">
         <div class="flex items-center justify-between">
           <div class="flex grow items-center">
+            <!-- Collapse button -->
             <button @click="toggleArtistCollapse(artist.slug)"
-                class="bg-primary-200/50 px-3 py-2 border-l border-y border-gray-300 rounded-l-full group">
-              <ListChevronsDownUp v-if="!collapsedArtists.has(artist.slug)" class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
-              <ListChevronsUpDown v-else class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
+                    class="bg-primary-200/50 px-3 py-2 border-l border-y border-gray-300 rounded-l-full group">
+              <ListChevronsDownUp v-if="!collapsedArtists.has(artist.slug)"
+                                  class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
+              <ListChevronsUpDown v-else
+                                  class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
             </button>
+            <!-- Artist label -->
             <label
                 class="work-label-artist group">
               <GripVertical class="text-gray-400 group-hover:text-gray-500 transition"/>
               Artist
             </label>
+            <!-- Artist input -->
             <input type="text"
                    class="work-input-artist placeholder:text-gray-400 placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75"
                    placeholder="Artist name"
-                   :value="artist.artist">
+                   v-model="artist.artist">
           </div>
           <!-- Add album button -->
           <button
@@ -107,59 +113,63 @@ const toggleAlbumCollapse = (slug: string) => {
             <span
                 class="text-sm text-blue-600 group-hover:text-blue-700 group-hover:translate-x-1 transition">New album</span>
           </button>
-          <button @click="deleteArtist(artist)"
-              class="bg-gray-200/50 border-y border-r border-gray-300 px-4 py-2 font-semibold flex items-center gap-1 cursor-pointer select-none transition-transform duration-300 group rounded-r-full">
-            <Trash2 class="text-red-700/60 group-hover:text-red-700 group-hover:scale-105 transition"/>
-          </button>
+          <!-- Delete artist button -->
+          <DeleteButton @delete="deleteArtist(artist)" customClass="rounded-r-full"/>
+
         </div>
 
+        <!-- ALBUMS -->
         <div v-show="!collapsedArtists.has(artist.slug)" class="flex">
           <div class="w-2 bg-primary-200/30 border-x border-b border-gray-400/30 mx-4 mb-1 rounded-b-full"/>
           <div class="flex flex-col grow">
-            <!-- ALBUMS -->
             <div v-for="album in artist.albums">
               <div class="flex items-center mt-2">
+                <!-- Collapse button -->
                 <button @click="toggleAlbumCollapse(album.slug)"
-                    class="bg-yellow-200/50 px-3 py-2 border-l border-y border-gray-300 rounded-l-full group">
-                  <ListChevronsDownUp v-if="!collapsedAlbums.has(album.slug)" class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
-                  <ListChevronsUpDown v-else class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
+                        class="bg-yellow-200/50 px-3 py-2 border-l border-y border-gray-300 rounded-l-full group">
+                  <ListChevronsDownUp v-if="!collapsedAlbums.has(album.slug)"
+                                      class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
+                  <ListChevronsUpDown v-else
+                                      class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
                 </button>
+                <!-- Album label -->
                 <label class="work-label-album group">
                   <GripVertical class="text-gray-400 group-hover:text-gray-500 transition"/>
                   Album
                 </label>
+                <!-- Album input -->
                 <input type="text"
                        class="work-input-album placeholder:text-gray-400 placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75"
                        placeholder="Album title"
-                       :value="album.title">
-                <button @click="deleteAlbum(artist, album)"
-                    class="bg-gray-200/50 border-y border-r border-gray-300 px-4 py-2 font-semibold flex items-center gap-1 cursor-pointer select-none transition-transform duration-300 group">
-                  <Trash2 class="text-red-700/60 group-hover:text-red-700 group-hover:scale-105 transition"/>
-                </button>
+                       v-model="album.title">
+                <!-- Delete album button -->
+                <DeleteButton @delete="deleteAlbum(artist, album)"/>
               </div>
+
+              <!-- TRACKS -->
               <div v-show="!collapsedAlbums.has(album.slug)" class="flex">
                 <div class="w-2 bg-yellow-200/30 border-x border-b border-gray-400/30 mx-4 mb-1 rounded-b-full"/>
                 <div class="flex flex-col grow">
-                  <!-- TRACKS -->
                   <div v-for="track in album.tracks">
                     <div class="flex items-center">
+                      <!-- Track Label -->
                       <label
                           class="work-label-track group">
                         <GripVertical class="text-gray-400 group-hover:text-gray-500 transition"/>
                         Track
                       </label>
+                      <!-- Upload track button -->
                       <button
                           class="work-upload-btn group">
                         <Upload class="text-gray-600 group-hover:text-gray-800 group-hover:translate-x-1 transition"/>
                       </button>
+                      <!-- Track input -->
                       <input type="text"
                              class="work-input-track placeholder:text-gray-400 placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75"
                              placeholder="Track title"
-                             :value="track.title">
-                      <button @click="deleteTrack(album, track)"
-                          class="bg-gray-200/50 border-b border-r border-gray-300 px-4 py-2 font-semibold flex items-center gap-1 cursor-pointer select-none transition-transform duration-300 group">
-                        <Trash2 class="text-red-700/60 group-hover:text-red-700 group-hover:scale-105 transition"/>
-                      </button>
+                             v-model="track.title">
+                      <!-- Delete track button -->
+                      <DeleteButton @delete="deleteTrack(album, track)"/>
                     </div>
                   </div>
                   <!-- Add track button -->
