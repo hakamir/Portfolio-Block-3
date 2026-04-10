@@ -13,8 +13,10 @@ onMounted(async () => {
 
 const addArtist = () => {
   audioStore.artists.push({
-    _id: uuidv4(),
+    _id: '',
+    slug: uuidv4(),
     artist: '',
+    order: audioStore.artists.length + 1,
     albums: []
   });
 }
@@ -54,8 +56,8 @@ const deleteTrack = (album: Album, track: Track) => {
 const collapsedArtists = ref<Set<string>>(new Set());
 const collapsedAlbums = ref<Set<string>>(new Set());
 
-const toggleArtistCollapse = (id: string) => {
-  collapsedArtists.value.has(id) ? collapsedArtists.value.delete(id) : collapsedArtists.value.add(id);
+const toggleArtistCollapse = (slug: string) => {
+  collapsedArtists.value.has(slug) ? collapsedArtists.value.delete(slug) : collapsedArtists.value.add(slug);
 }
 
 const toggleAlbumCollapse = (slug: string) => {
@@ -66,7 +68,7 @@ const toggleAlbumCollapse = (slug: string) => {
 
 <template>
   <section class="pt-8 pb-16 md:pt-16 container mx-auto px-8 md:px-32">
-    <h1 class="text-4xl font-bold font-unbounded">Works</h1>
+    <h1 class="text-4xl font-bold font-unbounded mb-8">Works</h1>
     <div class="border border-gray-200 bg-gray-50 rounded-xl p-6 flex flex-col">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-semibold mb-4">Audio</h2>
@@ -82,9 +84,9 @@ const toggleAlbumCollapse = (slug: string) => {
       <div v-for="artist in audioStore.artists" class="mt-2">
         <div class="flex items-center justify-between">
           <div class="flex grow items-center">
-            <button @click="toggleArtistCollapse(artist._id)"
+            <button @click="toggleArtistCollapse(artist.slug)"
                 class="bg-primary-200/50 px-3 py-2 border-l border-y border-gray-300 rounded-l-full group">
-              <ListChevronsDownUp v-if="!collapsedArtists.has(artist._id)" class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
+              <ListChevronsDownUp v-if="!collapsedArtists.has(artist.slug)" class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
               <ListChevronsUpDown v-else class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
             </button>
             <label
@@ -93,7 +95,8 @@ const toggleAlbumCollapse = (slug: string) => {
               Artist
             </label>
             <input type="text"
-                   class="work-input-artist"
+                   class="work-input-artist placeholder:text-gray-400 placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75"
+                   placeholder="Artist name"
                    :value="artist.artist">
           </div>
           <!-- Add album button -->
@@ -110,7 +113,7 @@ const toggleAlbumCollapse = (slug: string) => {
           </button>
         </div>
 
-        <div v-show="!collapsedArtists.has(artist._id)" class="flex">
+        <div v-show="!collapsedArtists.has(artist.slug)" class="flex">
           <div class="w-2 bg-primary-200/30 border-x border-b border-gray-400/30 mx-4 mb-1 rounded-b-full"/>
           <div class="flex flex-col grow">
             <!-- ALBUMS -->
@@ -126,7 +129,8 @@ const toggleAlbumCollapse = (slug: string) => {
                   Album
                 </label>
                 <input type="text"
-                       class="work-input-album"
+                       class="work-input-album placeholder:text-gray-400 placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75"
+                       placeholder="Album title"
                        :value="album.title">
                 <button @click="deleteAlbum(artist, album)"
                     class="bg-gray-200/50 border-y border-r border-gray-300 px-4 py-2 font-semibold flex items-center gap-1 cursor-pointer select-none transition-transform duration-300 group">
@@ -149,7 +153,8 @@ const toggleAlbumCollapse = (slug: string) => {
                         <Upload class="text-gray-600 group-hover:text-gray-800 group-hover:translate-x-1 transition"/>
                       </button>
                       <input type="text"
-                             class="work-input-track"
+                             class="work-input-track placeholder:text-gray-400 placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75"
+                             placeholder="Track title"
                              :value="track.title">
                       <button @click="deleteTrack(album, track)"
                           class="bg-gray-200/50 border-b border-r border-gray-300 px-4 py-2 font-semibold flex items-center gap-1 cursor-pointer select-none transition-transform duration-300 group">

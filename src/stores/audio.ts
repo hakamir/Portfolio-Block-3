@@ -19,6 +19,8 @@ export interface Album {
 export interface Artist {
     _id: string
     artist: string
+    slug: string
+    order: number
     albums: Album[]
 }
 

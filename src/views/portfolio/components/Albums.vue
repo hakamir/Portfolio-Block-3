@@ -45,7 +45,7 @@ onMounted(async () => {
           <AudioPlayer
               v-for="track in album.tracks"
               :title="track.title"
-              :src="`${apiUrl}${track.src}`"
+              :src="`${apiUrl}/uploads/audio/${artist.slug}/${album.slug}/${track.src}`"
               :subtitle="`${artist.artist} - ${album.title}`"
           />
         </Card>
