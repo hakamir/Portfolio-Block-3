@@ -211,24 +211,23 @@ button {
 }
 
 /* -------- DASHBOARD / WORKS --------- */
-.work-label-base {
-    @apply border border-gray-300 px-4 py-2 font-semibold flex items-center gap-2 cursor-grab select-none
-}
-
 .work-label-artist {
-    @apply bg-primary-200/50 border border-gray-300 px-4 py-2 font-semibold flex items-center gap-2 cursor-grab select-none;
+    @apply bg-primary-200/50 border-y border-r border-gray-300 pr-4 py-2 font-semibold flex items-center gap-2 cursor-grab select-none;
 }
 
 .work-label-album {
-    @apply border border-gray-300 px-4 py-2 font-semibold flex items-center gap-2 cursor-grab select-none bg-yellow-200/50;
+    @apply border-y border-gray-300 pr-4 py-2 font-semibold flex items-center gap-2 cursor-grab select-none bg-yellow-200/50;
 }
 
 .work-label-track {
-    @apply border border-gray-300 px-4 py-2 font-semibold flex items-center gap-2 cursor-grab select-none bg-orange-200/50;
+    @apply border-l border-gray-300 px-4 py-2 font-semibold flex items-center gap-2 cursor-grab select-none bg-orange-200/50;
+}
+.work-label-track:first-child {
+    @apply border-b;
 }
 
 .work-input-artist {
-    @apply bg-white border border-gray-300 px-4 py-2 w-full font-semibold hover:bg-gray-50 focus:outline-none focus:bg-primary-200/20 transition-colors duration-300;
+    @apply bg-white border-y border-gray-300 px-4 py-2 w-full font-semibold hover:bg-gray-50 focus:outline-none focus:bg-primary-200/20 transition-colors duration-300;
 }
 
 .work-input-album {
@@ -236,11 +235,11 @@ button {
 }
 
 .work-input-track {
-    @apply bg-white border border-gray-300 px-4 py-2 w-full font-semibold hover:bg-gray-50 focus:outline-none focus:bg-orange-200/20;
+    @apply bg-white border-r border-b border-gray-300 px-4 py-2 w-full font-semibold hover:bg-gray-50 focus:outline-none focus:bg-orange-200/20;
 }
 
 .work-upload-btn {
-    @apply bg-gray-200/50 border border-gray-300 px-4 py-2 font-semibold flex items-center gap-2;
+    @apply bg-gray-200/50 border-x border-b border-gray-300 px-4 py-2 font-semibold flex items-center gap-2;
 }
 
 .work-add-album-btn {
@@ -248,7 +247,7 @@ button {
 }
 
 .work-add-track-btn {
-    @apply bg-gray-200/50 border border-gray-300 px-4 py-2 font-semibold flex items-center gap-2 cursor-pointer select-none hover:translate-x-2 transition-transform duration-300;
+    @apply bg-gray-200/50 border-x border-b mb-2 rounded-b-lg border-gray-300 px-4 py-2 font-semibold flex items-center gap-2 cursor-pointer select-none hover:translate-x-2 transition-transform duration-300;
 }
 
 /* -------- FONTS --------- */

@@ -2,7 +2,7 @@
 
 import {useAudioStore} from "@stores";
 import {onMounted} from "vue";
-import {GripVertical, Upload, Plus} from "@lucide/vue";
+import {GripVertical, Upload, Plus, ListChevronsDownUp} from "@lucide/vue";
 
 const audioStore = useAudioStore();
 
@@ -28,6 +28,9 @@ onMounted(async () => {
       <div v-for="artist in audioStore.artists" class="">
         <div class="flex items-center justify-between">
           <div class="flex grow items-center">
+            <button class="bg-primary-200/50 px-3 py-2 border-l border-y border-gray-300 rounded-l-full group">
+              <ListChevronsDownUp class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
+            </button>
             <label
                 class="work-label-artist group">
               <GripVertical class="text-gray-400 group-hover:text-gray-500 transition"/>
@@ -51,9 +54,12 @@ onMounted(async () => {
           <div class="flex flex-col grow">
             <!-- ALBUMS -->
             <div v-for="album in artist.albums">
-              <div class="flex items-center">
-                <label
-                    class="work-label-album group">
+              <div class="flex items-center mt-2">
+                <button class="bg-yellow-200/50 px-3 py-2 border-l border-y border-gray-300 rounded-l-full group">
+                  <ListChevronsDownUp
+                      class="text-gray-400 group-hover:text-gray-500 group-hover:translate-x-1 transition"/>
+                </button>
+                <label class="work-label-album group">
                   <GripVertical class="text-gray-400 group-hover:text-gray-500 transition"/>
                   Album
                 </label>
