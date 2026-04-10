@@ -41,45 +41,57 @@ onMounted(async () => {
           <button
               class="work-add-album-btn group">
             <Plus class="text-blue-400 group-hover:text-blue-600 group-hover:scale-120 transition"/>
-            <span class="text-sm text-blue-600 group-hover:text-blue-700 group-hover:translate-x-1 transition">New album</span>
+            <span
+                class="text-sm text-blue-600 group-hover:text-blue-700 group-hover:translate-x-1 transition">New album</span>
           </button>
         </div>
-        <!-- ALBUMS -->
-        <div v-for="album in artist.albums" class=" border-l-4 border-double border-gray-400/30 ml-2 pl-6">
-          <div class="flex items-center">
-            <label
-                class="work-label-album group">
-              <GripVertical class="text-gray-400 group-hover:text-gray-500 transition"/>
-              Album
-            </label>
-            <input type="text"
-                   class="work-input-album"
-                   :value="album.title">
-          </div>
-          <!-- TRACKS -->
-          <div v-for="track in album.tracks" class="border-l-4 border-double border-gray-400/30 ml-2 pl-6">
-            <div class="flex items-center">
-              <label
-                  class="work-label-track group">
-                <GripVertical class="text-gray-400 group-hover:text-gray-500 transition"/>
-                Track
-              </label>
-              <button
-                  class="work-upload-btn group">
-                <Upload class="text-gray-600 group-hover:text-gray-800 group-hover:translate-x-1 transition"/>
-              </button>
-              <input type="text"
-                     class="work-input-track"
-                     :value="track.title">
+
+        <div class="flex">
+          <div class="w-2 bg-primary-200/30 border-x border-b border-gray-400/30 mx-4 mb-1 rounded-b-full"/>
+          <div class="flex flex-col grow">
+            <!-- ALBUMS -->
+            <div v-for="album in artist.albums">
+              <div class="flex items-center">
+                <label
+                    class="work-label-album group">
+                  <GripVertical class="text-gray-400 group-hover:text-gray-500 transition"/>
+                  Album
+                </label>
+                <input type="text"
+                       class="work-input-album"
+                       :value="album.title">
+              </div>
+              <div class="flex">
+                <div class="w-2 bg-yellow-200/30 border-x border-b border-gray-400/30 mx-4 mb-1 rounded-b-full"/>
+                <div class="flex flex-col grow">
+                  <!-- TRACKS -->
+                  <div v-for="track in album.tracks">
+                    <div class="flex items-center">
+                      <label
+                          class="work-label-track group">
+                        <GripVertical class="text-gray-400 group-hover:text-gray-500 transition"/>
+                        Track
+                      </label>
+                      <button
+                          class="work-upload-btn group">
+                        <Upload class="text-gray-600 group-hover:text-gray-800 group-hover:translate-x-1 transition"/>
+                      </button>
+                      <input type="text"
+                             class="work-input-track"
+                             :value="track.title">
+                    </div>
+                  </div>
+                  <!-- Add track button -->
+                  <div>
+                    <button
+                        class="work-add-track-btn group">
+                      <Plus class="text-gray-400 group-hover:text-gray-600 group-hover:scale-110 transition"/>
+                      <span class="text-sm text-gray-600">Add track</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-          <!-- Add track button -->
-          <div class="border-l-4 border-double border-gray-400/30 ml-2 pl-6">
-            <button
-                class="work-add-track-btn group">
-              <Plus class="text-gray-400 group-hover:text-gray-600 group-hover:scale-110 transition"/>
-              <span class="text-sm text-gray-600">Add track</span>
-            </button>
           </div>
         </div>
       </div>
