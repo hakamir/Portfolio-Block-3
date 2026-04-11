@@ -14,10 +14,14 @@ export const useAuthStore = defineStore("auth", () => {
         await router.push('/dashboard')
     }
 
-    const logout = () => {
+    const logout = async () => {
         token.value = null
         localStorage.removeItem('token')
-        router.push('/')
+        await router.push('/')
+    }
+
+    const changePassword = async (currentPwd: string, newPwd: string) => {
+        await instance.put(authApi.changePassword, {currentPwd, newPwd})
     }
 
     const isTokenExpired = (token: string) => {
@@ -38,5 +42,5 @@ export const useAuthStore = defineStore("auth", () => {
         return true;
     }
 
-    return {token, login, logout, isAuthenticated}
+    return {token, login, logout, changePassword, isAuthenticated}
 })

@@ -4,6 +4,7 @@ import {ref} from "vue";
 import {useAudioStore} from "@stores";
 import {Trash2} from "@lucide/vue";
 import Modal from "@components/Modal.vue";
+import ChangePassword from "@views/dashboard/settings/components/ChangePassword.vue";
 
 const audioStore = useAudioStore()
 const showDeleteModal = ref(false)
@@ -27,7 +28,10 @@ const onConfirmDelete = async () => {
 <template>
   <section class="pt-8 pb-16 md:pt-16 container mx-auto px-8 md:px-32">
     <h1 class="text-4xl font-bold font-unbounded mb-8">Settings</h1>
-    <OrphansAudio @request-delete="onRequestDelete" :key="orphansRefreshKey"/>
+    <div class="flex flex-col gap-8">
+      <ChangePassword/>
+      <OrphansAudio @request-delete="onRequestDelete" :key="orphansRefreshKey"/>
+    </div>
     <Modal
         v-if="showDeleteModal"
         :icon="Trash2"

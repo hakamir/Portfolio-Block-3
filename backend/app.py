@@ -2,7 +2,7 @@ import os
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flask_pymongo import PyMongo
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from bson import ObjectId
 from datetime import timedelta, datetime
 import bcrypt
@@ -16,9 +16,9 @@ app = Flask(__name__)
 app.config['MONGO_URI'] = 'mongodb://localhost:27017/Portfolio?serverSelectionTimeoutMS=5000'
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=8)
+CORS(app)
 limiter = Limiter(get_remote_address, app=app, default_limits=[])
 
-CORS(app)
 mongo = PyMongo(app)
 jwt = JWTManager(app)
 
@@ -55,6 +55,24 @@ def login():
     token = create_access_token(identity=str(user['_id']))
     return jsonify({'token': token})
 
+@handle_db_timeout
+@app.route('/auth/password', methods=['PUT'])
+@jwt_required()
+def update_password():
+    try:
+        data = request.get_json()
+        print('data: ', data)
+        user = mongo.db.users.find_one({'_id': ObjectId(get_jwt_identity())})
+        print('user: ', user)
+        if not bcrypt.checkpw(data['currentPwd'].encode('utf-8'), user['password'].encode('utf-8')):
+            return jsonify({'error': 'Invalid current password'}), 401
+
+        hashed = bcrypt.hashpw(data['newPwd'].encode('utf-8'), bcrypt.gensalt())
+        mongo.db.users.update_one({'_id': user['_id']}, {'$set': {'password': hashed.decode('utf-8')}})
+        return jsonify({'updated': True}), 200
+    except Exception as e:
+        print('error:', e)
+        return jsonify({'error': str(e)}), 500
 
 # --- Messages --- #
 @handle_db_timeout
