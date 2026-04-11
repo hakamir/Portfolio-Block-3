@@ -67,7 +67,7 @@ const toggleAlbumCollapse = (slug: string) => {
   collapsedAlbums.value.has(slug) ? collapsedAlbums.value.delete(slug) : collapsedAlbums.value.add(slug);
 }
 
-const handleUpload = (src: string | undefined) => console.log(src)
+const handleUpload = () => {}
 
 </script>
 
@@ -125,7 +125,7 @@ const handleUpload = (src: string | undefined) => console.log(src)
 
               <!-- TRACKS -->
               <div v-show="!collapsedAlbums.has(album.slug)" class="flex">
-                <div class="w-2 bg-yellow-200/30 border-x border-b border-gray-400/30 mx-4 mb-1 rounded-b-full"/>
+                <div class="w-2 bg-yellow-200/30 border-x border-b border-gray-400/30 mx-4 mb-6 rounded-b-full"/>
                 <div class="flex flex-col grow">
                   <div v-for="track in album.tracks">
                     <div class="flex items-center">

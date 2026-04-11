@@ -50,9 +50,7 @@ const labelText = {
             class="work-upload-btn group min-w-16 flex items-center justify-center">
       <Upload class="text-gray-600 group-hover:text-gray-800 group-hover:translate-x-1 transition"/>
     </button>
-    <div v-else>
-      <AudioPlayerMini className="work-upload-btn min-w-16 group flex items-center justify-center" :src="`${apiUrl}/uploads/audio/${src}`"/>
-    </div>
+      <AudioPlayerMini v-else className="work-upload-btn min-w-16 group flex items-center justify-center" :src="`${apiUrl}/uploads/audio/${src}`"/>
   </div>
   <input
       type="text"
