@@ -170,7 +170,8 @@ const onSave = async () => {
                     <!-- Album input -->
                     <WorkInput type="album" placeholder="Album title" v-model="album.title"/>
                     <!-- Delete album button -->
-                    <DeleteButton @delete="deleteAlbum(artist, album)" assignedFor="album"/>
+                    <DeleteButton @delete="deleteAlbum(artist, album)" customClass="rounded-tr-2xl"
+                                  assignedFor="album"/>
                   </div>
 
                   <!-- TRACKS -->
@@ -183,7 +184,7 @@ const onSave = async () => {
                           group="tracks"
                           @update="reorderTracks(album)"
                           class="flex flex-col">
-                        <div v-for="track in album.tracks" :key="track.trackNumber">
+                        <div v-for="(track, index) in album.tracks" :key="track.trackNumber">
                           <div class="flex items-center">
                             <!-- Track Input -->
                             <WorkInput type="track"
@@ -193,7 +194,8 @@ const onSave = async () => {
                                        :track="track"
                             />
                             <!-- Delete track button -->
-                            <DeleteButton @delete="deleteTrack(album, track)" assignedFor="track"/>
+                            <DeleteButton @delete="deleteTrack(album, track)" assignedFor="track"
+                                          :customClass="index === album.tracks.length - 1 ? 'rounded-br-2xl' : ''"/>
                           </div>
                         </div>
                       </VueDraggable>
