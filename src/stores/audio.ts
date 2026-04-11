@@ -131,5 +131,26 @@ export const useAudioStore = defineStore('audio', () => {
         }
     }
 
-    return {artists, sortedArtists, loading, fetchStatus, fetchAudios, checkAudioExists, pendingUploads, uploadTrack, saveAudios}
+    const orphans = ref<string[]>([])
+
+    const fetchOrphans = async () => {
+        try {
+            const res = await instance.get(audiosApi.getOrphans)
+            console.log('Orphans:', res.data)
+            orphans.value = res.data
+        } catch (err) {
+            console.error('Error fetching orphans:', err)
+        }
+    }
+
+    const deleteOrphans = async (files: string[]) => {
+        try {
+            await instance.delete(audiosApi.deleteOrphans, {data: {files}})
+            await fetchOrphans()
+        } catch (err) {
+            console.error('Error deleting orphans:', err)
+        }
+    }
+
+    return {artists, sortedArtists, loading, fetchStatus, fetchAudios, checkAudioExists, pendingUploads, uploadTrack, saveAudios, fetchOrphans, orphans, deleteOrphans}
 })

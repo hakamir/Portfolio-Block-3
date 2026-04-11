@@ -149,6 +149,49 @@ def upload_file():
 
     return jsonify({'uploaded': track_src}), 201
 
+@handle_db_timeout
+@app.route('/audio/orphans', methods=['GET'])
+@jwt_required()
+def get_orphan_files():
+    tracked_files = set()
+    for artist in artists_col.find():
+        for album in artist.get('albums', []):
+            for track in album.get('tracks', []):
+                path = os.path.join(artist['slug'], album['slug'], track['src'])
+                tracked_files.add(path)
+                tracked_files.add(path.replace('\\', '/'))
+
+    orphans = []
+    audio_folder = os.path.join(UPLOAD_FOLDER, 'audio')
+    for root, dirs, files in os.walk(audio_folder):
+        for file in files:
+            full_path = os.path.join(root, file)
+            relative_path = os.path.relpath(full_path, audio_folder)
+            relative_path = relative_path.replace('\\', '/')
+            if relative_path not in tracked_files:
+                orphans.append(relative_path)
+    return jsonify(orphans), 200
+
+@app.route('/audio/orphans', methods=['DELETE'])
+@jwt_required()
+def delete_orphan_files():
+    data = request.get_json()
+    files = data.get('files', [])
+    deleted = []
+    for file in files:
+        full_path = os.path.join(UPLOAD_FOLDER, 'audio', file)
+        if os.path.exists(full_path):
+            os.remove(full_path)
+            deleted.append(file)
+
+    # Clean up empty directories
+    audio_folder = os.path.join(UPLOAD_FOLDER, 'audio')
+    for root, dirs, files in os.walk(audio_folder, topdown=False):
+        for dir in dirs:
+            dir_path = os.path.join(root, dir)
+            if not os.listdir(dir_path):
+                os.rmdir(dir_path)
+    return jsonify({'deleted': deleted}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
