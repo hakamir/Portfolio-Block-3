@@ -31,6 +31,8 @@ export const useAudioStore = defineStore('audio', () => {
 
     const toSlug = (str: string) => str.toLowerCase().trim().replace(/\s+/g, '_')
 
+    const pendingUploads = ref<Map<Track, File>>(new Map())
+
     watch(() => artists.value, (artists) => {
         artists.forEach(artist => {
             artist.slug = toSlug(artist.title)
@@ -89,5 +91,5 @@ export const useAudioStore = defineStore('audio', () => {
         }
     }
 
-    return {artists, sortedArtists, loading, fetchStatus, fetchAudios, checkAudioExists, uploadTrack}
+    return {artists, sortedArtists, loading, fetchStatus, fetchAudios, checkAudioExists, pendingUploads, uploadTrack}
 })

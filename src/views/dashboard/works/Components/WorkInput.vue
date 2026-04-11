@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import {GripVertical, Upload} from "@lucide/vue"
-import {onMounted, ref} from "vue";
-import {useAudioStore} from "@stores";
+import {onBeforeUnmount, onMounted, ref} from "vue";
+import {type Track, useAudioStore} from "@stores";
 import AudioPlayerMini from "@components/AudioPlayerMini.vue";
 
 const props = defineProps<{
   type: 'artist' | 'album' | 'track'
   placeholder: string
+  track?: Track
   src?: string
 }>()
 
@@ -14,10 +15,27 @@ const apiUrl = import.meta.env.VITE_API_URL
 const fileExists = ref(false)
 const audioStore = useAudioStore()
 const model = defineModel<string>({required: true})
-const emit = defineEmits<{ upload: [src: string | undefined] }>()
+
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const localSrc = ref<string | null>(null)
+
+const handleUpload = () => {
+  fileInputRef.value?.click()
+}
+
+const handleFileChange = (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file || !props.track) return
+  audioStore.pendingUploads.set(props.track, file)
+  localSrc.value = URL.createObjectURL(file)
+}
 
 onMounted(async () => {
   fileExists.value = await audioStore.checkAudioExists(props.src)
+})
+
+onBeforeUnmount(() => {
+  if (localSrc.value) URL.revokeObjectURL(localSrc.value)
 })
 
 const labelClass = {
@@ -45,12 +63,28 @@ const labelText = {
     {{ labelText[type] }}
   </label>
 
-  <div v-if="type==='track'">
-    <button v-if="!fileExists" @click="emit('upload', src)"
+  <div v-if="type === 'track'">
+    <!-- Fichier en attente d'upload (sélectionné localement) -->
+    <AudioPlayerMini
+        v-if="localSrc"
+        :src="localSrc"
+        :isLocal="true"
+        className="work-upload-btn min-w-16 group flex items-center justify-center"
+    />
+    <!-- Fichier déjà présent sur le serveur -->
+    <AudioPlayerMini
+        v-else-if="fileExists"
+        :src="`${apiUrl}/uploads/audio/${src}`"
+        :isLocal="false"
+        className="work-upload-btn min-w-16 group flex items-center justify-center"
+    />
+    <!-- Aucun fichier : bouton upload -->
+    <button v-else @click="handleUpload"
             class="work-upload-btn group min-w-16 flex items-center justify-center">
       <Upload class="text-gray-600 group-hover:text-gray-800 group-hover:translate-x-1 transition"/>
     </button>
-      <AudioPlayerMini v-else className="work-upload-btn min-w-16 group flex items-center justify-center" :src="`${apiUrl}/uploads/audio/${src}`"/>
+
+    <input ref="fileInputRef" type="file" accept=".mp3,audio/*" class="hidden" @change="handleFileChange"/>
   </div>
   <input
       type="text"
