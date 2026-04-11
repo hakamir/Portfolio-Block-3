@@ -98,16 +98,57 @@ def update_biography():
     mongo.db.biography.update_one({}, {'$set': data})
     return jsonify({'updated': True}), 200
 
+
+ # --- Artists --- #
 @handle_db_timeout
 @app.route('/artists', methods=['GET'])
 def get_artists():
     artists = [serialize(artist) for artist in artists_col.find()]
     return jsonify(artists)
 
+@handle_db_timeout
+@app.route('/artists', methods=['PUT'])
+@jwt_required()
+def update_artists():
+    data = request.get_json()
+    for artist in data:
+        artist_id = artist.pop('_id', None)
+        if artist_id:
+            artists_col.update_one({'_id': ObjectId(artist_id)}, {'$set': artist})
+        else:
+            artists_col.insert_one(artist)
+    return jsonify({'updated': True}), 200
+
+
+@handle_db_timeout
+@app.route('/artists/<id>', methods=['delete'])
+@jwt_required()
+def delete_artist(id):
+    artists_col.delete_one({'_id': ObjectId(id)})
+    return jsonify({'deleted': True}), 200
+
 # --- Upload --- #
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
+
+@app.route('/audio/upload', methods=['POST'])
+@jwt_required()
+def upload_file():
+    file = request.files['file']
+    artist_slug = request.form.get('artistSlug')
+    album_slug = request.form.get('albumSlug')
+    track_src = request.form.get('trackSrc')
+
+    if not file or not artist_slug or not album_slug or not track_src:
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    dest = os.path.join(UPLOAD_FOLDER, 'audio', artist_slug, album_slug)
+    os.makedirs(dest, exist_ok=True)
+    file.save(os.path.join(dest, track_src))
+
+    return jsonify({'uploaded': track_src}), 201
+
 
 if __name__ == '__main__':
     app.run(debug=True)

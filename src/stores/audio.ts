@@ -72,7 +72,7 @@ export const useAudioStore = defineStore('audio', () => {
     const checkAudioExists = async (src: string | undefined) => {
         if (!src) return false
         try {
-            await instance.head(audiosApi.checkTrack(`/uploads/audio/${src}`))
+            await instance.head(src)
             return true
         } catch {
             return false
@@ -91,5 +91,45 @@ export const useAudioStore = defineStore('audio', () => {
         }
     }
 
-    return {artists, sortedArtists, loading, fetchStatus, fetchAudios, checkAudioExists, pendingUploads, uploadTrack}
+    const saveAudios = async () => {
+        try {
+            // Upload pending tracks
+            for (const [track, file] of pendingUploads.value.entries()) {
+                const artist = artists.value.find(
+                    artist => artist.albums.some(
+                        album => album.tracks.includes(track)
+                    )
+                )
+                const album = artist?.albums.find(
+                    album => album.tracks.includes(track)
+                )
+                if (!artist || !album || !track.src) continue
+
+                const formData = new FormData()
+                formData.append('file', file)
+                formData.append('artistSlug', artist.slug)
+                formData.append('albumSlug', album.slug)
+                formData.append('trackSrc', track.src)
+                await instance.post(audiosApi.uploadAudio, formData)
+            }
+            pendingUploads.value.clear()
+
+            // Get ids from existing artists
+            const existingIds = (await instance.get(audiosApi.getAudios)).data.map((a: Artist) => a._id)
+
+            // If an artist id exists on the server but not in the store, delete it
+            const currentIds = artists.value.map(a => a._id).filter(id => id)
+            const toDelete = existingIds.filter((id: string) => !currentIds.includes(id))
+            for (const id of toDelete) {
+                await instance.delete(audiosApi.deleteArtist(id))
+            }
+
+            // Save artists
+            await instance.put(audiosApi.updateAudios, artists.value)
+        } catch (err) {
+            console.error('Error saving audios:', err)
+        }
+    }
+
+    return {artists, sortedArtists, loading, fetchStatus, fetchAudios, checkAudioExists, pendingUploads, uploadTrack, saveAudios}
 })

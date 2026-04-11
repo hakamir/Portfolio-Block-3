@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {GripVertical, Upload} from "@lucide/vue"
-import {onBeforeUnmount, onMounted, ref} from "vue";
+import {onBeforeUnmount, onMounted, ref, watch} from "vue";
 import {type Track, useAudioStore} from "@stores";
 import AudioPlayerMini from "@components/AudioPlayerMini.vue";
 
@@ -9,9 +9,9 @@ const props = defineProps<{
   placeholder: string
   track?: Track
   src?: string
+  debounceTime?: number
 }>()
 
-const apiUrl = import.meta.env.VITE_API_URL
 const fileExists = ref(false)
 const audioStore = useAudioStore()
 const model = defineModel<string>({required: true})
@@ -31,11 +31,24 @@ const handleFileChange = (e: Event) => {
 }
 
 onMounted(async () => {
-  fileExists.value = await audioStore.checkAudioExists(props.src)
+  if (props.type === 'track' && props.src) {
+    fileExists.value = await audioStore.checkAudioExists(props.src)
+  }
 })
 
 onBeforeUnmount(() => {
   if (localSrc.value) URL.revokeObjectURL(localSrc.value)
+})
+
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+watch(() => props.src, (newSrc) => {
+  if (!newSrc) return
+  if (debounceTimer) clearTimeout(debounceTimer)
+
+  debounceTimer = setTimeout(async () => {
+    fileExists.value = await audioStore.checkAudioExists(newSrc)
+  }, props.debounceTime || 750)
 })
 
 const labelClass = {
@@ -63,24 +76,26 @@ const labelText = {
     {{ labelText[type] }}
   </label>
 
-  <div v-if="type === 'track'">
-    <!-- Fichier en attente d'upload (sélectionné localement) -->
+  <div v-if="type === 'track'" class="flex items-center">
+    <!-- File waiting to be uploaded -->
     <AudioPlayerMini
         v-if="localSrc"
         :src="localSrc"
         :isLocal="true"
         className="work-upload-btn min-w-16 group flex items-center justify-center"
     />
-    <!-- Fichier déjà présent sur le serveur -->
+    <!-- File already on the server -->
     <AudioPlayerMini
         v-else-if="fileExists"
-        :src="`${apiUrl}/uploads/audio/${src}`"
+        :src="`${src}`"
         :isLocal="false"
         className="work-upload-btn min-w-16 group flex items-center justify-center"
     />
-    <!-- Aucun fichier : bouton upload -->
-    <button v-else @click="handleUpload"
-            class="work-upload-btn group min-w-16 flex items-center justify-center">
+
+    <!-- Upload button : visible if no file OR to replace existing -->
+    <button @click="handleUpload"
+            class="work-upload-btn group min-w-16 flex items-center justify-center"
+            :class="(localSrc || fileExists) ? 'opacity-60 hover:opacity-100' : ''">
       <Upload class="text-gray-600 group-hover:text-gray-800 group-hover:translate-x-1 transition"/>
     </button>
 
