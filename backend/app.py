@@ -7,11 +7,16 @@ from bson import ObjectId
 from datetime import timedelta, datetime
 import bcrypt
 from pymongo.errors import ServerSelectionTimeoutError
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+
 
 app = Flask(__name__)
 app.config['MONGO_URI'] = 'mongodb://localhost:27017/Portfolio?serverSelectionTimeoutMS=5000'
-app.config['JWT_SECRET_KEY'] = 'secret'
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=8)
+limiter = Limiter(get_remote_address, app=app, default_limits=[])
 
 CORS(app)
 mongo = PyMongo(app)
@@ -39,6 +44,7 @@ def serialize(doc):
 # --- Auth --- #
 @handle_db_timeout
 @app.route('/auth/login', methods=['POST'])
+@limiter.limit("5/minute")
 def login():
     data = request.get_json()
     user = mongo.db.users.find_one({'email': data['email']})
@@ -59,6 +65,7 @@ def get_messages():
     return jsonify(messages)
 
 @handle_db_timeout
+@limiter.limit("1/minute")
 @app.route('/messages', methods=['POST'])
 def create_message():
     data = request.get_json()

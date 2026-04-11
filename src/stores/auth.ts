@@ -1,29 +1,17 @@
 import {defineStore} from "pinia";
 import {ref} from "vue";
 import router from "../router";
+import {instance} from "@api/axios.ts";
+import authApi from "@api/auth.ts";
 
 export const useAuthStore = defineStore("auth", () => {
     const token = ref<string | null>(localStorage.getItem('token'))
 
     const login = async (email: string, pwd: string) => {
-        const res = await fetch('http://localhost:5000/auth/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({email, pwd}),
-        })
-
-        if (res.status === 401) {
-            throw new Error('Invalid credentials')
-        }
-        if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`)
-        }
-        const data = await res.json()
-        token.value = data.token
-        localStorage.setItem('token', data.token)
-        router.push('/dashboard')
+        const res = await instance.post(authApi.login, {email, pwd})
+        token.value = res.data.token
+        localStorage.setItem('token', res.data.token)
+        await router.push('/dashboard')
     }
 
     const logout = () => {
@@ -50,5 +38,5 @@ export const useAuthStore = defineStore("auth", () => {
         return true;
     }
 
-    return { token, login, logout, isAuthenticated }
+    return {token, login, logout, isAuthenticated}
 })

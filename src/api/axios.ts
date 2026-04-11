@@ -16,7 +16,8 @@ instance.interceptors.request.use((config) => {
 instance.interceptors.response.use(
     res => res,
     err => {
-        if (err.response.status === 401) {
+        // Logout if token is expired and exclude login endpoint to avoid redirection of login failure
+        if (err.response.status === 401 && !err.config.url?.includes('/auth/login')) {
             const authStore = useAuthStore();
             authStore.logout();
         }

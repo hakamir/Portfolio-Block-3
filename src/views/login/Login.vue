@@ -15,17 +15,20 @@ const formData = reactive<LoginForm>({
   pwd: ''
 })
 
-const status = ref<'idle' | 'loading' | 'success' | 'error' | 'invalid'>('idle')
+const status = ref<'idle' | 'loading' | 'success' | 'error' | 'invalid' | 'tooMany'>('idle')
 
 const authStore = useAuthStore()
 
 const handleSubmit = async () => {
-  status.value = 'loading';
+  status.value = 'loading'
   try {
     await authStore.login(formData.email, formData.pwd)
-    status.value = 'success';
+    status.value = 'success'
   } catch (error: any) {
-    status.value = error.message === 'invalid' ? 'invalid' : 'error';
+    const code = error.response?.status
+    if (code === 401) status.value = 'invalid'
+    else if (code === 429) status.value = 'tooMany'
+    else status.value = 'error'
   }
 }
 
@@ -64,11 +67,17 @@ const handleSubmit = async () => {
                   Invalid email of password.
                 </span>
             </div>
-            <div v-if="status === 'error'" class="flex justify-center mt-2">
+            <div v-else-if="status === 'error'" class="flex justify-center mt-2">
                 <span class="px-3 py-2 rounded-xl text-red-500 bg-red-100 text-sm flex items-center">
                   <TriangleAlert class="inline-block mr-2"/>
                   An error occurred while attempting to login. Please try again later.
                 </span>
+            </div>
+            <div v-else-if="status === 'tooMany'" class="flex justify-center mt-2">
+              <span class="px-3 py-2 rounded-xl text-amber-500 bg-amber-100 text-sm flex items-center">
+                <TriangleAlert class="inline-block mr-2"/>
+                Too many login attempts. Please try again later.
+              </span>
             </div>
           </div>
         </form>
