@@ -1,6 +1,6 @@
 import {defineStore} from "pinia";
 import {instance} from "@api/axios.ts";
-import {computed, ref, watch} from "vue";
+import {ref, watch} from "vue";
 import audiosApi from "@api/audios.ts";
 
 export interface Track {
@@ -44,16 +44,6 @@ export const useAudioStore = defineStore('audio', () => {
             })
         })
     }, {deep: true})
-
-    const sortedArtists = computed<Artist[]>(() => artists.value.map((artist: Artist) => ({
-        ...artist,
-        albums: [...artist.albums]
-            .sort((a, b) => a.order - b.order)
-            .map(album => ({
-                ...album,
-                tracks: [...album.tracks].sort((a, b) => a.trackNumber - b.trackNumber)
-            }))
-    })))
 
     const fetchAudios = async () => {
         loading.value = true
@@ -152,5 +142,5 @@ export const useAudioStore = defineStore('audio', () => {
         }
     }
 
-    return {artists, sortedArtists, loading, fetchStatus, fetchAudios, checkAudioExists, pendingUploads, uploadTrack, saveAudios, fetchOrphans, orphans, deleteOrphans}
+    return {artists, loading, fetchStatus, fetchAudios, checkAudioExists, pendingUploads, uploadTrack, saveAudios, fetchOrphans, orphans, deleteOrphans}
 })

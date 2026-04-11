@@ -71,7 +71,7 @@ const labelText = {
 </script>
 
 <template>
-  <label :class="[labelClass[type], 'group']">
+  <label :class="[labelClass[type], 'group']" class="drag-handle">
     <GripVertical class="text-gray-400 group-hover:text-gray-500 transition"/>
     {{ labelText[type] }}
   </label>

@@ -10,7 +10,14 @@ const apiUrl = import.meta.env.VITE_API_URL
 
 const audioStore = useAudioStore();
 onMounted(async () => {
-  await audioStore.fetchAudios();
+  await audioStore.fetchAudios()
+  audioStore.artists.sort((a, b) => a.order - b.order)
+  audioStore.artists.forEach(artist => {
+    artist.albums.sort((a, b) => a.order - b.order)
+    artist.albums.forEach(album => {
+      album.tracks.sort((a, b) => a.trackNumber - b.trackNumber)
+    })
+  })
 })
 
 </script>
@@ -40,7 +47,7 @@ onMounted(async () => {
 
     <!-- Success -->
     <template v-else>
-      <template v-for="artist in audioStore.sortedArtists">
+      <template v-for="artist in audioStore.artists">
         <Card v-for="album in artist.albums" :title="`${artist.title} - ${album.title}`">
           <AudioPlayer
               v-for="track in album.tracks"
