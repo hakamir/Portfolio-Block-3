@@ -9,10 +9,6 @@ const galleriesStore = useGalleriesStore()
 
 onMounted(async () => {
   await galleriesStore.fetchGalleries()
-  galleriesStore.galleries.sort((a, b) => a.order - b.order)
-  galleriesStore.galleries.forEach(gallery => {
-    gallery.images.sort((a, b) => a.order - b.order)
-  })
 })
 </script>
 
