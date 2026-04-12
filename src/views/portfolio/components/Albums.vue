@@ -2,7 +2,7 @@
 
 import Card from "@views/portfolio/components/Card.vue";
 import AudioPlayer from "@components/AudioPlayer.vue";
-import {LoaderCircle} from "@lucide/vue";
+import {LoaderCircle, Ban} from "@lucide/vue";
 import {useAudioStore} from "@stores/audio.ts";
 import {onMounted} from "vue";
 
@@ -40,8 +40,11 @@ onMounted(async () => {
 
     <!-- Error -->
     <template v-else-if="audioStore.fetchStatus === 'error'">
-      <Card title="Erreur">
-        <p>Impossible de charger les albums.</p>
+      <Card title="Error">
+        <div class="flex gap-4">
+          <Ban />
+          <p>Unable to load albums...</p>
+        </div>
       </Card>
     </template>
 
