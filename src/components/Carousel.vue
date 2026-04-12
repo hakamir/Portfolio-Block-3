@@ -1,14 +1,10 @@
 <script setup lang="ts">
 import {ref, onMounted, onUnmounted} from 'vue'
 import {ChevronLeft, ChevronRight} from '@lucide/vue'
-
-interface CarouselImage {
-  src: string
-  alt?: string
-}
+import type {Image} from "@stores/gallery.ts";
 
 const props = defineProps<{
-  images: CarouselImage[]
+  images: Image[]
   baseSrc?: string
   autoplay?: boolean
   autoplayDelay?: number
@@ -33,7 +29,7 @@ onUnmounted(() => stopAutoplay())
 
 <template>
   <div class="relative w-full" @mouseenter="stopAutoplay" @mouseleave="startAutoplay">
-    <div class="relative overflow-hidden rounded-3xl aspect-video shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+    <div class="relative overflow-hidden rounded-3xl aspect-video shadow-[0_0_50px_rgba(0,0,0,0.5)] group">
       <transition-group name="fade">
         <img
             v-for="(image, index) in images"
@@ -44,6 +40,16 @@ onUnmounted(() => stopAutoplay())
             class="absolute inset-0 w-full h-full object-cover"
         />
       </transition-group>
+      <div class="absolute inset-0 z-10 items-end p-6 pointer-events-none flex flex-col">
+        <span class="text-white opacity-40 text-2xl text-shadow-[0_0_20px_rgba(0,0,0,1)] font-unbounded group-hover:opacity-100 transition-opacity">
+          {{ images[current]?.title }}
+        </span>
+        <div>
+          <span class="text-white opacity-20 font-light text-sm text-shadow-[0_0_20px_rgba(0,0,0,1)] font-unbounded group-hover:opacity-80 transition-opacity">
+            {{ images[current]?.location }} - {{ new Date(images[current]?.date.$date).toLocaleDateString() }}
+          </span>
+        </div>
+      </div>
     </div>
 
     <button @click="prev"

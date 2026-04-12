@@ -3,12 +3,16 @@ import {ref} from "vue";
 import {instance} from "@api/axios.ts";
 import galleryApi from "@api/gallery.ts";
 
+interface DateTime {
+    $date: string
+}
+
 export interface Image {
     src: string
     alt: string
     title: string
     location: string
-    date: Date
+    date: DateTime
     order: number
 }
 
@@ -26,6 +30,7 @@ export const useGalleriesStore = defineStore('galleries', () => {
     const fetchGalleries = async () => {
         const res = await instance.get(galleryApi.getGalleries)
         galleries.value = res.data
+        console.log(galleries.value)
     }
 
     return {galleries, fetchGalleries}
