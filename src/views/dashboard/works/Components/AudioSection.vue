@@ -110,7 +110,7 @@ const onSave = async () => {
 <template>
   <div class="border border-gray-200 bg-gray-50 rounded-xl p-6 flex flex-col">
     <div class="flex justify-between items-center mb-4">
-      <h2 class="text-2xl font-semibold mb-4">Audio</h2>
+      <h2 class="text-2xl font-semibold mb-4">Audios</h2>
       <!-- Add artist button -->
       <button
           @click="addArtist"

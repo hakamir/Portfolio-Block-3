@@ -15,7 +15,9 @@ onMounted(async () => {
 <template>
   <div class="relative w-full mx-auto">
     <h2 class="font-unbounded text-3xl md:text-5xl mb-8 text-shadow-[0_0_20px_rgba(0,0,0,1)]">
-      Gallery
+      <span v-if="galleriesStore.galleries.length === 1">Gallery</span>
+      <span v-else-if="galleriesStore.galleries.length > 1">Galleries</span>
+      <span v-else>No gallery found</span>
     </h2>
     <div v-for="(gallery, index) in galleriesStore.galleries" :key="index">
       <Carousel
