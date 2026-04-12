@@ -1,6 +1,5 @@
 <script setup lang="ts">
-
-import {computed} from "vue";
+import {ref, computed} from "vue"
 
 type Side = 'top' | 'bottom' | 'left' | 'right'
 type Align = 'start' | 'center' | 'end'
@@ -10,73 +9,104 @@ interface Props {
   icon?: object
   iconBgColor?: string
   size?: number
-  groupRef?: string
   delay?: number
   side?: Side
   align?: Align
 }
 
-const {message, icon, iconBgColor = "bg-gray-700/50", size = 28, groupRef, delay = 500, side = 'top', align = 'center'} = defineProps<Props>()
+const {
+  message,
+  icon,
+  iconBgColor = "bg-gray-700/50",
+  size = 28,
+  delay = 100,
+  side = 'top',
+  align = 'center'
+} = defineProps<Props>()
 
-const sideBase = {
-  top: 'bottom-full mb-2',
-  bottom: 'top-full mt-2',
-  left: 'right-full mr-2',
-  right: 'left-full ml-2'
-} as const
+const triggerRef = ref<HTMLElement | null>(null)
+const showTooltip = ref(false)
+const tooltipTop = ref(0)
+const tooltipLeft = ref(0)
 
-const alignMap = {
-  top: {
-    start: 'left-0',
-    center: 'left-1/2 -translate-x-1/2',
-    end: 'right-0'
-  },
-  bottom: {
-    start: 'left-0',
-    center: 'left-1/2 -translate-x-1/2',
-    end: 'right-0'
-  },
-  left: {
-    start: 'top-0',
-    center: 'top-1/2 -translate-y-1/2',
-    end: 'bottom-0'
-  },
-  right: {
-    start: 'top-0',
-    center: 'top-1/2 -translate-y-1/2',
-    end: 'bottom-0'
+const updatePosition = () => {
+  if (!triggerRef.value) return
+  const rect = triggerRef.value.getBoundingClientRect()
+
+  switch (side) {
+    case 'top':
+      tooltipTop.value = rect.top + window.scrollY - 8
+      tooltipLeft.value = rect.left + window.scrollX + rect.width / 2
+      break
+    case 'bottom':
+      tooltipTop.value = rect.bottom + window.scrollY + 8
+      tooltipLeft.value = rect.left + window.scrollX + rect.width / 2
+      break
+    case 'left':
+      tooltipTop.value = rect.top + window.scrollY + rect.height / 2
+      tooltipLeft.value = rect.left + window.scrollX - 8
+      break
+    case 'right':
+      tooltipTop.value = rect.top + window.scrollY + rect.height / 2
+      tooltipLeft.value = rect.right + window.scrollX + 8
+      break
   }
-} as const
+}
 
-const positionClass = computed(() => {
-  const s = side ?? 'top'
-  const a = align ?? 'center'
+const onMouseEnter = () => {
+  updatePosition()
+  showTooltip.value = true
+}
 
-  return [
-    sideBase[s],
-    alignMap[s][a]
-  ]
+const translateClass = computed(() => {
+  switch (side) {
+    case 'top':
+      return align === 'center' ? '-translate-x-1/2 -translate-y-full' : '-translate-y-full'
+    case 'bottom':
+      return align === 'center' ? '-translate-x-1/2' : ''
+    case 'left':
+      return align === 'center' ? '-translate-x-full -translate-y-1/2' : '-translate-x-full'
+    case 'right':
+      return align === 'center' ? '-translate-y-1/2' : ''
+    default:
+      return ''
+  }
 })
-
 </script>
 
 <template>
-  <div
-      :class="[
-    'absolute z-100 pointer-events-none',
-    positionClass,
-    'bg-gray-800/60 backdrop-blur-sm rounded-2xl text-white p-2',
-    'text-sm transition-opacity whitespace-nowrap flex items-center gap-2',
-    `delay-[${delay}]`,
-    'opacity-0',
-    {
-      [`group-hover/${groupRef}:opacity-100`]: groupRef,
-      'group-hover:opacity-100': !groupRef
-    }
-  ]"
-  >
-    <component :is="icon" :size="size" class="border rounded-full border-gray-300/70 p-1"
-               :class="iconBgColor"/>
-    {{ message }}
+  <div ref="triggerRef"
+       @mouseenter="onMouseEnter"
+       @mouseleave="showTooltip = false"
+       class="relative">
+    <slot/>
   </div>
+
+  <Teleport to="body">
+    <Transition name="tooltip-fade">
+      <div v-if="showTooltip"
+           class="fixed z-100 pointer-events-none bg-gray-800/60 backdrop-blur-sm rounded-2xl text-white p-2 text-sm whitespace-nowrap flex items-center gap-2"
+           :class="translateClass"
+           :style="{ top: tooltipTop + 'px', left: tooltipLeft + 'px', transitionDelay: `${delay}ms` }">
+        <component v-if="icon" :is="icon" :size="size" class="border rounded-full border-gray-300/70 p-1"
+                   :class="iconBgColor"/>
+        {{ message }}
+      </div>
+    </Transition>
+  </Teleport>
 </template>
+
+<style scoped>
+.tooltip-fade-enter-active {
+  transition: opacity 0.15s ease;
+}
+
+.tooltip-fade-leave-active {
+  transition: opacity 0.1s ease;
+}
+
+.tooltip-fade-enter-from,
+.tooltip-fade-leave-to {
+  opacity: 0;
+}
+</style>

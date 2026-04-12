@@ -34,14 +34,14 @@ onBeforeUnmount(() => audioRef.value?.removeEventListener('pause', onPause))
   <div :class="[props.className]">
     <div class="relative group/tooltip w-max">
       <div v-if="isLocal">
-        <CircleDotDashed class="bg-blue-500/50 text-blue-700 p-1 rounded-full w-6 h-6"/>
-        <Tooltip message="Ready for upload" :icon="CircleDotDashed" iconBgColor="bg-blue-500/50"
-                 side="left" groupRef="tooltip"/>
+        <Tooltip message="Ready for upload" :icon="CircleDotDashed" iconBgColor="bg-blue-500/50" side="left">
+          <CircleDotDashed class="bg-blue-500/50 text-blue-700 p-1 rounded-full w-6 h-6"/>
+        </Tooltip>
       </div>
       <div v-else>
-        <Check class="bg-lime-500/50 text-lime-700 p-1 rounded-full w-6 h-6"/>
-        <Tooltip message="Already uploaded on the server" :icon="Check" iconBgColor="bg-lime-500/50"
-                 side="left" groupRef="tooltip"/>
+        <Tooltip message="Already uploaded on the server" :icon="Check" iconBgColor="bg-lime-500/50"  side="left">
+          <Check class="bg-lime-500/50 text-lime-700 p-1 rounded-full w-6 h-6"/>
+        </Tooltip>
 
       </div>
     </div>
