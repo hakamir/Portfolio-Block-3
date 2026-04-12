@@ -24,6 +24,7 @@ jwt = JWTManager(app)
 
 messages_col = mongo.db.messages
 artists_col = mongo.db.artists
+galleries_col = mongo.db.galleries
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
 
@@ -73,6 +74,7 @@ def update_password():
     except Exception as e:
         print('error:', e)
         return jsonify({'error': str(e)}), 500
+
 
 # --- Messages --- #
 @handle_db_timeout
@@ -129,7 +131,7 @@ def update_biography():
 @app.route('/artists', methods=['GET'])
 def get_artists():
     artists = [serialize(artist) for artist in artists_col.find()]
-    return jsonify(artists)
+    return jsonify(artists), 200
 
 @handle_db_timeout
 @app.route('/artists', methods=['PUT'])
@@ -144,13 +146,21 @@ def update_artists():
             artists_col.insert_one(artist)
     return jsonify({'updated': True}), 200
 
-
 @handle_db_timeout
 @app.route('/artists/<id>', methods=['delete'])
 @jwt_required()
 def delete_artist(id):
     artists_col.delete_one({'_id': ObjectId(id)})
     return jsonify({'deleted': True}), 200
+
+
+# --- Gallery --- #
+@handle_db_timeout
+@app.route('/gallery', methods=['GET'])
+def get_gallery():
+    gallery = [serialize(gallery) for gallery in galleries_col.find()]
+    return jsonify(gallery), 200
+
 
 # --- Upload --- #
 @app.route('/uploads/<path:filename>')
