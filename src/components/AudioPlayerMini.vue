@@ -2,6 +2,7 @@
 import {ref, onMounted, onBeforeUnmount} from 'vue'
 import {CirclePlay, CirclePause, Check, CircleDotDashed} from '@lucide/vue'
 import {useAudioPlayerStore} from "@stores"
+import Tooltip from "@components/layout/Tooltip.vue";
 
 const props = defineProps<{ src: string, className?: string, isLocal?: boolean }>()
 
@@ -34,19 +35,14 @@ onBeforeUnmount(() => audioRef.value?.removeEventListener('pause', onPause))
     <div class="relative group/tooltip w-max">
       <div v-if="isLocal">
         <CircleDotDashed class="bg-blue-500/50 text-blue-700 p-1 rounded-full w-6 h-6"/>
-        <div
-            class="absolute top-1/2 right-full mr-2 -translate-y-1/2 bg-gray-800/60 backdrop-blur-sm rounded-2xl text-white p-2 text-sm opacity-0 group-hover/tooltip:opacity-100 transition-opacity delay-500 whitespace-nowrap pointer-events-none flex items-center gap-2">
-          <CircleDotDashed class="w-8 h-8 border rounded-full bg-blue-500/50 border-gray-300/70 p-1"/>
-          Ready for upload
-        </div>
+        <Tooltip message="Ready for upload" :icon="CircleDotDashed" iconBgColor="bg-blue-500/50"
+                 side="left" groupRef="tooltip"/>
       </div>
       <div v-else>
         <Check class="bg-lime-500/50 text-lime-700 p-1 rounded-full w-6 h-6"/>
-        <div
-            class="absolute top-1/2 right-full mr-2 -translate-y-1/2 bg-gray-800/60 backdrop-blur-sm rounded-2xl text-white p-2 text-sm opacity-0 group-hover/tooltip:opacity-100 transition-opacity delay-500 whitespace-nowrap pointer-events-none flex items-center gap-2">
-          <Check class="w-8 h-8 border rounded-full bg-lime-500/50 border-gray-300/70 p-1"/>
-          Already uploaded on the server
-        </div>
+        <Tooltip message="Already uploaded on the server" :icon="Check" iconBgColor="bg-lime-500/50"
+                 side="left" groupRef="tooltip"/>
+
       </div>
     </div>
     <button @click="togglePlay" class="-m-2 p-2">
