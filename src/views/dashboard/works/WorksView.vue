@@ -8,6 +8,7 @@ import DeleteButton from "@views/dashboard/works/Components/DeleteButton.vue";
 import CollapseButton from "@views/dashboard/works/Components/CollapseButton.vue";
 import WorkInput from "@views/dashboard/works/Components/WorkInput.vue";
 import {VueDraggable} from "vue-draggable-plus";
+import CollaspeTransition from "@components/CollaspeTransition.vue";
 
 const apiUrl = import.meta.env.VITE_API_URL
 const audioStore = useAudioStore();
@@ -152,7 +153,7 @@ const onSave = async () => {
           </div>
 
           <!-- ALBUMS -->
-          <div v-show="!collapsedArtists.has(artist.slug)" class="flex">
+          <CollaspeTransition :show="!collapsedArtists.has(artist.slug)" customClass="flex">
             <div class="w-2 bg-primary-200/30 border-x border-b border-gray-400/30 mx-4 mb-1 rounded-b-full"/>
             <div class="flex flex-col grow">
               <VueDraggable
@@ -175,8 +176,9 @@ const onSave = async () => {
                   </div>
 
                   <!-- TRACKS -->
-                  <div v-show="!collapsedAlbums.has(album.slug)" class="flex">
-                    <div class="w-2 bg-yellow-200/30 border-x border-b border-gray-400/30 mx-4 mb-6 rounded-b-full"/>
+                  <CollaspeTransition :show="!collapsedAlbums.has(album.slug)" customClass="flex">
+                    <div
+                        class="w-2 bg-yellow-200/30 border-x border-b border-gray-400/30 mx-4 mb-6 rounded-b-full"/>
                     <div class="flex flex-col grow">
                       <VueDraggable
                           v-model="album.tracks"
@@ -209,11 +211,11 @@ const onSave = async () => {
                         </button>
                       </div>
                     </div>
-                  </div>
+                  </CollaspeTransition>
                 </div>
               </VueDraggable>
             </div>
-          </div>
+          </CollaspeTransition>
         </div>
         <div class="flex justify-end mt-4">
           <button @click="onSave"
