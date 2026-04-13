@@ -7,6 +7,7 @@ export interface Track {
     trackNumber: number
     title: string
     src: string
+    tags: string[]
 }
 
 export interface Album {

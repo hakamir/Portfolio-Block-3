@@ -8,9 +8,11 @@ import CollapseButton from "@views/dashboard/works/Components/CollapseButton.vue
 import WorkAudioInput from "@views/dashboard/works/Components/WorkAudioInput.vue";
 import {VueDraggable} from "vue-draggable-plus";
 import CollapseTransition from "@components/CollapseTransition.vue";
+import TagSelector from "@views/dashboard/works/Components/TagSelector.vue";
 
 const apiUrl = import.meta.env.VITE_API_URL
 const audioStore = useAudioStore();
+const emit = defineEmits(['TagSelectorToggled'])
 
 onMounted(async () => {
   await audioStore.fetchAudios()
@@ -47,6 +49,7 @@ const addTrack = (album: Album) => {
     trackNumber: album.tracks.length + 1,
     title: '',
     src: '',
+    tags: [],
   });
 }
 
@@ -190,6 +193,7 @@ const onSave = async () => {
                                      :src="`${apiUrl}/uploads/audio/${artist.slug}/${album.slug}/${track.src}`"
                                      :track="track"
                           />
+                          <TagSelector v-model="track.tags" @toggle="emit('TagSelectorToggled', track)" />
                           <!-- Delete track button -->
                           <DeleteButton @delete="deleteTrack(album, track)" assignedFor="track"
                                         :customClass="index === album.tracks.length - 1 ? 'rounded-br-2xl' : ''"/>

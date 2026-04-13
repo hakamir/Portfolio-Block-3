@@ -16,9 +16,9 @@ const emit = defineEmits<{ close: [] }>()
 
 const buttonClass: Record<string, string> = {
   cancel: 'border border-gray-200 text-white hover:bg-gray-100 hover:text-gray-900',
-  confirm: 'bg-lime-500 text-white hover:bg-lime-600',
+  confirm: 'bg-lime-600 text-white hover:bg-lime-500',
   delete: 'bg-red-500 text-white hover:bg-red-600',
-  ok: 'bg-blue-500 text-white hover:bg-blue-600',
+  ok: 'bg-blue-600 text-white hover:bg-blue-500',
 }
 </script>
 
