@@ -3,7 +3,7 @@ import Footer from "@components/layout/footer/Footer.vue";
 import ProgressiveImage from "@components/ProgressiveImage.vue";
 import Albums from "@views/portfolio/components/Albums.vue";
 import Gallery from "@views/portfolio/components/Gallery.vue";
-import {Search} from "@lucide/vue"
+
 </script>
 
 <template>
@@ -24,15 +24,6 @@ import {Search} from "@lucide/vue"
           <span>a brand new</span>
           <span>Horizon</span>
         </h1>
-        <div class="flex items-center gap-4 ml-8 mb-8">
-          <div :class="['bg-gray-800/30 backdrop-blur-sm text-white',
-                        'flex items-center gap-2 px-5 py-4',
-                        'border border-gray-500/50 has-focus:border-gray-300/50 transition rounded-full',
-                        'shadow-[0_0_15px_rgba(0,0,0,0.25)] has-focus:shadow-[0_0_20px_rgba(127,127,127,0.5)]']">
-            <Search class="w-8 h-8"/>
-            <input type="text" placeholder="Search" class="bg-transparent outline-none text-lg text-white font-unbounded"/>
-          </div>
-        </div>
         <Albums/>
         <Gallery/>
       </div>

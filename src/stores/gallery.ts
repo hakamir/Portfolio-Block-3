@@ -36,7 +36,6 @@ export const useGalleriesStore = defineStore('galleries', () => {
         galleries.value.forEach(gallery => {
             gallery.images.sort((a, b) => a.order - b.order)
         })
-        console.log(galleries.value)
     }
 
     const getNextSrc = async (gallerySlug: string): Promise<string> => {
