@@ -2,9 +2,9 @@
 
 > [!NOTE]
 > Part of a 3-block final project series.
-> - Block 1 — Frontend (vanilla HTML/CSS/JS)
-> - Block 2 — Backend (raw Python)
-> - **Block 3 — Full-stack with frameworks (this repo)**
+> - [Block 1 — Frontend](https://github.com/hakamir/Portfolio-Block-1) (vanilla HTML/CSS/JS)
+> - [Block 2 — Backend](https://github.com/hakamir/Portfolio-Block-2) (raw Python)
+> - **[Block 3 — Full-stack with frameworks](https://github.com/hakamir/Portfolio-Block-3) (this repo)**
 
 A full-stack portfolio web application for a music artist. Built with **Vue 3** on the frontend and **Flask** on the backend, with MongoDB as the database.
 
