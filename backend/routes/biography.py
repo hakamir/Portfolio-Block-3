@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
 
 from extensions import mongo
 from helpers import handle_db_timeout
@@ -15,6 +16,7 @@ def get_biography():
 
 @handle_db_timeout
 @biography_bp.route('/biography', methods=['PUT'])
+@jwt_required()
 def update_biography():
     data = request.get_json()
     data.pop('_id', None)
