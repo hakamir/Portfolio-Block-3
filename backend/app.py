@@ -10,7 +10,10 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    CORS(app)
+    CORS(app, origins=[
+        f"http://localhost:{app.config['FRONTEND_PORT']}",
+        f"{app.config['FRONTEND_URL']}:{app.config['FRONTEND_PORT']}"
+    ])
     limiter.init_app(app)
     mongo.init_app(app)
     jwt.init_app(app)
@@ -23,4 +26,4 @@ def create_app():
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
