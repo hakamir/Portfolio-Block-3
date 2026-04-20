@@ -5,7 +5,7 @@ import ProgressiveImage from "@components/ProgressiveImage.vue";
 
 <template>
   <section
-      class="grid grid-rows-2 sm:relative bg-black text-white overflow-hidden min-h-screen h-screen sm:flex sm:items-center sm:snap-start">
+      class="grid grid-rows-2 sm:relative bg-black text-white overflow-hidden lg:min-h-screen lg:h-screen sm:flex sm:items-center sm:snap-start">
     <!-- Hero Image -->
     <div class="sm:absolute sm:right-0 sm:top-0 sm:w-2/3 sm:h-full z-0">
       <ProgressiveImage src512="./src/assets/img/hero/hero-1/hero-1-512.webp"
@@ -16,7 +16,7 @@ import ProgressiveImage from "@components/ProgressiveImage.vue";
       <div class="hidden sm:block absolute top-0 left-0 h-full w-50 bg-linear-to-l from-black/0 to-black"></div>
     </div>
     <!-- Hero -->
-    <div class="relative px-5 container mx-auto py-8 z-20 sm:snap-center">
+    <div class="relative px-5 landscape:mt-40 container mx-auto py-8 z-20 sm:snap-center">
       <div class="pb-6">
         <h1 class="hero-title font-unbounded"><span>Let's</span><span>Make Music</span>
           <span>Together</span>

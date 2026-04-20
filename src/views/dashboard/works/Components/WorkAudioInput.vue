@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import {GripVertical, Upload} from "@lucide/vue"
 import {onBeforeUnmount, onMounted, ref, watch} from "vue";
-import {type Track, useAudioStore} from "@stores";
+import {type Album, type Artist, type Track, useAudioStore} from "@stores";
 import AudioPlayerMini from "@components/AudioPlayerMini.vue";
 
 const props = defineProps<{
   type: 'artist' | 'album' | 'track'
   placeholder: string
   track?: Track
+  album?: Album
+  artist?: Artist
   src?: string
   debounceTime?: number
 }>()
-
 const fileExists = ref(false)
 const audioStore = useAudioStore()
 const model = defineModel<string>({required: true})
@@ -81,6 +82,8 @@ const labelText = {
     <AudioPlayerMini
         v-if="localSrc"
         :src="localSrc"
+        :title="track?.title"
+        :subtitle="`${artist?.title} - ${album?.title}`"
         :isLocal="true"
         className="work-upload-btn min-w-16 group flex items-center justify-center"
     />
@@ -88,6 +91,8 @@ const labelText = {
     <AudioPlayerMini
         v-else-if="fileExists"
         :src="`${src}`"
+        :title="track?.title"
+        :subtitle="`${artist?.title} - ${album?.title}`"
         :isLocal="false"
         className="work-upload-btn min-w-16 group flex items-center justify-center"
     />

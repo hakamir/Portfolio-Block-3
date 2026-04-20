@@ -188,12 +188,15 @@ const onSave = async () => {
                         <div class="flex items-center">
                           <!-- Track Input -->
                           <WorkAudioInput type="track"
-                                     placeholder="Track title"
-                                     v-model="track.title"
-                                     :src="`${apiUrl}/uploads/audio/${artist.slug}/${album.slug}/${track.src}`"
-                                     :track="track"
+                                          placeholder="Track title"
+                                          v-model="track.title"
+                                          :src="`${apiUrl}/uploads/audio/${artist.slug}/${album.slug}/${track.src}`"
+                                          :track="track"
+                                          :album="album"
+                                          :artist="artist"
+                                          :title="track.title"
                           />
-                          <TagSelector v-model="track.tags" @toggle="emit('TagSelectorToggled', track)" />
+                          <TagSelector v-model="track.tags" @toggle="emit('TagSelectorToggled', track)"/>
                           <!-- Delete track button -->
                           <DeleteButton @delete="deleteTrack(album, track)" assignedFor="track"
                                         :customClass="index === album.tracks.length - 1 ? 'rounded-br-2xl' : ''"/>

@@ -4,7 +4,13 @@ import {CirclePlay, CirclePause, Check, CircleDotDashed} from '@lucide/vue'
 import {useAudioPlayerStore} from "@stores"
 import Tooltip from "@components/layout/Tooltip.vue";
 
-const props = defineProps<{ src: string, className?: string, isLocal?: boolean }>()
+const props = defineProps<{
+  src: string,
+  className?: string,
+  isLocal?: boolean
+  title?: string
+  subtitle?: string
+}>()
 
 const playerStore = useAudioPlayerStore()
 const audioRef = ref<HTMLAudioElement | null>(null)
@@ -17,7 +23,7 @@ const togglePlay = () => {
     audioRef.value.currentTime = 0
     isPlaying.value = false
   } else {
-    playerStore.play(audioRef.value)
+    playerStore.play(audioRef.value, {title: props.title || 'Unknown', subtitle: props.subtitle || '', src: props.src})
     isPlaying.value = true
   }
 }
@@ -39,7 +45,7 @@ onBeforeUnmount(() => audioRef.value?.removeEventListener('pause', onPause))
         </Tooltip>
       </div>
       <div v-else>
-        <Tooltip message="Already uploaded on the server" :icon="Check" iconBgColor="bg-lime-500/50"  side="left">
+        <Tooltip message="Already uploaded on the server" :icon="Check" iconBgColor="bg-lime-500/50" side="left">
           <Check class="bg-lime-500/50 text-lime-700 p-1 rounded-full w-6 h-6"/>
         </Tooltip>
 
