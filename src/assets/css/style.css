@@ -140,27 +140,6 @@ button {
     @apply lg:ml-40;
 }
 
-/* Table */
-.table {
-    @apply w-full table-auto border border-neutral-200;
-}
-
-.table thead th {
-    @apply bg-primary px-4 py-2 text-left font-semibold uppercase font-unbounded;
-}
-
-.table tbody tr {
-    @apply border-b border-neutral-200 transition-colors;
-}
-
-.table tbody tr:hover {
-    @apply bg-primary-50;
-}
-
-.table tbody td {
-    @apply border border-neutral-200;
-}
-
 .tooltip {
     @apply absolute -top-8 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-300
     bg-gray-700 text-white text-xs px-1 py-1 rounded whitespace-nowrap;

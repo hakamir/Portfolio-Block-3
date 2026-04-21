@@ -4,25 +4,31 @@ import { useMessagesStore } from '@stores/messages'
 import { storeToRefs } from 'pinia'
 
 const props = defineProps<{ selectedIds: string[] }>()
+const emit = defineEmits<{ 'update:selectedIds': [value: string[]] }>()
+
 const store = useMessagesStore()
 const { currentTab } = storeToRefs(store)
 
 const markUnread = async () => {
   await store.applyToSelected(props.selectedIds, id => store.markAsRead(id, false))
+  emit('update:selectedIds', [])
 }
 const moveToTrash = async () => {
   await store.applyToSelected(props.selectedIds, id => store.trashMessage(id, true))
+  emit('update:selectedIds', [])
 }
 const moveToInbox = async () => {
   await store.applyToSelected(props.selectedIds, id => store.trashMessage(id, false))
+  emit('update:selectedIds', [])
 }
 const deletePermanently = async () => {
   await store.applyToSelected(props.selectedIds, id => store.deleteMessage(id))
+  emit('update:selectedIds', [])
 }
 </script>
 
 <template>
-  <div class="flex justify-start items-center mt-8">
+  <div class="flex justify-start items-center">
     <div class="relative group flex justify-center items-center mx-2">
       <span class="tooltip">Mark as unread</span>
       <button @click="markUnread">
