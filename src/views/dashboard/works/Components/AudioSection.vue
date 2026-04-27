@@ -101,10 +101,11 @@ const refreshKey = ref(0);
 
 const onSave = async () => {
   try {
-    await audioStore.saveAudios()
-    await audioStore.fetchAudios()
-    refreshKey.value += 1;
-  } catch (error) {
+      if (await audioStore.saveAudios()) {
+        await audioStore.fetchAudios()
+        refreshKey.value += 1;
+      }
+    } catch (error) {
     console.error('Error saving audios:', error)
   }
 }

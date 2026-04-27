@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {GripVertical, Upload} from "@lucide/vue"
-import {onBeforeUnmount, onMounted, ref, watch} from "vue";
+import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import {type Album, type Artist, type Track, useAudioStore} from "@stores";
 import AudioPlayerMini from "@components/AudioPlayerMini.vue";
 
@@ -12,6 +12,7 @@ const props = defineProps<{
   artist?: Artist
   src?: string
   debounceTime?: number
+  submitted?: boolean
 }>()
 const fileExists = ref(false)
 const audioStore = useAudioStore()
@@ -50,6 +51,10 @@ watch(() => props.src, (newSrc) => {
   debounceTimer = setTimeout(async () => {
     fileExists.value = await audioStore.checkAudioExists(newSrc)
   }, props.debounceTime || 750)
+})
+
+const isInvalid = computed(() => {
+  return audioStore.isSubmitted && !model.value?.trim()
 })
 
 const labelClass = {
@@ -108,7 +113,9 @@ const labelText = {
   </div>
   <input
       type="text"
-      :class="[inputClass[type], 'placeholder:text-gray-400 placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75']"
+      :class="[inputClass[type],
+      isInvalid ? 'ring-2 ring-inset ring-red-500/70 transition' : '',
+       'placeholder:text-gray-400 placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75']"
       :placeholder="placeholder"
       v-model="model"
   />
