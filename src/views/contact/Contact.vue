@@ -11,28 +11,27 @@ const {formData, status} = storeToRefs(store)
 <template>
   <div class="flex flex-col min-h-screen">
     <div class="flex flex-1">
-      <section class="pt-28 pb-16 md:pt-48 container mx-auto px-8 md:px-32">
-        <div class="md:grid md:grid-cols-2 p-8 gap-16 border border-gray-300 rounded-xl bg-gray-100">
+      <section class="pt-28 pb-16 md:pt-48 container mx-auto px-6 md:px-32">
+        <div class="md:grid md:grid-cols-2 md:p-8 gap-16 md:border border-gray-300 rounded-xl md:bg-gray-100">
           <div class="pb-8">
-            <h1 class="text-4xl font-unbounded">Get in touch!</h1>
+            <h1 class="text-3xl md:text-4xl font-unbounded">Get in touch!</h1>
             <p class="pt-4">Feel free to reach out to me for any inquiries, collaborations, or just to say hello.
               I'm always open to new opportunities and excited to hear from you!</p>
           </div>
           <form v-if="status !== 'submitted'" id="form-contact" class="flex flex-col"
                 @submit.prevent="store.sendMessage">
-            <div class="flex items-center border rounded-t-xl bg-white border-gray-300 group focus-within:ring-2 focus-within:bg-white/70 ring-inset ring-black/50 transition">
-              <label for="name" class="block font-unbounded px-4 w-24 group-focus-within:-translate-x-1 group-focus-within:text-black/80 transition">Name</label>
-              <input id="name" type="text" v-model="formData.name" class="w-full h-10 outline-none" required>
+            <div class="relative flex items-center border rounded-t-xl bg-white h-14 border-gray-300 group focus-within:inset-shadow-[0_0_5px_rgba(0,0,0,0.5)] focus-within:bg-white/70 ring-inset ring-black/50 transition">
+              <label for="name" class="block font-unbounded px-4 w-24 group-focus-within:-translate-x-1 group-focus-within:text-black/0 md:group-focus-within:text-black/80 transition select-none">Name</label>
+              <input id="name" type="text" v-model="formData.name" class="absolute md:relative w-full h-12 outline-none px-4" required>
             </div>
             <div
-                class="flex items-center border-x bg-white border-gray-300 group focus-within:ring-2 focus-within:bg-white/70 ring-inset ring-black/50 transition">
-              <label for="email" class="block font-unbounded px-4 w-24 group-focus-within:-translate-x-1 group-focus-within:text-black/80 transition">Email</label>
-              <input id="email" type="email" name="email" v-model="formData.email"
-                     class="w-full h-10 outline-none" required>
+                class="relative flex items-center border-x bg-white h-14 border-gray-300 group focus-within:inset-shadow-[0_0_5px_rgba(0,0,0,0.5)] focus-within:bg-white/70 ring-inset ring-black/50 transition">
+              <label for="email" class="block font-unbounded px-4 w-24 group-focus-within:-translate-x-1 group-focus-within:text-black/0 md:group-focus-within:text-black/80 transition select-none">Email</label>
+              <input id="email" type="email" name="email" v-model="formData.email" class="absolute md:relative w-full h-12 outline-none px-4" required>
             </div>
-            <div class="flex flex-col border border-gray-300 bg-white group focus-within:ring-2 focus-within:bg-white/70 ring-inset ring-black/50 transition">
+            <div class="flex flex-col border border-gray-300 bg-white group focus-within:inset-shadow-[0_0_5px_rgba(0,0,0,0.5)] focus-within:bg-white/70 ring-inset ring-black/50 transition">
               <textarea id="message" placeholder="Your message..." v-model="formData.message"
-                        class="px-4 py-2 w-full min-h-25 outline-none placeholder:font-unbounded focus:placeholder:opacity-50 placeholder:text-sm placeholder:font-extralight"
+                        class="px-4 py-2 w-full min-h-70 outline-none placeholder:font-unbounded focus:placeholder:opacity-50 placeholder:text-sm placeholder:font-extralight"
                         required autocomplete="off"></textarea>
             </div>
             <div class="flex flex-col justify-end">
