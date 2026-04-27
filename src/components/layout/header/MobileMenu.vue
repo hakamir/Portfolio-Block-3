@@ -62,6 +62,11 @@ const toggleMenu = () => {
             CONTACT
           </RouterLink>
         </li>
+        <li v-if="!store.isAuthenticated()">
+          <RouterLink to="/login" active-class="selected" class="nav-item font-unbounded">
+            LOGIN
+          </RouterLink>
+        </li>
         <li v-if="store.isAuthenticated()">
           <RouterLink
               to="/dashboard"
