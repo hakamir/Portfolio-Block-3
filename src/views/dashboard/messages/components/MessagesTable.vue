@@ -87,11 +87,11 @@ const format_date = (date: Date) => {
             <div class="px-4 py-2 select-none">{{ message.name }}</div>
             <div class="px-4 py-2 select-none">{{ store.truncateMessage(message.message) }}</div>
           </div>
-          <div class="px-4 py-2 select-none">{{ format_date(message.date.$date) }}</div>
+          <div class="px-4 py-2 select-none">{{ format_date(message.date) }}</div>
         </div>
         <!-- Expanded row -->
-        <tr v-if="expandedId === message._id" class="border-b border-neutral-200">
-          <td colspan="5" class="px-4 py-2 bg-gray-50">
+        <div v-if="expandedId === message._id" class="border-b border-neutral-200">
+          <div class="px-4 py-2 bg-gray-50">
             <div class="flex justify-between">
               <div>
                 <span class="font-bold text-lg">{{ message.name }}</span>
@@ -99,11 +99,11 @@ const format_date = (date: Date) => {
                   {{ message.email }}
                 </a>
               </div>
-              <span class="text-gray-500 italic">{{ new Date(message.date.$date).toLocaleString() }}</span>
+              <span class="text-gray-500 italic">{{ new Date(message.date).toLocaleString() }}</span>
             </div>
             <p class="whitespace-pre-wrap mt-2">{{ message.message }}</p>
-          </td>
-        </tr>
+          </div>
+        </div>
       </template>
     </div>
   </div>

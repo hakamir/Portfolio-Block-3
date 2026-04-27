@@ -1,12 +1,10 @@
 import os
-from bson import ObjectId
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 
 from config import Config
-from extensions import mongo
-from helpers import handle_db_timeout, serialize
-
+from helpers import handle_db_timeout
+from models.gallery import Gallery
 
 gallery_bp = Blueprint('gallery', __name__)
 
@@ -14,8 +12,7 @@ gallery_bp = Blueprint('gallery', __name__)
 @handle_db_timeout
 @gallery_bp.route('/gallery', methods=['GET'])
 def get_gallery():
-    gallery = [serialize(gallery) for gallery in mongo.db.galleries.find()]
-    return jsonify(gallery), 200
+    return jsonify([gallery.to_json_dict() for gallery in Gallery.objects()]), 200
 
 @handle_db_timeout
 @gallery_bp.route('/gallery', methods=['PUT'])
@@ -25,19 +22,18 @@ def update_galleries():
     for gallery in data:
         gallery_id = gallery.pop('_id', None)
         if gallery_id:
-            mongo.db.galleries.update_one(
-                {'_id': ObjectId(gallery_id)},
-                {'$set': gallery}
+            Gallery.objects(id=gallery_id).update_one(
+                **gallery
             )
         else:
-            mongo.db.galleries.insert_one(gallery)
+            Gallery(**gallery).save()
     return jsonify({'updated': True}), 200
 
 @handle_db_timeout
 @gallery_bp.route('/gallery/<id>', methods=['DELETE'])
 @jwt_required()
 def delete_gallery(id):
-    mongo.db.galleries.delete_one({'_id': ObjectId(id)})
+    Gallery.objects(id=id).delete()
     return jsonify({'deleted': id}), 200
 
 @gallery_bp.route('/gallery/upload', methods=['POST'])

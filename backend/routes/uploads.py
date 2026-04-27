@@ -3,8 +3,8 @@ from flask import Blueprint, jsonify, request, send_from_directory
 from flask_jwt_extended import jwt_required
 
 from config import Config
-from extensions import mongo
 from helpers import handle_db_timeout
+from models.artist import Artist
 
 
 uploads_bp = Blueprint('uploads', __name__)
@@ -36,10 +36,10 @@ def upload_file():
 @jwt_required()
 def get_orphan_files():
     tracked_files = set()
-    for artist in mongo.db.artists.find():
-        for album in artist.get('albums', []):
-            for track in album.get('tracks', []):
-                path = os.path.join(artist['slug'], album['slug'], track['src'])
+    for artist in Artist.objects():
+        for album in artist.albums:
+            for track in album.tracks:
+                path = os.path.join(artist.slug, album.slug, track.src)
                 tracked_files.add(path)
                 tracked_files.add(path.replace('\\', '/'))
 

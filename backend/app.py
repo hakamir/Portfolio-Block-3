@@ -2,7 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 
 from config import Config
-from extensions import mongo, jwt, limiter
+from extensions import jwt, limiter, init_db
 from routes import register_routes
 
 
@@ -15,7 +15,7 @@ def create_app():
         f"{app.config['FRONTEND_URL']}:{app.config['FRONTEND_PORT']}"
     ])
     limiter.init_app(app)
-    mongo.init_app(app)
+    init_db(app)
     jwt.init_app(app)
 
     register_routes(app)

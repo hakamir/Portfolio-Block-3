@@ -46,7 +46,7 @@ onUnmounted(() => stopAutoplay())
         </span>
         <div>
           <span class="text-white opacity-20 font-light text-sm text-shadow-[0_0_20px_rgba(0,0,0,1)] font-unbounded group-hover:opacity-80 transition-opacity">
-            {{ images[current]?.location }} - {{ new Date(images[current]?.date.$date).toLocaleDateString() }}
+            {{ images[current]?.location }} - {{ new Date(images[current]?.date).toLocaleDateString() }}
           </span>
         </div>
       </div>

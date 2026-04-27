@@ -8,9 +8,7 @@ interface Message {
     name: string;
     email: string;
     message: string;
-    date: {
-        $date: Date
-    };
+    date: Date;
     read: boolean;
     trashed: boolean;
 }
@@ -26,7 +24,7 @@ export const useMessagesStore = defineStore('messages', () => {
     const filteredMessages = computed(() =>
         allMessages.value
             .filter(m => currentTab.value === 'inbox' ? !m.trashed : m.trashed)
-            .sort((a, b) => new Date(b.date.$date).getTime() - new Date(a.date.$date).getTime())
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     )
 
     // truncate a message to a maximum length
