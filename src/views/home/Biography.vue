@@ -31,7 +31,7 @@ onMounted(async () => {
           <h2 class="font-unbounded text-3xl sm:text-5xl">{{ biography.title }}</h2>
           <div v-for="section in biography.sections">
             <h3 class="font-unbounded text-xl sm:text-2xl pt-16">{{ section.title }}</h3>
-            <p class="pt-2 lg:pl-4 text-justify text-md! leading-relaxed" v-for="paragraph in section.paragraphs">{{ paragraph }}</p>
+            <p class="pt-2 lg:pl-4 text-md! leading-relaxed" v-for="paragraph in section.paragraphs">{{ paragraph }}</p>
           </div>
         </div>
       </div>
