@@ -1,12 +1,12 @@
-from datetime import datetime
+from bson import ObjectId
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
-from mongoengine import ValidationError, DoesNotExist
-
+from mongoengine.errors import ValidationError, DoesNotExist
 from helpers import handle_db_timeout
 from extensions import limiter
 from models.message import Message
-
+from pydantic import ValidationError as PydanticValidationError
+from Schemas.message import MessageIn
 
 messages_bp = Blueprint('messages', __name__)
 
@@ -22,16 +22,23 @@ def get_messages():
 @messages_bp.route('/messages', methods=['POST'])
 @handle_db_timeout
 def create_message():
-    data = request.get_json()
-    if 'date' in data and isinstance(data['date'], str):
-        data['date'] = datetime.fromisoformat(data['date'].replace('Z', '+00:00'))
     try:
-        message = Message(**data)
+        data = MessageIn.model_validate(request.get_json())
+    except PydanticValidationError:
+        return jsonify({'error': 'Invalid payload'}), 400
+    if not data:
+        return jsonify({'error': 'Missing JSON data'}), 400
+    try:
+        message = Message(
+            name=data.name,
+            email=data.email,
+            message=data.message,
+        )
         message.validate()
         message.save()
-        return jsonify({'inserted_id': str(message.id)}), 201
+        return jsonify({'created': True}), 201
     except ValidationError as e:
-        return jsonify({'error': str(e)}), 400
+        return jsonify({'error': 'Invalid data'}), 400
 
 @messages_bp.route('/messages/<id>', methods=['PATCH'])
 @jwt_required()
@@ -40,7 +47,7 @@ def update_message(id):
     data = request.get_json()
     try:
         Message.objects.get(id=id).update(**data)
-        return jsonify({'updated': id}), 200
+        return jsonify({'updated': True}), 200
     except DoesNotExist:
         return jsonify({'error': 'Message not found'}), 404
 
@@ -48,8 +55,11 @@ def update_message(id):
 @jwt_required()
 @handle_db_timeout
 def delete_message(id):
+    if not ObjectId.is_valid(id):
+        return jsonify({'error': 'Invalid ID'}), 400
     try:
-        Message.objects.get(id=id).delete()
-        return jsonify({'deleted': id}), 200
+        message = Message.objects.get(id=id)
+        message.delete()
+        return jsonify({'deleted': True}), 200
     except DoesNotExist:
         return jsonify({'error': 'Message not Found'}), 404
