@@ -4,7 +4,7 @@ import {instance} from "../api/axios.ts";
 import messageApi from "../api/messages.ts"
 
 interface Message {
-    _id?: string;
+    _id: string;
     name: string;
     email: string;
     message: string;
@@ -28,7 +28,7 @@ export const useMessagesStore = defineStore('messages', () => {
     )
 
     // truncate a message to a maximum length
-    function truncateMessage(text: string, maxLength = 50) {
+    function truncateMessage(text: string, maxLength = 100) {
         return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
     }
 
@@ -77,7 +77,8 @@ export const useMessagesStore = defineStore('messages', () => {
     }
 
     // apply an action to selected messages
-    const applyToSelected = async (ids: string[], action: (id: string) => Promise<void>) => {
+    const applyToSelected = async (ids: string[] |undefined, action: (id: string) => Promise<void>) => {
+        if (!ids || ids.length === 0) return
         await Promise.all(ids.map(id => action(id)))
     }
 

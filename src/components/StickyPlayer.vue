@@ -123,29 +123,31 @@ const toggleMute = () => {
 <template>
   <Transition name="sticky-player">
     <div v-if="playerStore.isPlaying"
-         class="fixed bottom-0 left-0 right-0 z-50 bg-black/10 backdrop-blur-2xl border-t border-white/10 px-6 py-3">
-      <div class="flex items-center gap-4 max-w-7xl mx-auto">
+         class="fixed bottom-0 left-0 right-0 z-50
+              bg-linear-0 from-black/90 via-black/80 to-black/60 lg:from-black/60 lg:via-black/40 lg:to-black/20
+              lg:hover:hover:from-black/90 lg:hover:hover:via-black/80 lg:hover:hover:to-black/60
+              lg:translate-y-10 lg:hover:hover:translate-y-0 group/container transition duration-500
+              backdrop-blur-xl border-t border-white/10 px-6 py-3">
+      <div class="flex items-center gap-1 lg:gap-4 container mx-auto">
         <button @click="togglePlay"
-                class="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:bg-neutral-200 transition shrink-0">
-          <Play v-if="!playerStore.isPlaying" class="w-5 h-5 ml-0.5"/>
+                class="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-white text-black flex items-center justify-center hover:bg-neutral-200 shrink-0 lg:opacity-0 lg:group-hover/container:opacity-100 transition duration-300 group/button">
+          <Play v-if="!playerStore.isPlaying" class="w-5 h-5 ml-0.5 group-hover/button:scale-105"/>
           <Pause v-else class="w-5 h-5"/>
         </button>
 
         <div class="flex flex-col gap-1 flex-1 min-w-0">
-          <span class="text-white font-unbounded truncate">{{ playerStore.currentMeta?.title }}</span>
-          <span class="text-sm text-white/70 truncate">{{ playerStore.currentMeta?.subtitle }}</span>
+          <span
+              class="text-white text-md lg:text-2xl font-unbounded truncate lg:p-2 lg:ml-2 text-shadow-[0_0_10px_rgba(0,0,0,1)]">{{
+              playerStore.currentMeta?.title
+            }}</span>
+          <span
+              class="text-white text-sm lg:font-thin lg:font-unbounded truncate lg:py-1 px-2 text-shadow-[0_0_5px_rgba(0,0,0,1)]">{{
+              playerStore.currentMeta?.subtitle
+            }}</span>
 
-          <div ref="barRef" class="relative h-8 cursor-pointer group flex items-center" @mousedown="startDrag">
-            <div class="relative w-full h-1 bg-white/30 rounded-full" @click="seek">
-              <div class="h-full bg-white rounded-full" :style="{ width: `${progress}%` }"/>
-              <div
-                  class="absolute top-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-100"
-                  :style="{ left: `${progress}%`, transform: 'translate(-50%, -50%)' }"/>
-            </div>
-          </div>
         </div>
 
-        <span class="text-sm text-white/70 tabular-nums select-none shrink-0">
+        <span class="text-sm text-white/80 tabular-nums select-none shrink-0 text-shadow-[0_0_10px_rgba(0,0,0,1)]">
           {{ currentTime }} / {{ duration }}
         </span>
 
@@ -162,6 +164,14 @@ const toggleMute = () => {
               class="volume-slider w-24 cursor-pointer"
               :style="{ '--fill': `${isMuted ? 0 : volume}%` }"
           />
+        </div>
+      </div>
+      <div ref="barRef" class="relative h-8 cursor-pointer group flex items-center justify-center" @mousedown="startDrag">
+        <div class="relative w-full mt-2 lg:w-2/3 h-1 bg-white/30 rounded-full" @click="seek">
+          <div class="h-full bg-white rounded-full" :style="{ width: `${progress}%` }"/>
+          <div
+              class="absolute top-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-100"
+              :style="{ left: `${progress}%`, transform: 'translate(-50%, -50%)' }"/>
         </div>
       </div>
     </div>

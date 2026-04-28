@@ -1,17 +1,19 @@
 <script setup lang="ts">
 import {GripVertical, Upload} from "@lucide/vue"
-import {onBeforeUnmount, onMounted, ref, watch} from "vue";
-import {type Track, useAudioStore} from "@stores";
+import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
+import {type Album, type Artist, type Track, useAudioStore} from "@stores";
 import AudioPlayerMini from "@components/AudioPlayerMini.vue";
 
 const props = defineProps<{
   type: 'artist' | 'album' | 'track'
   placeholder: string
   track?: Track
+  album?: Album
+  artist?: Artist
   src?: string
   debounceTime?: number
+  submitted?: boolean
 }>()
-
 const fileExists = ref(false)
 const audioStore = useAudioStore()
 const model = defineModel<string>({required: true})
@@ -51,6 +53,10 @@ watch(() => props.src, (newSrc) => {
   }, props.debounceTime || 750)
 })
 
+const isInvalid = computed(() => {
+  return audioStore.isSubmitted && !model.value?.trim()
+})
+
 const labelClass = {
   artist: 'work-label-artist',
   album: 'work-label-album',
@@ -81,6 +87,8 @@ const labelText = {
     <AudioPlayerMini
         v-if="localSrc"
         :src="localSrc"
+        :title="track?.title"
+        :subtitle="`${artist?.title} - ${album?.title}`"
         :isLocal="true"
         className="work-upload-btn min-w-16 group flex items-center justify-center"
     />
@@ -88,6 +96,8 @@ const labelText = {
     <AudioPlayerMini
         v-else-if="fileExists"
         :src="`${src}`"
+        :title="track?.title"
+        :subtitle="`${artist?.title} - ${album?.title}`"
         :isLocal="false"
         className="work-upload-btn min-w-16 group flex items-center justify-center"
     />
@@ -103,7 +113,9 @@ const labelText = {
   </div>
   <input
       type="text"
-      :class="[inputClass[type], 'placeholder:text-gray-400 placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75']"
+      :class="[inputClass[type],
+      isInvalid ? 'ring-2 ring-inset ring-red-500/70 transition' : '',
+       'placeholder:text-gray-400 placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75']"
       :placeholder="placeholder"
       v-model="model"
   />

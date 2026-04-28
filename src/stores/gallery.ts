@@ -3,16 +3,13 @@ import {ref, watch} from "vue";
 import {instance} from "@api/axios.ts";
 import galleryApi from "@api/gallery.ts";
 
-export interface DateTime {
-    $date: string
-}
 
 export interface Image {
     src: string
     alt: string
     title: string
     location: string
-    date: DateTime
+    date: Date
     order: number
 }
 
@@ -49,7 +46,7 @@ export const useGalleriesStore = defineStore('galleries', () => {
         galleries.forEach(gallery => {
             gallery.slug = toSlug(gallery.title)
             gallery.images.forEach(image => {
-                const year = image.date.$date ? new Date(image.date.$date).getFullYear() : ''
+                const year = image.date ? new Date(image.date).getFullYear() : ''
                 image.alt = [image.title, image.location, year].filter(Boolean).join(', ')
             })
         })

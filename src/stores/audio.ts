@@ -29,12 +29,14 @@ export const useAudioStore = defineStore('audio', () => {
     const artists = ref<Artist[]>([])
     const loading = ref(false)
     const fetchStatus = ref<'idle' | 'loading' | 'error'>('idle')
+    const isSubmitted = ref(false);
 
     const toSlug = (str: string) => str.toLowerCase().trim().replace(/\s+/g, '_')
 
     const pendingUploads = ref<Map<Track, File>>(new Map())
 
     watch(() => artists.value, (artists) => {
+        isSubmitted.value = false;
         artists.forEach(artist => {
             artist.slug = toSlug(artist.title)
             artist.albums.forEach(album => {
@@ -83,43 +85,54 @@ export const useAudioStore = defineStore('audio', () => {
     }
 
     const saveAudios = async () => {
-        try {
-            // Upload pending tracks
-            for (const [track, file] of pendingUploads.value.entries()) {
-                const artist = artists.value.find(
-                    artist => artist.albums.some(
-                        album => album.tracks.includes(track)
-                    )
+        // Upload pending tracks
+        isSubmitted.value = true;
+
+        const hasEmpty = artists.value.some(artist =>
+            !artist.title?.trim() ||
+            artist.albums.some(album =>
+                !album.title?.trim() ||
+                album.tracks.some(track =>
+                    !track.title?.trim()
                 )
-                const album = artist?.albums.find(
+            )
+        )
+        if (hasEmpty) {
+            return false
+        }
+        for (const [track, file] of pendingUploads.value.entries()) {
+            const artist = artists.value.find(
+                artist => artist.albums.some(
                     album => album.tracks.includes(track)
                 )
-                if (!artist || !album || !track.src) continue
+            )
+            const album = artist?.albums.find(
+                album => album.tracks.includes(track)
+            )
+            if (!artist || !album || !track.src) continue
 
-                const formData = new FormData()
-                formData.append('file', file)
-                formData.append('artistSlug', artist.slug)
-                formData.append('albumSlug', album.slug)
-                formData.append('trackSrc', track.src)
-                await instance.post(audiosApi.uploadAudio, formData)
-            }
-            pendingUploads.value.clear()
-
-            // Get ids from existing artists
-            const existingIds = (await instance.get(audiosApi.getAudios)).data.map((a: Artist) => a._id)
-
-            // If an artist id exists on the server but not in the store, delete it
-            const currentIds = artists.value.map(a => a._id).filter(id => id)
-            const toDelete = existingIds.filter((id: string) => !currentIds.includes(id))
-            for (const id of toDelete) {
-                await instance.delete(audiosApi.deleteArtist(id))
-            }
-
-            // Save artists
-            await instance.put(audiosApi.updateAudios, artists.value)
-        } catch (err) {
-            console.error('Error saving audios:', err)
+            const formData = new FormData()
+            formData.append('file', file)
+            formData.append('artistSlug', artist.slug)
+            formData.append('albumSlug', album.slug)
+            formData.append('trackSrc', track.src)
+            await instance.post(audiosApi.uploadAudio, formData)
         }
+        pendingUploads.value.clear()
+
+        // Get ids from existing artists
+        const existingIds = (await instance.get(audiosApi.getAudios)).data.map((a: Artist) => a._id)
+
+        // If an artist id exists on the server but not in the store, delete it
+        const currentIds = artists.value.map(a => a._id).filter(id => id)
+        const toDelete = existingIds.filter((id: string) => !currentIds.includes(id))
+        for (const id of toDelete) {
+            await instance.delete(audiosApi.deleteArtist(id))
+        }
+
+        // Save artists
+        await instance.put(audiosApi.updateAudios, artists.value)
+        return true;
     }
 
     const orphans = ref<string[]>([])
@@ -143,5 +156,18 @@ export const useAudioStore = defineStore('audio', () => {
         }
     }
 
-    return {artists, loading, fetchStatus, fetchAudios, checkAudioExists, pendingUploads, uploadTrack, saveAudios, fetchOrphans, orphans, deleteOrphans}
+    return {
+        artists,
+        loading,
+        fetchStatus,
+        fetchAudios,
+        checkAudioExists,
+        pendingUploads,
+        uploadTrack,
+        saveAudios,
+        fetchOrphans,
+        orphans,
+        deleteOrphans,
+        isSubmitted
+    }
 })

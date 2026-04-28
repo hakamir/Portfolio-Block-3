@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {vTilt} from '@directives/tilt'
-import {LogOut} from "@lucide/vue";
+import {LogIn, LogOut} from "@lucide/vue";
 import {useAuthStore} from "@stores";
 
 const store = useAuthStore()
@@ -40,6 +40,15 @@ const store = useAuthStore()
               v-tilt
           >
             CONTACT
+          </RouterLink>
+        </li>
+        <li v-if="!store.isAuthenticated()">
+          <RouterLink
+              to="/login"
+              active-class="selected"
+              class="nav-item"
+              v-tilt>
+            <LogIn />
           </RouterLink>
         </li>
         <li v-if="store.isAuthenticated()">

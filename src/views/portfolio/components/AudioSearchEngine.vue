@@ -55,7 +55,7 @@ const typeLabels: Record<string, string> = {
 </script>
 
 <template>
-  <div class="flex items-center gap-4 ml-8 mb-8 flex-wrap">
+  <div class="flex items-center gap-4 lg:ml-8 mb-8 flex-wrap">
 
     <!-- Input + dropdown -->
     <div class="relative">
