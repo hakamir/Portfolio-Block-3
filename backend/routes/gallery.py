@@ -1,8 +1,7 @@
 import os
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from flask_jwt_extended import jwt_required
 
-from config import Config
 from helpers import handle_db_timeout
 from models.gallery import Gallery
 
@@ -45,8 +44,8 @@ def upload_image():
 
     if not file or not gallery_slug or not image_src:
         return jsonify({'error': 'Missing data'}), 400
-
-    dest = os.path.join(Config.UPLOAD_FOLDER, 'gallery', gallery_slug)
+    settings = current_app.config['settings']
+    dest = os.path.join(settings.upload_folder, 'gallery', gallery_slug)
     os.makedirs(dest, exist_ok=True)
     file.save(os.path.join(dest, image_src))
     return jsonify({'uploaded': image_src}), 201
@@ -57,8 +56,8 @@ def get_next_src():
     gallery_slug = request.args.get('gallerySlug')
     if not gallery_slug:
         return jsonify({'error': 'Missing gallerySlug'}), 400
-
-    dest = os.path.join(Config.UPLOAD_FOLDER, 'gallery', gallery_slug)
+    settings = current_app.config['settings']
+    dest = os.path.join(settings.upload_folder, 'gallery', gallery_slug)
     os.makedirs(dest, exist_ok=True)
 
     existing = [f for f in os.listdir(dest) if f.endswith('.webp')]

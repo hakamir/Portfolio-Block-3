@@ -1,21 +1,21 @@
 from flask import Flask
 from flask_cors import CORS
 
-from config import Config
+from config import load_settings
 from extensions import jwt, limiter, init_db
 from routes import register_routes
 
+settings = load_settings()
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object(Config)
-
+    app.config["settings"] = settings
     CORS(app, origins=[
-        f"http://localhost:{app.config['FRONTEND_PORT']}",
-        f"{app.config['FRONTEND_URL']}:{app.config['FRONTEND_PORT']}"
+        f"http://localhost:{settings.frontend_port}",
+        f"{settings.frontend_url}:{settings.frontend_port}"
     ])
     limiter.init_app(app)
-    init_db(app)
+    init_db(settings)
     jwt.init_app(app)
 
     register_routes(app)
