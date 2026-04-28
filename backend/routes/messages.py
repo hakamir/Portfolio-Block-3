@@ -11,16 +11,16 @@ from models.message import Message
 messages_bp = Blueprint('messages', __name__)
 
 
-@handle_db_timeout
 @messages_bp.route('/messages', methods=['GET'])
 @jwt_required()
+@handle_db_timeout
 def get_messages():
     messages = Message.objects().order_by('-date')
     return jsonify([msg.to_json_dict() for msg in messages]), 200
 
-@handle_db_timeout
 @limiter.limit("1/minute")
 @messages_bp.route('/messages', methods=['POST'])
+@handle_db_timeout
 def create_message():
     data = request.get_json()
     if 'date' in data and isinstance(data['date'], str):
@@ -33,9 +33,9 @@ def create_message():
     except ValidationError as e:
         return jsonify({'error': str(e)}), 400
 
-@handle_db_timeout
 @messages_bp.route('/messages/<id>', methods=['PATCH'])
 @jwt_required()
+@handle_db_timeout
 def update_message(id):
     data = request.get_json()
     try:
@@ -44,9 +44,9 @@ def update_message(id):
     except DoesNotExist:
         return jsonify({'error': 'Message not found'}), 404
 
-@handle_db_timeout
 @messages_bp.route('/messages/<id>', methods=['DELETE'])
 @jwt_required()
+@handle_db_timeout
 def delete_message(id):
     try:
         Message.objects.get(id=id).delete()

@@ -10,9 +10,9 @@ from models.user import User
 auth_bp = Blueprint('auth', __name__)
 
 
-@handle_db_timeout
 @auth_bp.route('/auth/login', methods=['POST'])
 @limiter.limit("5/minute")
+@handle_db_timeout
 def login():
     data = request.get_json()
     user = User.objects.get(email=data['email'])
@@ -22,9 +22,9 @@ def login():
     token = create_access_token(identity=str(user.id))
     return jsonify({'token': token})
 
-@handle_db_timeout
 @auth_bp.route('/auth/password', methods=['PUT'])
 @jwt_required()
+@handle_db_timeout
 def update_password():
     try:
         data = request.get_json()

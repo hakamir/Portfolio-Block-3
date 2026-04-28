@@ -8,15 +8,15 @@ from models.biography import Biography
 biography_bp = Blueprint('biography', __name__)
 
 
-@handle_db_timeout
 @biography_bp.route('/biography', methods=['GET'])
+@handle_db_timeout
 def get_biography():
     biography = Biography.objects.first()
     return jsonify({"biography": biography.to_json_dict()})
 
-@handle_db_timeout
 @biography_bp.route('/biography', methods=['PUT'])
 @jwt_required()
+@handle_db_timeout
 def update_biography():
     data = request.get_json()
     data.pop('_id', None)

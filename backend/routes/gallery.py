@@ -9,14 +9,14 @@ from models.gallery import Gallery
 gallery_bp = Blueprint('gallery', __name__)
 
 
-@handle_db_timeout
 @gallery_bp.route('/gallery', methods=['GET'])
+@handle_db_timeout
 def get_gallery():
     return jsonify([gallery.to_json_dict() for gallery in Gallery.objects()]), 200
 
-@handle_db_timeout
 @gallery_bp.route('/gallery', methods=['PUT'])
 @jwt_required()
+@handle_db_timeout
 def update_galleries():
     data = request.get_json()
     for gallery in data:
@@ -29,9 +29,9 @@ def update_galleries():
             Gallery(**gallery).save()
     return jsonify({'updated': True}), 200
 
-@handle_db_timeout
 @gallery_bp.route('/gallery/<id>', methods=['DELETE'])
 @jwt_required()
+@handle_db_timeout
 def delete_gallery(id):
     Gallery.objects(id=id).delete()
     return jsonify({'deleted': id}), 200

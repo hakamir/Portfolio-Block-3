@@ -31,9 +31,9 @@ def upload_file():
 
     return jsonify({'uploaded': track_src}), 201
 
-@handle_db_timeout
 @uploads_bp.route('/audio/orphans', methods=['GET'])
 @jwt_required()
+@handle_db_timeout
 def get_orphan_files():
     tracked_files = set()
     for artist in Artist.objects():

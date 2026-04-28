@@ -9,15 +9,15 @@ from models.artist import Artist, Track, Album
 artists_bp = Blueprint('artists', __name__)
 
 
-@handle_db_timeout
 @artists_bp.route('/artists', methods=['GET'])
+@handle_db_timeout
 def get_artists():
     return jsonify([artist.to_json_dict() for artist in Artist.objects()]), 200
 
 
-@handle_db_timeout
 @artists_bp.route('/artists', methods=['PUT'])
 @jwt_required()
+@handle_db_timeout
 def update_artists():
     data = request.get_json()
 
@@ -59,9 +59,9 @@ def update_artists():
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
 
-@handle_db_timeout
 @artists_bp.route('/artists/<id>', methods=['DELETE'])
 @jwt_required()
+@handle_db_timeout
 def delete_artist(id):
     try:
         artist = Artist.objects.get(id=id)
