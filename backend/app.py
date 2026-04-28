@@ -10,6 +10,8 @@ settings = load_settings()
 def create_app():
     app = Flask(__name__)
     app.config["settings"] = settings
+    app.config["JWT_SECRET_KEY"] = settings.jwt_secret_key
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = settings.jwt_access_token_expires_delta
     CORS(app, origins=[
         f"http://localhost:{settings.frontend_port}",
         f"{settings.frontend_url}:{settings.frontend_port}"
