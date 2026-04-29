@@ -8,12 +8,13 @@ export const useBiographyStore = defineStore("biography", () => {
 
     const fetchBiography = async () => {
         const res = await instance.get(biographyApi.getBiography)
-        biography.value = res.data.biography
+        const {updatedAt, ...rest} = res.data.biography
+        biography.value = rest
     }
 
-    const updateBiography = async (data: string) => {
-        await instance.put(biographyApi.updateBiography, data)
-        biography.value = data
+    const updateBiography = async () => {
+        await instance.put(biographyApi.updateBiography, biography.value)
+        biography.value = biography.value
     }
 
     return {biography, fetchBiography, updateBiography}

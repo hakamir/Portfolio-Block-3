@@ -13,7 +13,6 @@ onMounted(async () => {
   await store.fetchBiography()
 })
 
-// Sections
 const addSection = () => {
   biography.value.sections.push({title: '', paragraphs: ['']})
 }
@@ -21,7 +20,6 @@ const removeSection = (sectionIndex: number) => {
   biography.value.sections.splice(sectionIndex, 1)
 }
 
-// Paragraphes
 const addParagraph = (sectionIndex: number) => {
   biography.value.sections[sectionIndex].paragraphs.push('')
 }
@@ -29,11 +27,10 @@ const removeParagraph = (sectionIndex: number, paragraphIndex: number) => {
   biography.value.sections[sectionIndex].paragraphs.splice(paragraphIndex, 1)
 }
 
-// Sauvegarde
 const save = async () => {
   saveStatus.value = 'loading'
   try {
-    await store.updateBiography(biography.value)
+    await store.updateBiography()
     saveStatus.value = 'saved'
   } catch {
     saveStatus.value = 'error'
