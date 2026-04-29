@@ -32,9 +32,7 @@ const addImage = (gallery: Gallery) => {
     alt: '',
     title: '',
     location: '',
-    date: {
-      $date: ''
-    },
+    date:  new Date(),
     order: gallery.images.length + 1,
   });
 }
