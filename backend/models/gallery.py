@@ -21,4 +21,6 @@ class Gallery(Document):
     def to_json_dict(self):
         data = self.to_mongo().to_dict()
         data['_id'] = str(data['_id'])
+        for image in data['images']:
+            image['date'] = image['date'].isoformat()
         return data

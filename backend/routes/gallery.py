@@ -1,9 +1,13 @@
 import os
+
+from bson import ObjectId
 from flask import Blueprint, jsonify, request, current_app
 from flask_jwt_extended import jwt_required
-
+from mongoengine import DoesNotExist
+from pydantic import ValidationError
+from Schemas.gallery import GalleryIn
 from helpers import handle_db_timeout
-from models.gallery import Gallery
+from models.gallery import Gallery, GalleryImage
 
 gallery_bp = Blueprint('gallery', __name__)
 
@@ -13,27 +17,50 @@ gallery_bp = Blueprint('gallery', __name__)
 def get_gallery():
     return jsonify([gallery.to_json_dict() for gallery in Gallery.objects()]), 200
 
+
 @gallery_bp.route('/gallery', methods=['PUT'])
 @jwt_required()
 @handle_db_timeout
 def update_galleries():
-    data = request.get_json()
-    for gallery in data:
-        gallery_id = gallery.pop('_id', None)
-        if gallery_id:
-            Gallery.objects(id=gallery_id).update_one(
-                **gallery
+    if not request.is_json:
+        return jsonify({"error": "invalid content-type"}), 415
+    payload = request.get_json()
+    try:
+        galleries = [GalleryIn.model_validate(g) for g in payload]
+    except ValidationError as e:
+        return jsonify({"error": "invalid payload"}), 400
+    for g in galleries:
+        images = [GalleryImage(**img.model_dump()) for img in g.images]
+        if g.id:
+            Gallery.objects(id=g.id).update_one(
+                set__slug=g.slug,
+                set__title=g.title,
+                set__order=g.order,
+                set__images=images
             )
         else:
-            Gallery(**gallery).save()
+            Gallery(
+                slug=g.slug,
+                title=g.title,
+                order=g.order,
+                images=images
+            ).save()
     return jsonify({'updated': True}), 200
+
 
 @gallery_bp.route('/gallery/<id>', methods=['DELETE'])
 @jwt_required()
 @handle_db_timeout
 def delete_gallery(id):
-    Gallery.objects(id=id).delete()
-    return jsonify({'deleted': id}), 200
+    if not ObjectId.is_valid(id):
+        return jsonify({'error': 'Invalid ID'}), 400
+    try:
+        gallery = Gallery.objects.get(id=id)
+        gallery.delete()
+        return jsonify({'deleted': True}), 200
+    except DoesNotExist:
+        return jsonify({'error': 'Gallery not found'}), 404
+
 
 @gallery_bp.route('/gallery/upload', methods=['POST'])
 @jwt_required()
@@ -49,6 +76,7 @@ def upload_image():
     os.makedirs(dest, exist_ok=True)
     file.save(os.path.join(dest, image_src))
     return jsonify({'uploaded': image_src}), 201
+
 
 @gallery_bp.route('/gallery/next-src', methods=['GET'])
 @jwt_required()
