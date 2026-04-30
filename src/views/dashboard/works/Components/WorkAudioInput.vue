@@ -109,7 +109,13 @@ const labelText = {
       <Upload class="text-gray-600 group-hover:text-gray-800 group-hover:translate-x-1 transition"/>
     </button>
 
-    <input ref="fileInputRef" type="file" accept=".mp3,audio/*" class="hidden" @change="handleFileChange"/>
+    <input
+        ref="fileInputRef"
+        type="file"
+        accept=".mp3,.wma,.aac,.flac,.ogg,.wav,.aiff,.alac,.amr,.m4a"
+        class="hidden"
+        @change="handleFileChange"
+    />
   </div>
   <input
       type="text"
