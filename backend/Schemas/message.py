@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, EmailStr
 class MessageIn(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     email: EmailStr
-    message: str = Field(min_length=1)
+    message: str = Field(min_length=1, max_length=5000)
     date: Optional[datetime] = None
     read: bool = False
     trashed: bool = False

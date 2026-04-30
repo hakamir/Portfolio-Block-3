@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from bson import ObjectId
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
@@ -33,6 +35,9 @@ def create_message():
             name=data.name,
             email=data.email,
             message=data.message,
+            date=datetime.now(),
+            read=False,
+            trashed=False
         )
         message.validate()
         message.save()
