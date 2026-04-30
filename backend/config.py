@@ -42,6 +42,10 @@ class Settings(BaseSettings):
     base_dir: str = os.path.dirname(os.path.abspath(__file__))
     upload_folder: str = os.path.join(base_dir, 'uploads')
 
+    # FILE TYPES
+    allowed_audio_file_types: list[str] = ['mp3', 'wma', 'aac', 'flac', 'ogg', 'wav', 'aiff', 'alac', 'amr', 'm4a']
+    allowed_image_file_types: list[str] = ['jpg', 'jpeg', 'png', 'gif', 'webp']
+
     @field_validator("*")
     @classmethod
     def no_empty_strings(cls, value):

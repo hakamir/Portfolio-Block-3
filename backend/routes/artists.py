@@ -51,7 +51,7 @@ def update_artists():
                     albums=albums
                 ).save()
         return jsonify({'updated': True}), 200
-    except PydanticValidationError as e:
+    except PydanticValidationError:
         return jsonify({'error': 'Invalid payload'}), 400
     except ValidationError:
         return jsonify({'error': 'invalid data'}), 400

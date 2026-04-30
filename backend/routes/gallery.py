@@ -62,22 +62,6 @@ def delete_gallery(id):
         return jsonify({'error': 'Gallery not found'}), 404
 
 
-@gallery_bp.route('/gallery/upload', methods=['POST'])
-@jwt_required()
-def upload_image():
-    file = request.files.get('file')
-    gallery_slug = request.form.get('gallerySlug')
-    image_src = request.form.get('imageSrc')
-
-    if not file or not gallery_slug or not image_src:
-        return jsonify({'error': 'Missing data'}), 400
-    settings = current_app.config['settings']
-    dest = os.path.join(settings.upload_folder, 'gallery', gallery_slug)
-    os.makedirs(dest, exist_ok=True)
-    file.save(os.path.join(dest, image_src))
-    return jsonify({'uploaded': image_src}), 201
-
-
 @gallery_bp.route('/gallery/next-src', methods=['GET'])
 @jwt_required()
 def get_next_src():

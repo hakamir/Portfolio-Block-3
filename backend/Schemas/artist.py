@@ -11,6 +11,7 @@ class TrackIn(BaseModel):
         "extra": "forbid",
     }
 
+
 class AlbumIn(BaseModel):
     slug: str
     title: str
@@ -20,6 +21,7 @@ class AlbumIn(BaseModel):
     model_config = {
         "extra": "forbid",
     }
+
 
 class ArtistIn(BaseModel):
     id: str | None = Field(default=None, alias="_id")
