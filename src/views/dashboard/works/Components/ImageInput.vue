@@ -92,7 +92,7 @@ onBeforeUnmount(() => {
         </div>
       </Transition>
     </Teleport>
-    <input ref="fileInputRef" type="file" accept=".webp,.jpg,.jpeg,.png" class="hidden"
+    <input ref="fileInputRef" type="file" accept=".jpg,.jpeg,.png,.gif,.webp" class="hidden"
            @change="handleFileChange"/>
   </div>
 </template>
