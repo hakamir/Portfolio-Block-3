@@ -27,14 +27,15 @@ const addGallery = () => {
 }
 
 const addImage = (gallery: Gallery) => {
+  const precise_date = new Date();
+  precise_date.setUTCHours(0,0,0,0);
+  const date = precise_date.toISOString().split('.')[0];
   gallery.images.push({
     src: '',
     alt: '',
     title: '',
     location: '',
-    date: {
-      $date: ''
-    },
+    date:  date,
     order: gallery.images.length + 1,
   });
 }

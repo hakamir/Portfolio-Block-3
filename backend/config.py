@@ -36,11 +36,19 @@ class Settings(BaseSettings):
 
     # JWT
     jwt_secret_key: str = Field(..., min_length=1)
-    jwt_access_token_expires: int = Field(..., gt=0)  # in hours
+    jwt_access_token_expires: int = Field(..., gt=0)  # in minutes
+    jwt_refresh_token_expires: int = Field(..., gt=0) # in days
+    jwt_cookie_secure: bool = Field(...)
+    jwt_cookie_samesite: str = Field(..., min_length=1)
+    jwt_cookie_csrf_protect: bool = Field(...)
 
     # PATHS
     base_dir: str = os.path.dirname(os.path.abspath(__file__))
     upload_folder: str = os.path.join(base_dir, 'uploads')
+
+    # FILE TYPES
+    allowed_audio_file_types: list[str] = ['mp3', 'wma', 'aac', 'flac', 'ogg', 'wav', 'aiff', 'alac', 'amr', 'm4a']
+    allowed_image_file_types: list[str] = ['jpg', 'jpeg', 'png', 'gif', 'webp']
 
     @field_validator("*")
     @classmethod
@@ -62,8 +70,12 @@ class Settings(BaseSettings):
 
     @property
     def jwt_access_token_expires_delta(self) -> timedelta:
-        return timedelta(hours=self.jwt_access_token_expires)
+        return timedelta(minutes=self.jwt_access_token_expires)
+
+    @property
+    def jwt_refresh_token_expires_delta(self) -> timedelta:
+        return timedelta(days=self.jwt_refresh_token_expires)
 
     class Config:
-        env_file = f'../.env.{ENV}'
+        env_file = f'./.env.{ENV}'
         case_sensitive = False

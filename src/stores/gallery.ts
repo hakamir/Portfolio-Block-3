@@ -9,7 +9,7 @@ export interface Image {
     alt: string
     title: string
     location: string
-    date: Date
+    date: string
     order: number
 }
 

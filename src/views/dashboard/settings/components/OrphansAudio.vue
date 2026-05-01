@@ -3,7 +3,7 @@ import {useAudioStore} from '@stores'
 import {Trash2, Music, Music2, Disc, PackageOpen} from '@lucide/vue'
 import {computed, onMounted, ref} from "vue";
 
-interface OrphanFile {
+interface OrphanAudio {
   artist: string;
   album: string;
   track: string;
@@ -15,7 +15,7 @@ const selectedOrphans = ref<string[]>([])
 const emit = defineEmits<{ requestDelete: [srcs: string[]] }>()
 
 const orphansUrl = ref<string[]>([])
-const orphans = ref<OrphanFile[]>([])
+const orphans = ref<OrphanAudio[]>([])
 
 onMounted(async () => {
   await audioStore.fetchOrphans()
@@ -32,7 +32,7 @@ const groupedOrphans = computed(() => {
     if (!acc[orphan.artist][orphan.album]) acc[orphan.artist][orphan.album] = []
     acc[orphan.artist][orphan.album].push(orphan)
     return acc
-  }, {} as Record<string, Record<string, OrphanFile[]>>)
+  }, {} as Record<string, Record<string, OrphanAudio[]>>)
 })
 
 const toggleSelectAll = () => {
@@ -101,17 +101,17 @@ const formatData = () => {
       album: toLabel(albumSlug),
       track: toLabel(trackSrc),
       src: url
-    } as OrphanFile
+    } as OrphanAudio
   })
 }
 </script>
 
 <template>
-  <!-- Orphan files -->
+  <!-- Orphan audios -->
   <div class="border border-gray-200 bg-gray-50 rounded-xl p-6">
     <div class="flex justify-between items-center mb-6">
       <div>
-        <h2 class="text-2xl font-unbounded font-semibold">Orphan files</h2>
+        <h2 class="text-2xl font-unbounded font-semibold">Orphan audios</h2>
         <p class="text-sm text-gray-500 mt-1">Files present on the server but not linked to any track.</p>
       </div>
     </div>
@@ -120,7 +120,7 @@ const formatData = () => {
     <div v-if="orphans.length === 0"
          class="flex flex-col items-center justify-center py-8 gap-2">
       <PackageOpen class="w-10 h-10 text-gray-400"/>
-      <span class="text-md text-gray-500 font-unbounded">No orphan files found...</span>
+      <span class="text-md text-gray-500 font-unbounded">No orphan audios found...</span>
     </div>
 
     <!-- Orphans list -->

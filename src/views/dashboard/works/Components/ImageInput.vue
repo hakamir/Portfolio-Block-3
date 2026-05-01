@@ -63,7 +63,7 @@ onBeforeUnmount(() => {
         class="bg-white px-3 py-2 border-l border-b border-gray-300 focus:outline-none placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75 font-semibold"
         v-model="image.location"/>
     <div class="px-3 py-2 bg-orange-200/50 font-semibold border-l border-b border-gray-300">Date</div>
-    <DatePicker v-model="image.date.$date" />
+    <DatePicker v-model="image.date" />
 
     <button v-if="localSrc" @click="showPreview = true"
             class="px-1 border-b border-r border-gray-300 bg-gray-200/50 hover:bg-gray-300/50 transition">
@@ -92,7 +92,7 @@ onBeforeUnmount(() => {
         </div>
       </Transition>
     </Teleport>
-    <input ref="fileInputRef" type="file" accept=".webp,.jpg,.jpeg,.png" class="hidden"
+    <input ref="fileInputRef" type="file" accept=".jpg,.jpeg,.png,.gif,.webp" class="hidden"
            @change="handleFileChange"/>
   </div>
 </template>

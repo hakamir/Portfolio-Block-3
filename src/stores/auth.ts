@@ -5,19 +5,30 @@ import {instance} from "@api/axios.ts";
 import authApi from "@api/auth.ts";
 
 export const useAuthStore = defineStore("auth", () => {
-    const token = ref<string | null>(localStorage.getItem('token'))
+    const token = ref<string | null>()
+    const isInitialized = ref<boolean>(false)
 
     const login = async (email: string, pwd: string) => {
         const res = await instance.post(authApi.login, {email, pwd})
         token.value = res.data.token
-        localStorage.setItem('token', res.data.token)
         await router.push('/dashboard')
     }
 
     const logout = async () => {
+        await instance.post(authApi.logout)
         token.value = null
-        localStorage.removeItem('token')
         await router.push('/')
+    }
+
+    const refresh = async () => {
+        try {
+            const res = await instance.post(authApi.refresh)
+            token.value = res.data.token
+        } catch {
+            token.value = null
+        } finally {
+            isInitialized.value = true
+        }
     }
 
     const changePassword = async (currentPwd: string, newPwd: string) => {
@@ -42,5 +53,5 @@ export const useAuthStore = defineStore("auth", () => {
         return true;
     }
 
-    return {token, login, logout, changePassword, isAuthenticated}
+    return {token, isInitialized, login, logout, refresh, changePassword, isAuthenticated}
 })

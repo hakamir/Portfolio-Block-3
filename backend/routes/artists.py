@@ -1,8 +1,9 @@
 from bson import ObjectId
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
-from mongoengine import ValidationError, DoesNotExist, InvalidQueryError
-
+from mongoengine import ValidationError, DoesNotExist
+from pydantic import ValidationError as PydanticValidationError
+from Schemas.artist import ArtistIn
 from helpers import handle_db_timeout
 from models.artist import Artist, Track, Album
 
@@ -19,50 +20,52 @@ def get_artists():
 @jwt_required()
 @handle_db_timeout
 def update_artists():
-    data = request.get_json()
-
-    if not data or not isinstance(data, list):
+    if not request.is_json:
+        return jsonify({'error': 'Invalid content-type'}), 415
+    payload = request.get_json()
+    if not isinstance(payload, list):
         return jsonify({'error': 'Expected a list of artists'}), 400
-
     try:
-        for artist_data in data:
-            artist_data = dict(artist_data)
-            artist_id = artist_data.pop('_id', None)
-
-            albums = []
-            for album_data in artist_data.pop('albums', []):
-                album_data = dict(album_data)
-                tracks = [Track(**t) for t in album_data.pop('tracks', [])]
-                albums.append(Album(tracks=tracks, **album_data))
-
-            artist_obj = Artist(albums=albums, **artist_data)
-            artist_obj.validate()
-
-            if artist_id:
-                doc = artist_obj.to_mongo().to_dict()
-                doc.pop('_id', None)
-
-                result = Artist._get_collection().replace_one(
-                    {'_id': ObjectId(artist_id)},
-                    doc
-                )
-                if result.matched_count == 0:
-                    return jsonify({'error': f'Artist {artist_id} not found'}), 404
+        artists = [ArtistIn.model_validate(artist) for artist in payload]
+        for item in artists:
+            albums = [
+                Album(
+                    slug=al.slug,
+                    title=al.title,
+                    order=al.order,
+                    tracks=[Track(**t.model_dump()) for t in al.tracks]
+                ) for al in item.albums
+            ]
+            if item.id:
+                artist = Artist.objects.get(id=item.id)
+                artist.slug = item.slug
+                artist.title = item.title
+                artist.order = item.order
+                artist.albums = albums
+                artist.save()
             else:
-                artist_obj.save()
-
+                Artist(
+                    slug=item.slug,
+                    title=item.title,
+                    order=item.order,
+                    albums=albums
+                ).save()
         return jsonify({'updated': True}), 200
-
-    except ValidationError as e:
-        return jsonify({'error': str(e)}), 400
+    except PydanticValidationError:
+        return jsonify({'error': 'Invalid payload'}), 400
+    except ValidationError:
+        return jsonify({'error': 'invalid data'}), 400
     except Exception as e:
-        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
+        print(e)
+        return jsonify({'error': 'Server error'}), 500
 
 
 @artists_bp.route('/artists/<id>', methods=['DELETE'])
 @jwt_required()
 @handle_db_timeout
 def delete_artist(id):
+    if not ObjectId.is_valid(id):
+        return jsonify({'error': 'Invalid ID'}), 400
     try:
         artist = Artist.objects.get(id=id)
         artist.delete()
