@@ -44,7 +44,7 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="border border-gray-200 bg-gray-50 rounded-xl p-6 grid grid-cols-2">
+  <div class="border border-gray-200 bg-gray-50 rounded-xl p-6 grid md:grid-cols-2">
     <div class="mb-6 flex flex-col justify-between">
       <div>
         <h2 class="text-2xl font-semibold">Change password</h2>
@@ -53,11 +53,12 @@ const handleSubmit = async () => {
       <!-- Rules -->
       <div v-if="newPwd.length > 0" class="flex flex-col gap-1">
         <div v-for="(valid, rule) in rules" :key="rule"
-             class="flex items-center gap-2 text-md opacity-70 ml-12"
+             class="md:flex hidden items-center gap-2 text-md opacity-70 ml-12"
              :class="valid ? 'text-lime-700' : 'text-red-700'">
           <Check v-if="valid" class="w-5 h-5"/>
           <X v-else class="w-5 h-5"/>
-          <span>{{
+          <span class="text-sm"
+          >{{
               rule === 'minLength' ? 'At least 12 characters' :
                   rule === 'hasLower' ? 'One lowercase letter' :
                       rule === 'hasUpper' ? 'One uppercase letter' :
@@ -144,5 +145,23 @@ const handleSubmit = async () => {
       </div>
 
     </div>
+    <div v-if="newPwd.length > 0" class="flex md:hidden flex-col gap-1 mt-4">
+        <div v-for="(valid, rule) in rules" :key="rule"
+             class="flex items-center gap-2 text-md opacity-70"
+             :class="valid ? 'text-lime-700' : 'text-red-700'">
+          <Check v-if="valid" class="w-5 h-5"/>
+          <X v-else class="w-5 h-5"/>
+          <span class="text-sm"
+          >{{
+              rule === 'minLength' ? 'At least 12 characters' :
+                  rule === 'hasLower' ? 'One lowercase letter' :
+                      rule === 'hasUpper' ? 'One uppercase letter' :
+                          rule === 'hasNumber' ? 'One number' :
+                              rule === 'hasSpecial' ? 'One special character' :
+                                  rule === 'notSame' ? 'Different from current password' :
+                                      'Passwords match'
+            }}</span>
+        </div>
+      </div>
   </div>
 </template>
