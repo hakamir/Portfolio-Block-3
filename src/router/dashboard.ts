@@ -1,22 +1,12 @@
-import {useAuthStore} from "@stores";
-
 export default {
     path: '/dashboard',
     name: 'dashboard',
     component: () => import('@views/dashboard/DashboardLayout.vue'),
     meta: {requiresAuth: true},
-    beforeEnter: async () => {
-        const authStore = useAuthStore()
-        if (!authStore.isInitialized) {
-            await authStore.refresh()
-        }
-        if (!authStore.isAuthenticated()) {
-            return '/login'
-        }
-    },
     children: [
         {
             path: '',
+            name: 'dashboard-home',
             redirect: {name: 'dashboard-messages'}
         },
         {

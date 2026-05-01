@@ -140,7 +140,6 @@ export const useAudioStore = defineStore('audio', () => {
     const fetchOrphans = async () => {
         try {
             const res = await instance.get(audiosApi.getOrphans)
-            console.log('Orphans:', res.data)
             orphans.value = res.data
         } catch (err) {
             console.error('Error fetching orphans:', err)

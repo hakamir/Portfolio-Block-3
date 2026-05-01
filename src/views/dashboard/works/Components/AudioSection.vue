@@ -195,7 +195,6 @@ const onSave = async () => {
                                           :track="track"
                                           :album="album"
                                           :artist="artist"
-                                          :title="track.title"
                           />
                           <TagSelector v-model="track.tags" @toggle="emit('TagSelectorToggled', track)"/>
                           <!-- Delete track button -->
