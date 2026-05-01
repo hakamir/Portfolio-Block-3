@@ -38,10 +38,9 @@ class Settings(BaseSettings):
     jwt_secret_key: str = Field(..., min_length=1)
     jwt_access_token_expires: int = Field(..., gt=0)  # in minutes
     jwt_refresh_token_expires: int = Field(..., gt=0) # in days
-    jwt_token_location: list[str] = ['cookies', 'headers']
-    jwt_refresh_cookie_name: str = 'refresh_token'
-    jwt_cookie_secure: bool = False
-    jwt_cookie_samesite: str = 'Strict'
+    jwt_cookie_secure: bool = Field(...)
+    jwt_cookie_samesite: str = Field(..., min_length=1)
+    jwt_cookie_csrf_protect: bool = Field(...)
 
     # PATHS
     base_dir: str = os.path.dirname(os.path.abspath(__file__))
@@ -78,5 +77,5 @@ class Settings(BaseSettings):
         return timedelta(days=self.jwt_refresh_token_expires)
 
     class Config:
-        env_file = f'../.env.{ENV}'
+        env_file = f'./.env.{ENV}'
         case_sensitive = False

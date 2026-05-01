@@ -16,19 +16,20 @@ def create_app():
     app.config["JWT_REFRESH_TOKEN_EXPIRES"] = settings.jwt_refresh_token_expires_delta
     app.config['JWT_TOKEN_LOCATION'] = ['headers', 'cookies']
     app.config['JWT_REFRESH_COOKIE_NAME'] = 'refresh_token'
-    app.config['JWT_COOKIE_SECURE'] = False  # True in prod (HTTPS)
-    app.config['JWT_COOKIE_SAMESITE'] = 'Strict'
-    app.config['JWT_COOKIE_CSRF_PROTECT'] = True
+    app.config['JWT_COOKIE_SECURE'] = settings.jwt_cookie_secure
+    app.config['JWT_COOKIE_SAMESITE'] = settings.jwt_cookie_samesite
+    app.config['JWT_COOKIE_CSRF_PROTECT'] = settings.jwt_cookie_csrf_protect
+
     CORS(app,
          supports_credentials=True,
          origins=[
              f"http://localhost:{settings.frontend_port}",
              f"{settings.frontend_url}:{settings.frontend_port}"
          ])
+
     limiter.init_app(app)
     init_db(settings)
     jwt.init_app(app)
-
     register_routes(app)
 
     return app
