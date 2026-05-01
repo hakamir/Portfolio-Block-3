@@ -9,7 +9,6 @@ from models.artist import Artist
 uploads_bp = Blueprint('uploads', __name__)
 
 
-
 @uploads_bp.route('/uploads/<path:filename>')
 def uploaded_file(filename):
     settings = current_app.config['settings']
@@ -52,35 +51,10 @@ def upload_audio():
     return jsonify({'uploaded': True}), 201
 
 
-@uploads_bp.route('/gallery/upload', methods=['POST'])
-@jwt_required()
-def upload_image():
-    settings = current_app.config['settings']
-
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file part'}), 400
-
-    file = request.files.get('file')
-    gallery_slug = secure_filename(request.form.get('gallerySlug'))
-    image_src = secure_filename(request.form.get('imageSrc'))
-
-    extension = file.filename.split('.', 1)[-1].lower()
-    if extension not in settings.allowed_image_file_types:
-        return jsonify({'error': 'Invalid file type'}), 400
-
-    if not file or not gallery_slug or not image_src:
-        return jsonify({'error': 'Missing data'}), 400
-
-    dest = os.path.join(settings.upload_folder, 'gallery', gallery_slug)
-    os.makedirs(dest, exist_ok=True)
-    file.save(os.path.join(dest, image_src))
-    return jsonify({'uploaded': image_src}), 201
-
-
 @uploads_bp.route('/audio/orphans', methods=['GET'])
 @jwt_required()
 @handle_db_timeout
-def get_orphan_files():
+def get_orphan_audio():
     settings = current_app.config['settings']
     tracked_files = set()
     for artist in Artist.objects():
@@ -104,7 +78,7 @@ def get_orphan_files():
 
 @uploads_bp.route('/audio/orphans', methods=['DELETE'])
 @jwt_required()
-def delete_orphan_files():
+def delete_orphan_audio():
     settings = current_app.config['settings']
     data = request.get_json()
     files = data.get('files', [])
@@ -124,3 +98,32 @@ def delete_orphan_files():
             if not os.listdir(dir_path):
                 os.rmdir(dir_path)
     return jsonify({'deleted': deleted}), 200
+
+
+@uploads_bp.route('/gallery/upload', methods=['POST'])
+@jwt_required()
+def upload_image():
+    settings = current_app.config['settings']
+
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+
+    file = request.files.get('file')
+
+    if not file or file.filename is None:
+        return jsonify({'error': 'Missing file'}), 400
+
+    gallery_slug = secure_filename(request.form.get('gallerySlug'))
+    image_src = secure_filename(request.form.get('imageSrc'))
+
+    extension = file.filename.split('.', 1)[-1].lower()
+    if extension not in settings.allowed_image_file_types:
+        return jsonify({'error': 'Invalid file type'}), 400
+
+    if not file or not gallery_slug or not image_src:
+        return jsonify({'error': 'Missing data'}), 400
+
+    dest = os.path.join(settings.upload_folder, 'gallery', gallery_slug)
+    os.makedirs(dest, exist_ok=True)
+    file.save(os.path.join(dest, image_src))
+    return jsonify({'uploaded': image_src}), 201
