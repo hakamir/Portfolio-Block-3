@@ -5,8 +5,11 @@ export default {
     name: 'dashboard',
     component: () => import('@views/dashboard/DashboardLayout.vue'),
     meta: {requiresAuth: true},
-    beforeEnter: () => {
+    beforeEnter: async () => {
         const authStore = useAuthStore()
+        if (!authStore.isInitialized) {
+            await authStore.refresh()
+        }
         if (!authStore.isAuthenticated()) {
             return '/login'
         }

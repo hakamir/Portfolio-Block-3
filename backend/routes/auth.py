@@ -1,6 +1,7 @@
 import bcrypt
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, create_refresh_token, decode_token, \
+    set_refresh_cookies, unset_jwt_cookies
 from mongoengine import DoesNotExist
 from pydantic import ValidationError
 from werkzeug.exceptions import UnsupportedMediaType
@@ -22,13 +23,33 @@ def login():
         if not user.verify_password(data.pwd):
             raise DoesNotExist
 
-        token = create_access_token(identity=str(user.id))
-        return jsonify({'token': token}), 200
+        access_token = create_access_token(identity=str(user.id))
+        refresh_token = create_refresh_token(identity=str(user.id))
+
+        response = jsonify({'token': access_token})
+        set_refresh_cookies(response, refresh_token)
+        return response, 200
+
     except (DoesNotExist, ValidationError):
         return jsonify({'error': 'Invalid credentials'}), 401
     except UnsupportedMediaType:
         return jsonify({'error': "content-type must be application/json"}), 415
 
+
+@auth_bp.route('/auth/refresh', methods=['POST'])
+@jwt_required(refresh=True)
+@handle_db_timeout
+def refresh():
+    identity = get_jwt_identity()
+    new_access_token = create_access_token(identity=identity)
+    return jsonify({'token': new_access_token}), 200
+
+
+@auth_bp.route('/auth/logout', methods=['POST'])
+def logout():
+    response = jsonify({'logged_out': True})
+    unset_jwt_cookies(response)
+    return response, 200
 
 @auth_bp.route('/auth/password', methods=['PUT'])
 @jwt_required()

@@ -2,7 +2,8 @@ import axios from 'axios';
 import {useAuthStore} from "@stores";
 
 export const instance = axios.create({
-    baseURL: import.meta.env.VITE_API_URL
+    baseURL: import.meta.env.VITE_API_URL,
+    withCredentials: true,
 });
 
 instance.interceptors.request.use((config) => {
@@ -15,12 +16,21 @@ instance.interceptors.request.use((config) => {
 
 instance.interceptors.response.use(
     res => res,
-    err => {
-        // Logout if token is expired and exclude login endpoint to avoid redirection of login failure
-        if (err.response?.status === 401 && !err.config.url?.includes('/auth/login')) {
-            const authStore = useAuthStore();
-            authStore.logout();
+    async err => {
+        const authStore = useAuthStore();
+        const url = err.config.url ?? ''
+
+        if (err.response?.status === 401 && !err.config._retry && !url.includes('/auth/login') && !url.includes('/auth/refresh')) {
+            err.config._retry = true
+            try {
+                await authStore.refresh()
+                err.config.headers['Authorization'] = `Bearer ${authStore.token}`
+                return instance(err.config)
+            } catch {
+                await authStore.logout()
+            }
         }
-        return Promise.reject(err);
+
+        return Promise.reject(err)
     }
 )
