@@ -14,6 +14,7 @@
       "@stores": ["src/stores/index.ts"],
       "@views/*": ["src/views/*"],
       "@api/*": ["src/api/*"],
+      "@utils/*": ["src/utils/*"],
     },
 
     /* Linting */

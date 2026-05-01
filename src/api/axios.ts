@@ -1,5 +1,6 @@
 import axios from 'axios';
 import {useAuthStore} from "@stores";
+import {getCookie} from "@utils/cookies.ts";
 
 export const instance = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
@@ -11,6 +12,14 @@ instance.interceptors.request.use((config) => {
     if (authStore.token) {
         config.headers.Authorization = `Bearer ${authStore.token}`;
     }
+
+    if (['post', 'put', 'patch', 'delete'].includes(config.method ?? '')) {
+        const csrfToken = getCookie('csrf_refresh_token')
+        if (csrfToken) {
+            config.headers['X-CSRF-Token'] = csrfToken
+        }
+    }
+
     return config;
 })
 
