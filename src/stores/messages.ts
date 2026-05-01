@@ -32,6 +32,10 @@ export const useMessagesStore = defineStore('messages', () => {
         return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
     }
 
+    const getMessageById = (id: string) => {
+        return allMessages.value.find(m => m._id === id)
+    }
+
     // load messages from API
     const loadMessages = async () => {
         fetchStatus.value = 'loading'
@@ -77,13 +81,13 @@ export const useMessagesStore = defineStore('messages', () => {
     }
 
     // apply an action to selected messages
-    const applyToSelected = async (ids: string[] |undefined, action: (id: string) => Promise<void>) => {
+    const applyToSelected = async (ids: string[] | undefined, action: (id: string) => Promise<void>) => {
         if (!ids || ids.length === 0) return
         await Promise.all(ids.map(id => action(id)))
     }
 
     return {
         allMessages, currentTab, fetchStatus, filteredMessages,
-        truncateMessage, loadMessages, markAsRead, trashMessage, deleteMessage, applyToSelected
+        truncateMessage, loadMessages, markAsRead, trashMessage, deleteMessage, applyToSelected, getMessageById
     }
 })

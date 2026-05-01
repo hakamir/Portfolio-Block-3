@@ -13,7 +13,22 @@ export default {
             path: 'messages',
             name: 'dashboard-messages',
             component: () => import('@views/dashboard/messages/MessagesView.vue'),
+            redirect: {name: 'dashboard-messages-list'},
+            children: [
+                {
+                    path: '',
+                    name: 'dashboard-messages-list',
+                    component: () => import('@views/dashboard/messages/components/MessageLayout.vue'),
+                },
+                {
+                    path: ':id',
+                    name: 'dashboard-message-detail',
+                    component: () => import('@views/dashboard/messages/components/MessageDetailView.vue'),
+                    props: true
+                },
+            ]
         },
+
         {
             path: 'biography',
             name: 'dashboard-biography',
