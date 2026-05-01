@@ -15,9 +15,10 @@ const status = ref<'idle' | 'loading' | 'success' | 'error' | 'invalid'>('idle')
 
 const rules = computed(() => ({
   minLength: newPwd.value.length >= 12,
+  hasLower: /[a-z]/.test(newPwd.value),
   hasUpper: /[A-Z]/.test(newPwd.value),
-  hasNumber: /[0-9]/.test(newPwd.value),
-  hasSpecial: /[^a-zA-Z0-9]/.test(newPwd.value),
+  hasNumber: /\d/.test(newPwd.value),
+  hasSpecial: /[^a-zA-Z0-9\s]/.test(newPwd.value),
   notSame: newPwd.value !== currentPwd.value,
   matches: newPwd.value === confirmPwd.value && confirmPwd.value !== '',
 }))
@@ -58,11 +59,12 @@ const handleSubmit = async () => {
           <X v-else class="w-5 h-5"/>
           <span>{{
               rule === 'minLength' ? 'At least 12 characters' :
-                  rule === 'hasUpper' ? 'One uppercase letter' :
-                      rule === 'hasNumber' ? 'One number' :
-                          rule === 'hasSpecial' ? 'One special character' :
-                              rule === 'notSame' ? 'Different from current password' :
-                                  'Passwords match'
+                  rule === 'hasLower' ? 'One lowercase letter' :
+                      rule === 'hasUpper' ? 'One uppercase letter' :
+                          rule === 'hasNumber' ? 'One number' :
+                              rule === 'hasSpecial' ? 'One special character' :
+                                  rule === 'notSame' ? 'Different from current password' :
+                                      'Passwords match'
             }}</span>
         </div>
       </div>
@@ -79,7 +81,7 @@ const handleSubmit = async () => {
                  v-model="currentPwd"
                  placeholder="••••••••"
                  class="flex-1 px-4 py-2 text-sm focus:outline-none bg-transparent"/>
-          <button @click="showCurrent = !showCurrent" class="px-3 text-gray-400 hover:text-gray-600 transition">
+          <button @click="showCurrent = !showCurrent" class="px-3 text-gray-400 hover:text-gray-600 transition" tabindex="-1">
             <Eye v-if="!showCurrent" :size="16"/>
             <EyeOff v-else :size="16"/>
           </button>

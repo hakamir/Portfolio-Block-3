@@ -32,6 +32,7 @@ def login():
 
 @auth_bp.route('/auth/password', methods=['PUT'])
 @jwt_required()
+@limiter.limit("5/minute")
 @handle_db_timeout
 def update_password():
     try:
@@ -48,5 +49,9 @@ def update_password():
         return jsonify({'error': "content-type must be application/json"}), 415
     except DoesNotExist:
         return jsonify({'error': 'user not found'}), 404
-    except ValidationError:
-        return jsonify({'error': 'Invalid payload'}), 400
+    except ValidationError as e:
+        errors = {
+            err['loc'][0]: err['msg'].replace('Value error, ', '')
+            for err in e.errors()
+        }
+        return jsonify({'error': {'Invalid payload': errors}}), 400
