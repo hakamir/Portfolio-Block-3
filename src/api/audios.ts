@@ -1,8 +1,8 @@
 export default {
-    getAudios: `/artists`,
-    updateAudios: `/artists`,
-    deleteArtist: (id: string) => `/artists/${id}`,
-    uploadAudio: `/audio/upload`,
-    getOrphans: `/audio/orphans`,
-    deleteOrphans: `/audio/orphans`,
+    getAudios: `/api/artists`,
+    updateAudios: `/api/artists`,
+    deleteArtist: (id: string) => `/api/artists/${id}`,
+    uploadAudio: `/api/audio/upload`,
+    getOrphans: `/api/audio/orphans`,
+    deleteOrphans: `/api/audio/orphans`,
 }

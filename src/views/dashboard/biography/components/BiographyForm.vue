@@ -52,8 +52,8 @@ const save = async () => {
     <div v-for="(section, sectionIndex) in biography.sections" :key="sectionIndex"
          class="border border-gray-200 bg-gray-50 rounded-xl p-6 flex flex-col gap-4">
       <div class="flex justify-between items-center">
-        <label class="font-bold text-lg">Section {{ sectionIndex + 1 }}</label>
-        <button @click="removeSection(sectionIndex)"
+        <label class="font-bold text-lg">Section {{ Number(sectionIndex) + 1 }}</label>
+        <button @click="removeSection(Number(sectionIndex))"
                 class="px-2 py-1 rounded-full text-red-500 text-sm hover:bg-red-100 transition flex items-center gap-1">
           <Trash2 class="w-4 h-4"/>
           Remove section
@@ -71,13 +71,13 @@ const save = async () => {
                   placeholder="Paragraph content"
                   class="bg-white border border-gray-300 rounded px-4 py-2 w-full min-h-10 resize-y"
                   style="font-size: 1.125rem;line-height: 1.75rem;"/>
-        <button @click="removeParagraph(sectionIndex, paragraphIndex)"
+        <button @click="removeParagraph(Number(sectionIndex), Number(paragraphIndex))"
                 class="px-1 py-1 rounded-full text-red-500 text-sm hover:bg-red-100 hover:scale-105 border border-red-300 mt-2 transition">
           <X/>
         </button>
       </div>
 
-      <button @click="addParagraph(sectionIndex)"
+      <button @click="addParagraph(Number(sectionIndex))"
               class="px-2 py-1 rounded-xl text-sm text-blue-600 hover:bg-blue-100 self-start transition flex justify-center items-center gap-2">
         <ListPlus/>
         Add paragraph

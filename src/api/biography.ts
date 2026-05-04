@@ -1,4 +1,4 @@
 export default {
-    getBiography: `/biography`,
-    updateBiography: `/biography`,
+    getBiography: `/api/biography`,
+    updateBiography: `/api/biography`,
 }

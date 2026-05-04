@@ -10,7 +10,7 @@ import {VueDraggable} from "vue-draggable-plus";
 import CollapseTransition from "@components/CollapseTransition.vue";
 import TagSelector from "@views/dashboard/works/Components/TagSelector.vue";
 
-const apiUrl = import.meta.env.VITE_API_URL
+const apiUrl = import.meta.env.VITE_API_URL + '/api'
 const audioStore = useAudioStore();
 const emit = defineEmits(['TagSelectorToggled'])
 

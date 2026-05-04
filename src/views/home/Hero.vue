@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import {vWave} from "@directives/wave.js";
 import ProgressiveImage from "@components/ProgressiveImage.vue";
+
+const apiUrl = import.meta.env.VITE_API_URL + '/api'
+
 </script>
 
 <template>
@@ -8,10 +11,11 @@ import ProgressiveImage from "@components/ProgressiveImage.vue";
       class="grid grid-rows-2 sm:relative bg-black text-white overflow-hidden lg:min-h-screen lg:h-screen sm:flex sm:items-center sm:snap-start">
     <!-- Hero Image -->
     <div class="sm:absolute sm:right-0 sm:top-0 sm:w-2/3 sm:h-full z-0">
-      <ProgressiveImage src512="./src/assets/img/hero/hero-1/hero-1-512.webp"
-                        src1024="./src/assets/img/hero/hero-1/hero-1-1024.webp"
-                        src2048="./src/assets/img/hero/hero-1/hero-1-2048.webp" alt="Block1 Logo"
+      <ProgressiveImage :src512="`${apiUrl}/uploads/background/hero/hero-512.webp`"
+                        :src1024="`${apiUrl}/uploads/background/hero/hero-1024.webp`"
+                        :src2048="`${apiUrl}/uploads/background/hero/hero-2048.webp`" alt="Block1 Logo"
                         blur
+                        :responsive=true
                         class="w-full h-full object-cover"/>
       <div class="hidden sm:block absolute top-0 left-0 h-full w-50 bg-linear-to-l from-black/0 to-black"></div>
     </div>

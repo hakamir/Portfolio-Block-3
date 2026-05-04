@@ -7,9 +7,9 @@ from .uploads import uploads_bp
 
 
 def register_routes(app):
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(messages_bp)
-    app.register_blueprint(biography_bp)
-    app.register_blueprint(artists_bp)
-    app.register_blueprint(gallery_bp)
-    app.register_blueprint(uploads_bp)
+    app.register_blueprint(auth_bp, url_prefix='/api')
+    app.register_blueprint(messages_bp, url_prefix='/api')
+    app.register_blueprint(biography_bp, url_prefix='/api')
+    app.register_blueprint(artists_bp, url_prefix='/api')
+    app.register_blueprint(gallery_bp, url_prefix='/api')
+    app.register_blueprint(uploads_bp, url_prefix='/api')

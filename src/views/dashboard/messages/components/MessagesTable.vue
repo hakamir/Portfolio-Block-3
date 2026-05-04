@@ -66,7 +66,7 @@ const format_date = (input: Date | string) => {
         <div :class="!message.read ? 'font-bold bg-blue-50': 'bg-white'"
              class="cursor-pointer border-b border-neutral-200 flex justify-between hover:bg-gray-50">
           <div class="flex">
-            <div class="px-4 py-2">
+            <div class="hidden md:block px-4 py-2">
               <input
                   type="checkbox"
                   class="checkbox"
@@ -74,14 +74,14 @@ const format_date = (input: Date | string) => {
                   @change="toggleSelect(message._id)"
               />
             </div>
-            <div class="flex items-center justify-center ">
+            <div class="flex items-center justify-center">
               <button
-                  class="w-10 h-10 hover:text-blue-600 hover:border hover:bg-white group border-gray-200 rounded-full flex items-center justify-center">
+                  class="hidden md:flex w-10 h-10 hover:text-blue-600 hover:border hover:bg-white group border-gray-200 rounded-full items-center justify-center">
                 <Reply class="group-hover:scale-110 transition-transform"/>
               </button>
             </div>
             <RouterLink :to="`/dashboard/messages/${message._id}`"
-                        class="flex">
+                        class="md:flex">
               <div class="px-4 py-2 select-none">{{ message.name }}</div>
               <div class="px-4 py-2 select-none">{{ store.truncateMessage(message.message) }}</div>
             </RouterLink>

@@ -7,7 +7,7 @@ import {useSearchStore} from "@stores/search.ts"
 import {onMounted, computed} from "vue"
 import AudioSearchEngine from "@views/portfolio/components/AudioSearchEngine.vue"
 
-const apiUrl = import.meta.env.VITE_API_URL
+const apiUrl = import.meta.env.VITE_API_URL + '/api'
 const audioStore = useAudioStore()
 const searchStore = useSearchStore()
 
