@@ -4,15 +4,15 @@ import ProgressiveImage from "@components/ProgressiveImage.vue";
 import Albums from "@views/portfolio/components/Albums.vue";
 import Gallery from "@views/portfolio/components/Gallery.vue";
 
-const apiUrl = import.meta.env.VITE_API_URL
+const apiUrl = import.meta.env.VITE_API_URL + '/api'
 
 </script>
 
 <template>
   <div class="relative min-h-screen flex flex-col">
-    <ProgressiveImage :src512="`${apiUrl}/uploads/gallery/background/gallery_0001-512.webp`"
-                      :src1024="`${apiUrl}/uploads/gallery/background/gallery_0001-1024.webp`"
-                      :src2048="`${apiUrl}/uploads/gallery/background/gallery_0001-2048.webp`"
+    <ProgressiveImage :src512="`${apiUrl}/uploads/background/portfolio/portfolio-512.webp`"
+                      :src1024="`${apiUrl}/uploads/background/portfolio/portfolio-1024.webp`"
+                      :src2048="`${apiUrl}/uploads/background/portfolio/portfolio-2048.webp`"
                       alt="Portfolio Background"
                       blur scale
                       class="fixed inset-0 w-full h-full object-cover -z-20"

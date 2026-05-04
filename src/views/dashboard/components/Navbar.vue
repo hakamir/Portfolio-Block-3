@@ -3,7 +3,7 @@ import {Mails, UserRoundPen, BriefcaseBusiness, Settings } from "@lucide/vue";
 </script>
 
 <template>
-  <div class="mt-36 container mx-auto flex gap-6 border-b-2 scale-120 md:scale-100 border-gray-200 justify-center">
+  <div class="mt-36 container mx-auto flex gap-6 border-b-2 md:scale-100 border-gray-200 justify-center">
     <RouterLink :to="{name: 'dashboard-messages'}" active-class="text-blue-600 scale-115" class="flex items-center gap-2 hover:scale-105 hover:-translate-y-1 transition px-4 py-4">
       <Mails />
       <span class="font-bold font-unbounded hidden md:inline">Messages</span>

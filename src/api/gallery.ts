@@ -1,6 +1,6 @@
 export default {
-  getGalleries: `/gallery`,
-  updateGalleries: `/gallery`,
-  deleteGallery: (id: string) => `/gallery/${id}`,
-  uploadImage: `/gallery/upload`,
+  getGalleries: `/api/gallery`,
+  updateGalleries: `/api/gallery`,
+  deleteGallery: (id: string) => `/api/gallery/${id}`,
+  uploadImage: `/api/gallery/upload`,
 }

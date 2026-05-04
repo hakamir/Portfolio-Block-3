@@ -6,7 +6,7 @@ type Align = 'start' | 'center' | 'end'
 
 interface Props {
   message: string
-  icon?: object
+  icon?: Function
   iconBgColor?: string
   size?: number
   delay?: number

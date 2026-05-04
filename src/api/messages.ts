@@ -1,6 +1,6 @@
 export default {
-    getMessages: `/messages`,
-    createMessage: `/messages`,
-    updateMessage: (id: string) => `/messages/${id}`,
-    deleteMessage: (id: string) => `/messages/${id}`,
+    getMessages: `/api/messages`,
+    createMessage: `/api/messages`,
+    updateMessage: (id: string) => `/api/messages/${id}`,
+    deleteMessage: (id: string) => `/api/messages/${id}`,
 }

@@ -3,7 +3,7 @@ import {onMounted} from 'vue'
 import {useGalleriesStore} from "@stores/gallery.ts";
 import Carousel from "@components/Carousel.vue";
 
-const baseUrl = import.meta.env.VITE_API_URL
+const baseUrl = import.meta.env.VITE_API_URL + '/api'
 
 const galleriesStore = useGalleriesStore()
 

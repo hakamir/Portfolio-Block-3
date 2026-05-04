@@ -1,6 +1,6 @@
 export default {
-    login: `/auth/login`,
-    logout: `/auth/logout`,
-    refresh: `/auth/refresh`,
-    changePassword: `/auth/password`,
+    login: `/api/auth/login`,
+    logout: `/api/auth/logout`,
+    refresh: `/api/auth/refresh`,
+    changePassword: `/api/auth/password`,
 }

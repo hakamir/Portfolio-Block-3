@@ -1,0 +1,10 @@
+.env*
+!.env.example
+.flaskenv
+__pycache__
+*.pyc
+*.pyo
+.venv
+uploads/audio/*
+uploads/gallery/*
+*.log

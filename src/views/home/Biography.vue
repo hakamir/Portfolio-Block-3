@@ -6,7 +6,7 @@ import ProgressiveImage from "@components/ProgressiveImage.vue";
 
 const store = useBiographyStore()
 let {biography} = storeToRefs(store)
-const baseURL = import.meta.env.VITE_API_URL
+const baseURL = import.meta.env.VITE_API_URL + '/api'
 
 onMounted(async () => {
   await store.fetchBiography()
@@ -22,6 +22,7 @@ onMounted(async () => {
                           :src1024="`${baseURL}/uploads${biography.image.md}`"
                           :src2048="`${baseURL}/uploads${biography.image.lg}`"
                           :alt="biography.title"
+                          :responsive=true
                           class="w-full h-full object-cover"/>
         <div
             class="hidden sm:block absolute top-0 right-0 h-full w-0.5 bg-linear-to-r from-neutral-300/0 to-neutral-300"></div>

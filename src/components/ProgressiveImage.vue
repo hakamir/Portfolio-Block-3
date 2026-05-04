@@ -53,6 +53,7 @@ onMounted(async () => {
         'transition-[filter, transform]': blur || scale,
         'duration-700 ease-in-out': blur || scale,
       }]"
+      fetchpriority="high"
     />
   </picture>
 

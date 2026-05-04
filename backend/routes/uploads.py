@@ -30,7 +30,7 @@ def upload_audio():
     album_slug = secure_filename(request.form.get('albumSlug'))
     track_src = secure_filename(request.form.get('trackSrc'))
 
-    extension = file.filename.split('.', 1)[-1].lower()
+    extension = file.filename.rsplit('.', 1)[-1].lower()
     if extension not in settings.allowed_audio_file_types:
         return jsonify({'error': 'Invalid file type'}), 415
 

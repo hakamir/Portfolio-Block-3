@@ -1,5 +1,4 @@
-from datetime import datetime
-
+from datetime import datetime, timezone
 from bson import ObjectId
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
@@ -35,14 +34,14 @@ def create_message():
             name=data.name,
             email=data.email,
             message=data.message,
-            date=datetime.now(),
+            date=datetime.now(timezone.utc),
             read=False,
             trashed=False
         )
         message.validate()
         message.save()
         return jsonify({'created': True}), 201
-    except ValidationError as e:
+    except ValidationError:
         return jsonify({'error': 'Invalid data'}), 400
 
 @messages_bp.route('/messages/<id>', methods=['PATCH'])

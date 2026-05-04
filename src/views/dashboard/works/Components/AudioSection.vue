@@ -10,7 +10,7 @@ import {VueDraggable} from "vue-draggable-plus";
 import CollapseTransition from "@components/CollapseTransition.vue";
 import TagSelector from "@views/dashboard/works/Components/TagSelector.vue";
 
-const apiUrl = import.meta.env.VITE_API_URL
+const apiUrl = import.meta.env.VITE_API_URL + '/api'
 const audioStore = useAudioStore();
 const emit = defineEmits(['TagSelectorToggled'])
 
@@ -195,7 +195,6 @@ const onSave = async () => {
                                           :track="track"
                                           :album="album"
                                           :artist="artist"
-                                          :title="track.title"
                           />
                           <TagSelector v-model="track.tags" @toggle="emit('TagSelectorToggled', track)"/>
                           <!-- Delete track button -->
