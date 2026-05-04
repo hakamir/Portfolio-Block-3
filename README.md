@@ -31,116 +31,172 @@ A full-stack portfolio web application for a music artist. Built with **Vue 3** 
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| **Frontend framework** | Vue 3 · Composition API · `<script setup>` |
-| **Build tool** | Vite 8 |
-| **Language** | TypeScript |
-| **State management** | Pinia |
-| **Routing** | Vue Router 4 |
-| **Styling** | Tailwind CSS 4.2 |
-| **HTTP client** | Axios (JWT interceptors) |
-| **Backend framework** | Flask |
-| **Database** | MongoDB (PyMongo / Flask-PyMongo) |
-| **Authentication** | Flask-JWT-Extended (8 h tokens) |
-| **Password hashing** | bcrypt |
-| **Rate limiting** | Flask-Limiter |
+| Layer                  | Technology                                          |
+|------------------------|-----------------------------------------------------|
+| **Frontend framework** | Vue 3 · Composition API · `<script setup>`          |
+| **Build tool**         | Vite 8                                              |
+| **Language**           | TypeScript                                          |
+| **State management**   | Pinia                                               |
+| **Routing**            | Vue Router 4                                        |
+| **Styling**            | Tailwind CSS 4.2                                    |
+| **HTTP client**        | Axios (JWT interceptors)                            |
+| **Backend framework**  | Flask                                               |
+| **Database**           | MongoDB (MongoEngine ODM)                           |
+| **Authentication**     | Flask-JWT-Extended (15 min access / 30 day refresh) |
+| **Password hashing**   | bcrypt                                              |
+| **Rate limiting**      | Flask-Limiter                                       |
+| **Containerisation**   | Docker · Docker Compose · Nginx                     |
 
 ---
 
 ## API Endpoints
 
+All routes are prefixed with `/api`.
+
 ### Authentication
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| POST | `/auth/login` | — | Login (5 req/min) |
-| PUT | `/auth/password` | JWT | Change password |
+| Method | Path                 | Auth | Description       |
+|-------:|----------------------|------|-------------------|
+|   POST | `/api/auth/login`    | —    | Login (5 req/min) |
+|   POST | `/api/auth/logout`   | JWT  | Logout            |
+|    PUT | `/api/auth/password` | JWT  | Change password   |
 
 ### Artists
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| GET | `/artists` | — | All artists with albums & tracks |
-| PUT | `/artists` | JWT | Create/update artists (bulk) |
-| DELETE | `/artists/<id>` | JWT | Delete artist |
+| Method | Path                | Auth | Description                      |
+|-------:|---------------------|------|----------------------------------|
+|    GET | `/api/artists`      | —    | All artists with albums & tracks |
+|    PUT | `/api/artists`      | JWT  | Create/update artists (bulk)     |
+| DELETE | `/api/artists/<id>` | JWT  | Delete artist                    |
 
 ### Biography
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| GET | `/biography` | — | Biography content |
-| PUT | `/biography` | JWT | Update biography |
+| Method | Path             | Auth | Description       |
+|-------:|------------------|------|-------------------|
+|    GET | `/api/biography` | —    | Biography content |
+|    PUT | `/api/biography` | JWT  | Update biography  |
 
 ### Gallery
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| GET | `/gallery` | — | All galleries with images |
-| PUT | `/gallery` | JWT | Create/update galleries (bulk) |
-| DELETE | `/gallery/<id>` | JWT | Delete gallery |
-| POST | `/gallery/upload` | JWT | Upload image |
+| Method | Path                  | Auth | Description                    |
+|-------:|-----------------------|------|--------------------------------|
+|    GET | `/api/gallery`        | —    | All galleries with images      |
+|    PUT | `/api/gallery`        | JWT  | Create/update galleries (bulk) |
+| DELETE | `/api/gallery/<id>`   | JWT  | Delete gallery                 |
+|   POST | `/api/gallery/upload` | JWT  | Upload image                   |
 
 ### Messages
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| GET | `/messages` | JWT | List messages |
-| POST | `/messages` | — | Submit message (1 req/min) |
-| PATCH | `/messages/<id>` | JWT | Update message (read/trash) |
-| DELETE | `/messages/<id>` | JWT | Delete message |
+| Method | Path                 | Auth | Description                 |
+|-------:|----------------------|------|-----------------------------|
+|    GET | `/api/messages`      | JWT  | List messages               |
+|   POST | `/api/messages`      | —    | Submit message (1 req/min)  |
+|  PATCH | `/api/messages/<id>` | JWT  | Update message (read/trash) |
+| DELETE | `/api/messages/<id>` | JWT  | Delete message              |
 
 ### Uploads
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| POST | `/audio/upload` | JWT | Upload audio file |
-| GET | `/uploads/<path>` | — | Serve uploaded file |
+| Method | Path                  | Auth | Description         |
+|-------:|-----------------------|------|---------------------|
+|   POST | `/api/audio/upload`   | JWT  | Upload audio file   |
+|    GET | `/api/uploads/<path>` | —    | Serve uploaded file |
 
 ### Orphaned files management
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| GET | `/audio/orphans` | JWT | List orphaned audio files |
-| DELETE | `/audio/orphans` | JWT | Delete orphaned audio files |
+| Method | Path                 | Auth | Description                 |
+|-------:|----------------------|------|-----------------------------|
+|    GET | `/api/audio/orphans` | JWT  | List orphaned audio files   |
+| DELETE | `/api/audio/orphans` | JWT  | Delete orphaned audio files |
 
 ---
 
 ## Getting Started
 
-### Prerequisites
+### Option A — Docker (recommended)
 
-- Node.js ≥ 18
-- Python ≥ 3.10
-- MongoDB running on `localhost:27017`
+**1. Configure environment**
 
-### Environment
+```bash
+cp .env.docker.example .env
+```
 
-
-Copy `.env.example` to `.env` and fill in the values:
+Fill in `.env`:
 
 ```env
-VITE_API_URL=http://localhost:5000
-JWT_SECRET_KEY=your_secret_key
+MONGO_ROOT_USER=root
+MONGO_ROOT_PASSWORD=your_root_password
+MONGODB_USER=portfolio
+MONGODB_PASSWORD=your_db_password
+JWT_SECRET_KEY=your_long_random_secret
+TEST_USER_EMAIL=admin@example.com
+TEST_USER_PASSWORD=your_admin_password
 ```
 
-### Backend
+**2. Start all services**
 
-```backend
-cd backend
-python -m venv ../.venv
-source ../.venv/Scripts/activate   # Windows: ..\.venv\Scripts\activate
-pip install -r requirements.txt
-python app.py
+```bash
+docker compose up --build
 ```
+
+This starts four services:
+
+|  Service   | URL                   | Description                        |
+|:----------:|-----------------------|------------------------------------|
+| `frontend` | http://localhost      | Vue app (Vite dev server)          |
+| `backend`  | http://localhost:5000 | Flask API                          |
+| `mongodb`  | localhost:27018       | MongoDB (host access)              |
+|  `seeder`  | —                     | Creates test user + biography data |
+
+On the first run, the seeder automatically creates:
+- An admin user with the email/password from `.env`
+- A default biography document
+
+**3. Useful commands**
+
+```bash
+docker compose down          # stop (data preserved)
+docker compose down -v       # stop + wipe database
+docker compose logs backend  # view backend logs
+docker compose cp backend/uploads/. backend:/app/uploads/  # restore local uploads
+```
+
+**Connect to MongoDB via Compass:**
+```
+mongodb://root:<MONGO_ROOT_PASSWORD>@localhost:27018/?authSource=admin
+```
+
+---
+
+### Option B — Local development
+
+**Prerequisites:** Node.js ≥ 18, Python ≥ 3.14, MongoDB running on `localhost:27017`
+
+**Backend**
+
+```bash
+python -m venv .venv
+.venv/Scripts/activate        # Windows
+pip install -r backend/requirements.txt
+cd backend && flask run --debug
+```
+
 The API will be available at `http://localhost:5000`.
 
-### Frontend
-```frontend
+**Frontend**
+
+```bash
+cp .env.example .env.development
+# set VITE_API_URL=http://localhost:5000
 npm install
 npm run dev
 ```
+
 The app will be available at `http://localhost:5173`.
 
 ---
 
 ## Database
-MongoDB is used with the following collections:
-- `users` - Admin account (email + bcrypt password)
-- `artists` - nested document: artist -> album -> tracks
-- `galleries` - nested document: gallery -> images
-- `biography` - single document
-- `messages` - contact from submissions
+
+MongoDB collections, created automatically on first Docker startup:
+
+| Collection  | Description                                    |
+|-------------|------------------------------------------------|
+| `users`     | Admin account (email + bcrypt-hashed password) |
+| `artists`   | Nested document: artist → album → tracks       |
+| `galleries` | Nested document: gallery → images              |
+| `biography` | Single document                                |
+| `messages`  | Contact form submissions                       |
+

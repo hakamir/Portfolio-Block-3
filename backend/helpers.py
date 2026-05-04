@@ -12,11 +12,11 @@ def handle_db_timeout(fn):
     def wrapper(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
-        except ServerSelectionTimeoutError as e:
+        except ServerSelectionTimeoutError:
             return jsonify({'error': 'Cannot connect to database'}), 500
-        except NotUniqueError as e:
+        except NotUniqueError:
             return jsonify({'error': 'Duplicate entry'}), 409
-        except OperationError as e:
+        except OperationError:
             return jsonify({'error': 'Database operation failed'}), 500
 
     return wrapper

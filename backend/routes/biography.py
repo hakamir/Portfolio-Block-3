@@ -14,6 +14,8 @@ biography_bp = Blueprint('biography', __name__)
 @handle_db_timeout
 def get_biography():
     biography = Biography.objects.first()
+    if biography is None:
+        return jsonify({"error": "biography not found"}), 404
     return jsonify({"biography": biography.to_json_dict()})
 
 
@@ -25,7 +27,7 @@ def update_biography():
         return jsonify({"error": "invalid content-type"}), 415
     try:
         data = BiographyIn.model_validate(request.get_json())
-    except PydanticValidationError as e:
+    except PydanticValidationError:
         return jsonify({"error": "invalid payload"}), 400
     try:
         bio = Biography.objects.get(id=data.id)

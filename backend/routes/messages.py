@@ -41,7 +41,7 @@ def create_message():
         message.validate()
         message.save()
         return jsonify({'created': True}), 201
-    except ValidationError as e:
+    except ValidationError:
         return jsonify({'error': 'Invalid data'}), 400
 
 @messages_bp.route('/messages/<id>', methods=['PATCH'])

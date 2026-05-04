@@ -27,7 +27,7 @@ def update_galleries():
     payload = request.get_json()
     try:
         galleries = [GalleryIn.model_validate(g) for g in payload]
-    except ValidationError as e:
+    except ValidationError:
         return jsonify({"error": "invalid payload"}), 400
     for g in galleries:
         images = [GalleryImage(**img.model_dump()) for img in g.images]

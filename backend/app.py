@@ -20,12 +20,21 @@ def create_app():
     app.config['JWT_COOKIE_SAMESITE'] = settings.jwt_cookie_samesite
     app.config['JWT_COOKIE_CSRF_PROTECT'] = settings.jwt_cookie_csrf_protect
 
+    standard_ports = {80, 443}
+    if settings.frontend_port in standard_ports:
+        allowed_origins = [
+            "http://localhost",
+            settings.frontend_url,
+        ]
+    else:
+        allowed_origins = [
+            f"http://localhost:{settings.frontend_port}",
+            f"{settings.frontend_url}:{settings.frontend_port}",
+        ]
+
     CORS(app,
          supports_credentials=True,
-         origins=[
-             f"http://localhost:{settings.frontend_port}",
-             f"{settings.frontend_url}:{settings.frontend_port}"
-         ])
+         origins=allowed_origins)
 
     limiter.init_app(app)
     init_db(settings)

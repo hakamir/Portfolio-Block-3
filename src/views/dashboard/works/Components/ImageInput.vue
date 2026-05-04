@@ -10,7 +10,7 @@ const props = defineProps<{
 }>()
 
 const galleriesStore = useGalleriesStore()
-const apiUrl = import.meta.env.VITE_API_URL
+const apiUrl = import.meta.env.VITE_API_URL + '/api'
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const localSrc = ref<string | null>(null)

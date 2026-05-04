@@ -1,6 +1,6 @@
 import bcrypt
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, create_refresh_token, decode_token, \
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, create_refresh_token, \
     set_refresh_cookies, unset_jwt_cookies
 from mongoengine import DoesNotExist
 from pydantic import ValidationError
@@ -50,6 +50,7 @@ def logout():
     response = jsonify({'logged_out': True})
     unset_jwt_cookies(response)
     return response, 200
+
 
 @auth_bp.route('/auth/password', methods=['PUT'])
 @jwt_required()
