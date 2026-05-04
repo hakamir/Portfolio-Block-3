@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref, onMounted, onUnmounted} from 'vue'
+import {ref, onMounted, onUnmounted, watch} from 'vue'
 import {ChevronLeft, ChevronRight} from '@lucide/vue'
 import type {Image} from "@stores/gallery.ts";
 
@@ -25,18 +25,28 @@ const stopAutoplay = () => clearInterval(autoplayInterval)
 
 onMounted(() => startAutoplay())
 onUnmounted(() => stopAutoplay())
+
+const preloadImg = (src: string) => {
+  const img = new Image()
+  img.src = src
+}
+
+watch(current, (newIndex) => {
+  const nextIndex = (newIndex + 1) % props.images.length
+  const nextSrc = props.baseSrc ? `${props.baseSrc}/${props.images[nextIndex].src}` : props.images[nextIndex].src
+  preloadImg(nextSrc)
+})
+
 </script>
 
 <template>
   <div class="relative w-full" @mouseenter="stopAutoplay" @mouseleave="startAutoplay">
     <div class="relative overflow-hidden rounded-3xl aspect-video shadow-[0_0_50px_rgba(0,0,0,0.5)] group">
-      <transition-group name="fade">
+      <transition-group name="fade" mode="out-in">
         <img
-            v-for="(image, index) in images"
-            v-show="index === current"
-            :key="index"
-            :src="baseSrc ? `${baseSrc}/${image.src}` : image.src"
-            :alt="image.alt"
+            :key="current"
+            :src="baseSrc ? `${baseSrc}/${images[current].src}` : images[current].src"
+            :alt="images[current].alt"
             class="absolute inset-0 w-full h-full object-cover"
         />
       </transition-group>
