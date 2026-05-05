@@ -43,7 +43,7 @@ const onConfirmTagEdition = () => {
 
 <template>
 
-  <section class="pt-8 pb-16 md:pt-16 container mx-auto px-8 md:px-32 flex flex-col gap-4">
+  <section class="pt-8 pb-16 md:pt-16 lg:container lg:mx-auto px-4 lg:px-32 flex flex-col gap-4">
     <h1 class="text-4xl font-bold font-unbounded mb-8">Works</h1>
     <AudioSection @TagSelectorToggled="handleTagSelectorToggle"/>
     <GallerySection/>

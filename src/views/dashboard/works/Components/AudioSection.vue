@@ -115,7 +115,7 @@ const onSave = async () => {
 </script>
 
 <template>
-  <div class="border border-gray-200 bg-gray-50 rounded-xl p-6 flex flex-col">
+  <div class="border border-gray-200 bg-gray-50 rounded-xl p-2 md:p-6 flex flex-col">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-2xl font-semibold mb-4">Audios</h2>
       <!-- Add artist button -->
@@ -148,7 +148,7 @@ const onSave = async () => {
               class="work-add-album-btn group">
             <Plus class="text-blue-400 group-hover:text-blue-600 group-hover:scale-120 transition"/>
             <span
-                class="text-sm text-blue-600 group-hover:text-blue-700 group-hover:translate-x-1 transition">New album</span>
+                class="hidden md:block text-sm text-blue-600 group-hover:text-blue-700 group-hover:translate-x-1 transition">New album</span>
           </button>
           <!-- Delete artist button -->
           <DeleteButton @delete="deleteArtist(artist)" customClass="rounded-r-full" assignedFor="artist"/>
@@ -156,7 +156,8 @@ const onSave = async () => {
 
         <!-- ALBUMS -->
         <CollapseTransition :show="!collapsedArtists.has(artist.slug)" customClass="flex">
-          <div class="w-2 bg-primary-200/30 border-x border-b border-gray-400/30 mx-4 mb-1 rounded-b-full"/>
+          <div
+              class="hidden md:block w-2 bg-primary-200/30 border-x border-b border-gray-400/30 mx-4 mb-1 rounded-b-full"/>
           <div class="flex flex-col grow">
             <VueDraggable
                 v-model="artist.albums"
@@ -180,7 +181,7 @@ const onSave = async () => {
                 <!-- TRACKS -->
                 <CollapseTransition :show="!collapsedAlbums.has(album.slug)" customClass="flex">
                   <div
-                      class="w-2 bg-yellow-200/30 border-x border-b border-gray-400/30 mx-4 mb-6 rounded-b-full"/>
+                      class="hidden md:block w-2 bg-yellow-200/30 border-x border-b border-gray-400/30 mx-4 mb-6 rounded-b-full"/>
                   <div class="flex flex-col grow">
                     <VueDraggable
                         v-model="album.tracks"
@@ -225,7 +226,7 @@ const onSave = async () => {
     </VueDraggable>
     <div class="flex justify-end items-center mt-4 gap-4">
       <div v-if="fetchStatus == 'error'" class="flex items-center gap-2 text-red-800 bg-red-100 rounded-full p-2">
-        <Ban />
+        <Ban/>
         <span class="text-sm font-semibold">Error</span>
       </div>
       <button v-if="fetchStatus == 'idle' || fetchStatus == 'error'" @click="onSave"
@@ -237,7 +238,7 @@ const onSave = async () => {
               class="px-6 py-2 bg-gray-700 text-white rounded-2xl transition flex items-center gap-2 cursor-not-allowed!">
         <LoaderCircle class="animate-spin"/>
         <span class="font-unbounded">Uploading: </span>
-        <span class="text-blue-400 italic">{{uploadedFileName}}</span>
+        <span class="text-blue-400 italic">{{ uploadedFileName }}</span>
       </button>
     </div>
   </div>
