@@ -23,8 +23,9 @@ export interface Gallery {
 
 export const useGalleriesStore = defineStore('galleries', () => {
     const galleries = ref<Gallery[]>([])
-
     const pendingUploads = ref<Map<Image, File>>(new Map())
+    const fetchStatus = ref<'idle' | 'loading' | 'error'>('idle')
+    const uploadedFileName = ref<string | undefined>(undefined);
 
     const fetchGalleries = async () => {
         const res = await instance.get(galleryApi.getGalleries)
@@ -36,7 +37,7 @@ export const useGalleriesStore = defineStore('galleries', () => {
     }
 
     const getNextSrc = async (gallerySlug: string): Promise<string> => {
-        const res = await instance.get(`/gallery/next-src?gallerySlug=${gallerySlug}`)
+        const res = await instance.get(`/api/gallery/next-src?gallerySlug=${gallerySlug}`)
         return res.data.src
     }
 
@@ -63,40 +64,49 @@ export const useGalleriesStore = defineStore('galleries', () => {
     }
 
     const saveGalleries = async () => {
-        try {
-            // Upload pending images
-            for (const [image, file] of pendingUploads.value.entries()) {
-                const gallery = galleries.value.find(g => g.images.includes(image))
-                if (!gallery) continue
-
-                // Get next available src
-                const src = await getNextSrc(gallery.slug)
-                image.src = src
-
-                const formData = new FormData()
-                formData.append('file', file)
-                formData.append('gallerySlug', gallery.slug)
-                formData.append('imageSrc', src)
-                await instance.post(galleryApi.uploadImage, formData)
-            }
-            pendingUploads.value.clear()
-
-            // Delete galleries that no longer exist
-            const existingIds = (await instance.get(galleryApi.getGalleries)).data
-                .map((g: Gallery) => g._id)
-            const currentIds = galleries.value.map(g => g._id).filter(id => id)
-            const toDelete = existingIds.filter((id: string) => !currentIds.includes(id))
-            for (const id of toDelete) {
-                await instance.delete(galleryApi.deleteGallery(id))
-            }
-
-            // Save galleries
-            await instance.put(galleryApi.updateGalleries, galleries.value)
-        } catch (err) {
-            console.error('Error saving galleries:', err)
-            throw err
+        fetchStatus.value = 'loading'
+        // Upload pending images
+        const hasEmpty = galleries.value.some(gallery => {
+            !gallery.title?.trim() ||
+                gallery.images.some(image => {
+                !image.title?.trim() ||
+                !image.location?.trim()
+                })
+        })
+        if (hasEmpty) {
+            return false
         }
+        for (const [image, file] of pendingUploads.value.entries()) {
+            const gallery = galleries.value.find(g => g.images.includes(image))
+            if (!gallery) continue
+            uploadedFileName.value = pendingUploads.value.get(image)?.name;
+            // Get next available src
+            const src = await getNextSrc(gallery.slug)
+            image.src = src
+
+            const formData = new FormData()
+            formData.append('file', file)
+            formData.append('gallerySlug', gallery.slug)
+            formData.append('imageSrc', src)
+
+            await instance.post(galleryApi.uploadImage, formData)
+        }
+        pendingUploads.value.clear()
+        uploadedFileName.value = undefined;
+        // Delete galleries that no longer exist
+        const existingIds = (await instance.get(galleryApi.getGalleries)).data
+            .map((g: Gallery) => g._id)
+        const currentIds = galleries.value.map(g => g._id).filter(id => id)
+        const toDelete = existingIds.filter((id: string) => !currentIds.includes(id))
+        for (const id of toDelete) {
+            await instance.delete(galleryApi.deleteGallery(id))
+        }
+
+        // Save galleries
+        await instance.put(galleryApi.updateGalleries, galleries.value)
+        fetchStatus.value = 'idle'
+        return true
     }
 
-    return {galleries, fetchGalleries, saveGalleries, pendingUploads, checkImageExists}
+    return {galleries, fetchGalleries, saveGalleries, pendingUploads, checkImageExists, fetchStatus, uploadedFileName}
 });
