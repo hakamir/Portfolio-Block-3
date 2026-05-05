@@ -92,7 +92,7 @@ onMounted(async () => {
            class="flex gap-2 items-start">
         <textarea
             v-model="section.paragraphs[paragraphIndex]"
-            :ref="el => { if (el) textareaRefs[sectionIndex * 1000 + paragraphIndex] = el as HTMLTextAreaElement }"
+            :ref="el => { if (el) textareaRefs[(sectionIndex as number) * 1000 + (paragraphIndex as number)] = el as HTMLTextAreaElement }"
             rows="3"
             @input="autoResize"
             placeholder="Paragraph content"
