@@ -36,7 +36,7 @@ export const useGalleriesStore = defineStore('galleries', () => {
     }
 
     const getNextSrc = async (gallerySlug: string): Promise<string> => {
-        const res = await instance.get(`/gallery/next-src?gallerySlug=${gallerySlug}`)
+        const res = await instance.get(`/api/gallery/next-src?gallerySlug=${gallerySlug}`)
         return res.data.src
     }
 
