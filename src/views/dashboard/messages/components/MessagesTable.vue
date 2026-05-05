@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import {watch} from 'vue'
+import {ref, watch} from 'vue'
 import {useMessagesStore} from '@stores/messages'
 import {storeToRefs} from 'pinia'
-import {Reply} from "@lucide/vue";
+import {Inbox, Mail, Reply, Trash2, Shredder} from "@lucide/vue";
 
 const props = defineProps<{ selectedIds: string[] }>()
 const emit = defineEmits<{ 'update:selectedIds': [value: string[]] }>()
@@ -20,6 +20,66 @@ const toggleSelect = (id: string) => {
 watch(filteredMessages, () => {
   emit('update:selectedIds', [])
 })
+
+const swipeState = ref<Record<string, {
+  startX: number
+  startY: number
+  deltaX: number
+  swiping: boolean
+  locked: boolean
+}>>({})
+
+const onTouchStart = (id: string, e: TouchEvent) => {
+  swipeState.value[id] = {
+    startX: e.touches[0].clientX,
+    startY: e.touches[0].clientY,
+    deltaX: 0,
+    swiping: false,
+    locked: false
+  }
+}
+
+const onTouchMove = (id: string, e: TouchEvent) => {
+  const state = swipeState.value[id]
+  if (!state) return
+
+  const deltaX = e.touches[0].clientX - state.startX
+  const deltaY = e.touches[0].clientY - state.startY
+
+  if (!state.swiping && Math.abs(deltaX) < 5 && Math.abs(deltaY) < 5) return
+
+  if (!state.swiping && Math.abs(deltaY) > Math.abs(deltaX)) {
+    swipeState.value[id] = {...state, swiping: false, deltaX: 0, locked: true}
+    return
+  }
+
+  if (state.locked) return
+
+  e.preventDefault()
+  swipeState.value[id] = {...state, swiping: true, deltaX}
+}
+
+const onTouchEnd = async (id: string) => {
+  const state = swipeState.value[id]
+  const delta = state?.deltaX ?? 0
+  if (store.currentTab == "inbox") {
+    if (delta > 200) {
+      await store.markAsRead(id, false)
+    } else if (delta < -200) {
+      await store.trashMessage(id, true)
+    }
+  } else if (store.currentTab == "trash") {
+    if (delta > 200) {
+      await store.trashMessage(id, false)
+    } else if (delta < -200) {
+      await store.deleteMessage(id)
+    }
+  }
+  emit('update:selectedIds', [])
+  swipeState.value[id] = {startX: 0, startY: 0, deltaX: 0, locked: false, swiping: false}
+}
+
+const getSwipeDelta = (id: string) => swipeState.value[id]?.deltaX ?? 0
 
 const format_date = (input: Date | string) => {
   const date = new Date(input)
@@ -63,30 +123,55 @@ const format_date = (input: Date | string) => {
       </div>
       <!-- Messages -->
       <template v-else v-for="message in filteredMessages" :key="message._id">
-        <div :class="!message.read ? 'font-bold bg-blue-50': 'bg-white'"
-             class="cursor-pointer border-b border-neutral-200 flex justify-between hover:bg-gray-50">
-          <div class="flex">
-            <div class="hidden md:block px-4 py-2">
-              <input
-                  type="checkbox"
-                  class="checkbox"
-                  :checked="selectedIds?.includes(message._id)"
-                  @change="toggleSelect(message._id)"
-              />
-            </div>
-            <div class="flex items-center justify-center">
-              <button
-                  class="hidden md:flex w-10 h-10 hover:text-blue-600 hover:border hover:bg-white group border-gray-200 rounded-full items-center justify-center">
-                <Reply class="group-hover:scale-110 transition-transform"/>
-              </button>
-            </div>
-            <RouterLink :to="`/dashboard/messages/${message._id}`"
-                        class="md:flex">
-              <div class="px-4 py-2 select-none">{{ message.name }}</div>
-              <div class="px-4 py-2 select-none">{{ store.truncateMessage(message.message) }}</div>
-            </RouterLink>
+        <div class="relative flex border-b border-neutral-200 overflow-hidden">
+
+          <!-- Mark as read (Mobile) -->
+          <div
+              class="flex items-center justify-end bg-blue-600 text-white overflow-hidden transition-all duration-75"
+              :style="{ width: `${Math.max(0, getSwipeDelta(message._id))}px` }"
+          >
+            <Mail v-if="store.currentTab === 'inbox'" class="mr-4"/>
+            <Inbox v-else class="mr-4"/>
           </div>
-          <div class="px-4 py-2 select-none">{{ format_date(message.date) }}</div>
+
+          <!-- Message -->
+          <div :class="[!message.read ? 'font-bold bg-blue-50' : 'bg-white',
+                !swipeState[message._id]?.swiping ? 'transition-all duration-200' : '']"
+               class="flex-1 cursor-pointer flex justify-between hover:bg-gray-50 min-w-0"
+               @touchstart="onTouchStart(message._id, $event)"
+               @touchmove="onTouchMove(message._id, $event)"
+               @touchend="onTouchEnd(message._id)"
+          >
+            <div class="flex min-w-0">
+              <div class="hidden md:block px-4 py-2">
+                <input
+                    type="checkbox"
+                    class="checkbox"
+                    :checked="selectedIds?.includes(message._id)"
+                    @change="toggleSelect(message._id)"
+                />
+              </div>
+              <div class="flex items-center justify-center">
+                <button
+                    class="hidden md:flex w-10 h-10 hover:text-blue-600 hover:border hover:bg-white group border-gray-200 rounded-full items-center justify-center">
+                  <Reply class="group-hover:scale-110 transition-transform"/>
+                </button>
+              </div>
+              <RouterLink :to="`/dashboard/messages/${message._id}`" class="md:flex min-w-0">
+                <div class="px-4 py-2 select-none truncate min-w-50 font-medium">{{ message.name }}</div>
+                <div class="px-4 py-2 select-none truncate text-sm md:text-base">{{ message.message }}</div>
+              </RouterLink>
+            </div>
+            <div class="px-4 py-2 select-none shrink-0">{{ format_date(message.date) }}</div>
+          </div>
+
+          <!-- Trash (Mobile) -->
+          <div class="flex items-center justify-start bg-red-600 text-white overflow-hidden transition-all duration-75"
+               :style="{ width: `${Math.max(0, -getSwipeDelta(message._id))}px` }">
+            <Trash2 v-if="store.currentTab === 'inbox'" class="ml-4"/>
+            <Shredder v-else class="ml-4"/>
+          </div>
+
         </div>
       </template>
     </div>
