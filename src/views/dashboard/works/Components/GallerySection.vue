@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {type Gallery, useGalleriesStore} from "@stores/gallery.ts";
-import {Plus, Save} from "@lucide/vue";
+import {Ban, LoaderCircle, Plus, Save} from "@lucide/vue";
 import {v4 as uuidv4} from "uuid";
 import {onMounted, ref} from "vue";
 import CollapseButton from "@views/dashboard/works/Components/CollapseButton.vue";
@@ -9,6 +9,7 @@ import WorkInput from "@views/dashboard/works/Components/WorkInput.vue";
 import CollapseTransition from "@components/CollapseTransition.vue";
 import ImageInput from "@views/dashboard/works/Components/ImageInput.vue";
 import {VueDraggable} from "vue-draggable-plus";
+import {storeToRefs} from "pinia";
 
 const galleriesStore = useGalleriesStore();
 
@@ -51,14 +52,17 @@ const deleteImage = (gallery: Gallery, image: any) => {
 }
 
 const refreshKey = ref(0);
+const {fetchStatus, uploadedFileName} = storeToRefs(galleriesStore);
 
 const onSave = async () => {
   try {
-    await galleriesStore.saveGalleries()
-    await galleriesStore.fetchGalleries()
-    refreshKey.value += 1;
-  } catch (error) {
-    console.error('Error saving audios:', error)
+    if (await galleriesStore.saveGalleries()) {
+      await galleriesStore.fetchGalleries()
+      refreshKey.value += 1;
+    }
+  } catch {
+    console.error('Error saving images')
+    fetchStatus.value = 'error'
   }
 }
 
@@ -157,11 +161,21 @@ const reorderImages = (gallery: Gallery) => {
       </div>
 
     </VueDraggable>
-    <div class="flex justify-end mt-4">
-      <button @click="onSave"
+    <div class="flex justify-end items-center mt-4 gap-4">
+      <div v-if="fetchStatus == 'error'" class="flex items-center gap-2 text-red-800 bg-red-100 rounded-full p-2">
+        <Ban />
+        <span class="text-sm font-semibold">Error</span>
+      </div>
+      <button v-if="fetchStatus == 'idle' || fetchStatus == 'error'" @click="onSave"
               class="px-6 py-2 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 transition flex items-center gap-2">
         <Save class="w-6 h-6"/>
         <span class="font-unbounded">Save</span>
+      </button>
+      <button v-if="fetchStatus == 'loading'" @click="onSave"
+              class="px-6 py-2 bg-gray-700 text-white rounded-2xl transition flex items-center gap-2 cursor-not-allowed!">
+        <LoaderCircle class="animate-spin"/>
+        <span class="font-unbounded">Uploading: </span>
+        <span class="text-blue-400 italic">{{uploadedFileName}}</span>
       </button>
     </div>
   </div>

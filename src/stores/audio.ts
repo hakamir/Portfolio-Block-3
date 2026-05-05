@@ -30,6 +30,7 @@ export const useAudioStore = defineStore('audio', () => {
     const loading = ref(false)
     const fetchStatus = ref<'idle' | 'loading' | 'error'>('idle')
     const isSubmitted = ref(false);
+    const uploadedFileName = ref<string | undefined>(undefined);
 
     const toSlug = (str: string) => str.toLowerCase().trim().replace(/\s+/g, '_')
 
@@ -87,7 +88,7 @@ export const useAudioStore = defineStore('audio', () => {
     const saveAudios = async () => {
         // Upload pending tracks
         isSubmitted.value = true;
-
+        fetchStatus.value = 'loading';
         const hasEmpty = artists.value.some(artist =>
             !artist.title?.trim() ||
             artist.albums.some(album =>
@@ -116,10 +117,11 @@ export const useAudioStore = defineStore('audio', () => {
             formData.append('artistSlug', artist.slug)
             formData.append('albumSlug', album.slug)
             formData.append('trackSrc', track.src)
+            uploadedFileName.value = pendingUploads.value.get(track)?.name;
             await instance.post(audiosApi.uploadAudio, formData)
         }
         pendingUploads.value.clear()
-
+        uploadedFileName.value = undefined;
         // Get ids from existing artists
         const existingIds = (await instance.get(audiosApi.getAudios)).data.map((a: Artist) => a._id)
 
@@ -132,6 +134,7 @@ export const useAudioStore = defineStore('audio', () => {
 
         // Save artists
         await instance.put(audiosApi.updateAudios, artists.value)
+        fetchStatus.value = 'idle';
         return true;
     }
 
@@ -159,6 +162,7 @@ export const useAudioStore = defineStore('audio', () => {
         artists,
         loading,
         fetchStatus,
+        uploadedFileName,
         fetchAudios,
         checkAudioExists,
         pendingUploads,
