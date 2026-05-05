@@ -20,6 +20,7 @@ onMounted(async () => {
       <span v-else>No gallery found</span>
     </h2>
     <div v-for="(gallery, index) in galleriesStore.galleries" :key="index">
+      <h3 class="font-unbounded text-xl md:text-2xl ml-4 mb-4 sm:mb-8">{{ gallery.title }}</h3>
       <Carousel
           :images="gallery.images"
           :baseSrc="`${baseUrl}/uploads/gallery/${gallery.slug}`"

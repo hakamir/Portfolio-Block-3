@@ -66,35 +66,35 @@ const onLoaded = () => {
   duration.value = formatTime(audioRef.value.duration)
 }
 
-// Seek to a specific time in the song using click event on the seek bar
-const seek = (event: MouseEvent) => {
-  if (!audioRef.value) return
-  const bar = event.currentTarget as HTMLElement
-  const ratio = event.offsetX / bar.offsetWidth
-  audioRef.value.currentTime = ratio * audioRef.value.duration
-}
-
 const updateSeek = (clientX: number) => {
-  if (!audioRef.value || !barRef.value) return;
-
-  const rect = barRef.value.getBoundingClientRect();
-  const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
-  const ratio = x / rect.width;
-  audioRef.value.currentTime = ratio * audioRef.value.duration;
+  const audio = playerStore.currentTrack
+  if (!audio || !barRef.value) return
+  const rect = barRef.value.getBoundingClientRect()
+  const x = Math.max(0, Math.min(clientX - rect.left, rect.width))
+  audio.currentTime = (x / rect.width) * audio.duration
 }
 
-const startDrag = (event: MouseEvent) => {
-  isDragging.value = true;
-  updateSeek(event.clientX);
+const startDrag = (event: MouseEvent | TouchEvent) => {
+  isDragging.value = true
+  const clientX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX
+  updateSeek(clientX)
 }
 
-const onMouseMove = (event: MouseEvent) => {
-  if (!isDragging.value) return;
-  updateSeek(event.clientX)
+const onMouseMove = (event: MouseEvent | TouchEvent) => {
+  if (!isDragging.value) return
+  const clientX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX
+  updateSeek(clientX)
 }
 
 const stopDrag = () => {
-  isDragging.value = false;
+  isDragging.value = false
+}
+
+const seek = (event: MouseEvent | TouchEvent) => {
+  const audio = playerStore.currentTrack
+  if (!audio || !barRef.value) return
+  const clientX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX
+  updateSeek(clientX)
 }
 
 </script>
@@ -111,8 +111,15 @@ const stopDrag = () => {
       <span class="text-sm font-unbounded">{{ title }}</span>
       <span class="text-sm text-white/70">{{ subtitle }}</span>
 
-      <div ref="barRef" class="relative h-8 cursor-pointer group flex items-center" @mousedown="startDrag">
-        <div class="relative w-full h-1 bg-white/30 rounded-full" @click="seek">
+      <div class="hidden sm:flex text-sm relative h-8 cursor-pointer group items-center" >
+        <div ref="barRef" class="relative w-full h-1 bg-white/30 rounded-full"
+             @mousedown="startDrag"
+             @touchstart.prevent="startDrag"
+             @mousemove="onMouseMove"
+             @touchmove.prevent="onMouseMove"
+             @mouseup="stopDrag"
+             @touchend="stopDrag"
+             @click="seek">
           <div class="h-full bg-white rounded-full"
                :style="{ width: `${progress}%` }"/>
           <div
@@ -125,7 +132,7 @@ const stopDrag = () => {
       </div>
     </div>
 
-    <span class="text-sm text-white/70 tabular-nums select-none">{{ currentTime }} / {{ duration }}</span>
+    <span class="hidden sm:inline text-sm text-white/70 tabular-nums select-none">{{ currentTime }} / {{ duration }}</span>
 
     <audio ref="audioRef" :src="props.src"
            preload="metadata"
