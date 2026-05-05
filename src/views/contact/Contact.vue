@@ -3,15 +3,31 @@ import Footer from "@components/layout/footer/Footer.vue";
 import {Send, TriangleAlert, LoaderCircle} from "@lucide/vue";
 import {useContactStore} from "@stores";
 import {storeToRefs} from "pinia";
+import {onMounted, onUnmounted, ref} from "vue";
 
 const store = useContactStore()
 const {formData, status} = storeToRefs(store)
+
+const isMobile = ref(window.innerWidth < 768)
+
+onMounted(() => {
+  window.addEventListener('resize', () => {
+    isMobile.value = window.innerWidth < 768
+  })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', () => {
+    isMobile.value = window.innerWidth < 768
+  })
+})
+
 </script>
 
 <template>
   <div class="flex flex-col min-h-screen">
     <div class="flex flex-1">
-      <section class="pt-28 pb-16 md:pt-48 container mx-auto px-6 md:px-32">
+      <section class="pt-28 pb-16 md:pt-48 xl:container xl:mx-auto px-6 lg:px-32">
         <div class="md:grid md:grid-cols-2 md:p-8 gap-16 md:border border-gray-300 rounded-xl md:bg-gray-100">
           <div class="pb-8">
             <h1 class="text-3xl md:text-4xl font-unbounded">Get in touch!</h1>
@@ -21,12 +37,12 @@ const {formData, status} = storeToRefs(store)
           <form v-if="status !== 'submitted'" id="form-contact" class="flex flex-col"
                 @submit.prevent="store.sendMessage">
             <div class="relative flex items-center border rounded-t-xl bg-white h-14 border-gray-300 group focus-within:inset-shadow-[0_0_5px_rgba(0,0,0,0.5)] focus-within:bg-white/70 ring-inset ring-black/50 transition">
-              <label for="name" class="block font-unbounded px-4 w-24 group-focus-within:-translate-x-1 group-focus-within:text-black/0 md:group-focus-within:text-black/80 transition select-none">Name</label>
+              <label v-if="!isMobile || !formData.name.trim()" for="name" class="block font-unbounded px-4 w-24 group-focus-within:-translate-x-1 group-focus-within:text-black/0 md:group-focus-within:text-black/80 transition select-none">Name</label>
               <input id="name" type="text" v-model="formData.name" class="absolute md:relative w-full h-12 outline-none px-4" required>
             </div>
             <div
                 class="relative flex items-center border-x bg-white h-14 border-gray-300 group focus-within:inset-shadow-[0_0_5px_rgba(0,0,0,0.5)] focus-within:bg-white/70 ring-inset ring-black/50 transition">
-              <label for="email" class="block font-unbounded px-4 w-24 group-focus-within:-translate-x-1 group-focus-within:text-black/0 md:group-focus-within:text-black/80 transition select-none">Email</label>
+              <label v-if="!isMobile || !formData.email.trim()" for="email" class="block font-unbounded px-4 w-24 group-focus-within:-translate-x-1 group-focus-within:text-black/0 md:group-focus-within:text-black/80 transition select-none">Email</label>
               <input id="email" type="email" name="email" v-model="formData.email" class="absolute md:relative w-full h-12 outline-none px-4" required>
             </div>
             <div class="flex flex-col border border-gray-300 bg-white group focus-within:inset-shadow-[0_0_5px_rgba(0,0,0,0.5)] focus-within:bg-white/70 ring-inset ring-black/50 transition">

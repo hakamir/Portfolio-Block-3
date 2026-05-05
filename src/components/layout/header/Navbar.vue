@@ -9,9 +9,9 @@ const store = useAuthStore()
 </script>
 
 <template>
-  <div class="hidden md:block ms-auto">
+  <div class="hidden lg:block ms-auto">
     <nav>
-      <ul class="flex space-x-12 text-lg font-bold">
+      <ul class="flex space-x-6 xl:space-x-12 text-lg font-bold">
         <li>
           <RouterLink
               to="/"

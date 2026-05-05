@@ -35,8 +35,8 @@ const toggleMenu = () => {
 </script>
 
 <template>
-  <div class="block md:hidden ms-auto" ref="menuRef">
-    <div class="block md:hidden z-20 relative">
+  <div class="block lg:hidden ms-auto" ref="menuRef">
+    <div class="block lg:hidden z-20 relative">
       <button @click="toggleMenu" class="menu-button" type="button" aria-label="Menu button">
         <span class="line" :class="`bg-${props.color}`"></span>
         <span class="line" :class="`bg-${props.color}`"></span>
