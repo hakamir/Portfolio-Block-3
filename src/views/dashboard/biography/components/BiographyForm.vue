@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {useBiographyStore} from "@stores";
-import {onMounted, ref} from "vue";
+import {nextTick, onMounted, ref} from "vue";
 import {storeToRefs} from "pinia";
 import {X, Trash2, ListPlus, LayersPlus, Save, LoaderCircle, Check} from '@lucide/vue';
 
@@ -36,10 +36,31 @@ const save = async () => {
     saveStatus.value = 'error'
   }
 }
+const textareaRefs = ref<HTMLTextAreaElement[]>([])
+
+const autoResize = (e: Event) => {
+  const el = e.target as HTMLTextAreaElement
+  el.style.height = 'auto'
+  el.style.height = el.scrollHeight + 'px'
+}
+
+const autoResizeAll = () => {
+  textareaRefs.value.forEach(el => {
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = el.scrollHeight + 'px'
+  })
+}
+
+onMounted(async () => {
+  await store.fetchBiography()
+  await nextTick()
+  autoResizeAll()
+})
 </script>
 
 <template>
-  <div v-if="biography" class="flex flex-col gap-8 mt-8">
+  <div v-if="biography" class="flex flex-col gap-6 mt-8 pb-24 md:pb-8">
 
     <!-- Main title -->
     <div>
@@ -50,11 +71,13 @@ const save = async () => {
 
     <!-- Sections -->
     <div v-for="(section, sectionIndex) in biography.sections" :key="sectionIndex"
-         class="border border-gray-200 bg-gray-50 rounded-xl p-6 flex flex-col gap-4">
-      <div class="flex justify-between items-center">
+         class="border border-gray-200 bg-gray-50 rounded-xl p-4 md:p-6 flex flex-col gap-4">
+
+      <!-- Section header -->
+      <div class="flex flex-col gap-2 md:flex-row md:justify-between md:items-center">
         <label class="font-bold text-lg">Section {{ Number(sectionIndex) + 1 }}</label>
         <button @click="removeSection(Number(sectionIndex))"
-                class="px-2 py-1 rounded-full text-red-500 text-sm hover:bg-red-100 transition flex items-center gap-1">
+                class="px-2 py-1 rounded-full text-red-500 text-sm hover:bg-red-100 transition flex items-center gap-1 self-start md:self-auto">
           <Trash2 class="w-4 h-4"/>
           Remove section
         </button>
@@ -62,15 +85,19 @@ const save = async () => {
 
       <!-- Section title -->
       <input v-model="section.title" type="text" placeholder="Section title"
-             class="bg-white border border-gray-300 rounded px-4 py-2 w-full font-semibold font-unbounded"/>
+             class="bg-white border border-gray-300 rounded px-2 md:px-4 py-2 w-full font-semibold md:font-unbounded"/>
 
       <!-- Paragraphs -->
       <div v-for="(_, paragraphIndex) in section.paragraphs" :key="paragraphIndex"
            class="flex gap-2 items-start">
-        <textarea v-model="section.paragraphs[paragraphIndex]" rows="3"
-                  placeholder="Paragraph content"
-                  class="bg-white border border-gray-300 rounded px-4 py-2 w-full min-h-10 resize-y"
-                  style="font-size: 1.125rem;line-height: 1.75rem;"/>
+        <textarea
+            v-model="section.paragraphs[paragraphIndex]"
+            :ref="el => { if (el) textareaRefs[sectionIndex * 1000 + paragraphIndex] = el as HTMLTextAreaElement }"
+            rows="3"
+            @input="autoResize"
+            placeholder="Paragraph content"
+            class="bg-white border border-gray-300 rounded px-4 py-2 w-full min-h-10 resize-none overflow-hidden"
+        />
         <button @click="removeParagraph(Number(sectionIndex), Number(paragraphIndex))"
                 class="px-1 py-1 rounded-full text-red-500 text-sm hover:bg-red-100 hover:scale-105 border border-red-300 mt-2 transition">
           <X/>
@@ -92,15 +119,14 @@ const save = async () => {
     </button>
 
     <!-- Save -->
-    <div class="flex flex-col items-center gap-4">
+    <div class="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 md:relative md:bottom-auto md:left-auto md:right-auto md:p-0 md:border-0 md:bg-transparent flex flex-col items-center gap-4">
       <button @click="save"
-              class="bg-black text-white px-8 py-3 font-unbounded rounded-xl hover:bg-neutral-700 transition ">
-
-        <span v-if="saveStatus !== 'loading'" class="flex items-center gap-2"><Save />Save</span>
-        <span v-else class="flex items-center gap-2"><LoaderCircle class="animate-spin" />Saving...</span>
+              class="w-full md:w-auto bg-black text-white px-8 py-3 font-unbounded rounded-xl hover:bg-neutral-700 transition">
+        <span v-if="saveStatus !== 'loading'" class="flex items-center justify-center gap-2"><Save/>Save</span>
+        <span v-else class="flex items-center justify-center gap-2"><LoaderCircle class="animate-spin"/>Saving...</span>
       </button>
-      <span v-if="saveStatus === 'saved'" class="text-green-600 text-sm flex items-center gap-2"><Check />Saved successfully !</span>
-      <span v-if="saveStatus === 'error'" class="text-red-500 text-sm flex items-center gap-2"><X />An error occurred.</span>
+      <span v-if="saveStatus === 'saved'" class="text-green-600 text-sm flex items-center gap-2"><Check/>Saved successfully!</span>
+      <span v-if="saveStatus === 'error'" class="text-red-500 text-sm flex items-center gap-2"><X/>An error occurred.</span>
     </div>
 
   </div>

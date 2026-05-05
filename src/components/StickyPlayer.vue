@@ -77,25 +77,27 @@ const updateSeek = (clientX: number) => {
   audio.currentTime = (x / rect.width) * audio.duration
 }
 
-const startDrag = (event: MouseEvent) => {
+const startDrag = (event: MouseEvent | TouchEvent) => {
   isDragging.value = true
-  updateSeek(event.clientX)
+  const clientX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX
+  updateSeek(clientX)
 }
 
-const onMouseMove = (event: MouseEvent) => {
+const onMouseMove = (event: MouseEvent | TouchEvent) => {
   if (!isDragging.value) return
-  updateSeek(event.clientX)
+  const clientX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX
+  updateSeek(clientX)
 }
 
 const stopDrag = () => {
   isDragging.value = false
 }
 
-const seek = (event: MouseEvent) => {
+const seek = (event: MouseEvent | TouchEvent) => {
   const audio = playerStore.currentTrack
-  if (!audio) return
-  const bar = event.currentTarget as HTMLElement
-  audio.currentTime = (event.offsetX / bar.offsetWidth) * audio.duration
+  if (!audio || !barRef.value) return
+  const clientX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX
+  updateSeek(clientX)
 }
 
 // Volume control
@@ -166,8 +168,15 @@ const toggleMute = () => {
           />
         </div>
       </div>
-      <div ref="barRef" class="relative h-8 cursor-pointer group flex items-center justify-center" @mousedown="startDrag">
-        <div class="relative w-full mt-2 lg:w-2/3 h-1 bg-white/30 rounded-full" @click="seek">
+      <div class="relative h-8 group flex items-center justify-center">
+        <div ref="barRef" class="relative w-full mt-2 lg:w-2/3 h-1 bg-white/30 rounded-full cursor-pointer"
+             @mousedown="startDrag"
+             @touchstart.prevent="startDrag"
+             @mousemove="onMouseMove"
+             @touchmove.prevent="onMouseMove"
+             @mouseup="stopDrag"
+             @touchend="stopDrag"
+             @click="seek">
           <div class="h-full bg-white rounded-full" :style="{ width: `${progress}%` }"/>
           <div
               class="absolute top-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-100"

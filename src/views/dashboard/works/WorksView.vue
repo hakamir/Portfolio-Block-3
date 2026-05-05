@@ -3,7 +3,7 @@ import AudioSection from "@views/dashboard/works/Components/AudioSection.vue";
 import GallerySection from "@views/dashboard/works/Components/GallerySection.vue";
 import type {Track} from "@stores";
 import {ref, toRaw} from "vue";
-import {Tag, Plus, Trash2} from "@lucide/vue";
+import {Tag, Plus, X} from "@lucide/vue";
 import Modal from "@components/Modal.vue";
 
 const selectedTrack = ref<Track | null>(null)
@@ -34,54 +34,49 @@ const removeTag = (index: number) => {
 
 const onConfirmTagEdition = () => {
   if (!selectedTrack.value || !tempTrack.value) return
+  const pending = newTag.value.trim()
+  if (pending) {
+    tempTrack.value.tags.push(pending)
+    newTag.value = ''
+  }
   Object.assign(selectedTrack.value, tempTrack.value)
-
   showTagEditionModal.value = false
 }
-
 </script>
 
 <template>
-
-  <section class="pt-8 pb-16 md:pt-16 container mx-auto px-8 md:px-32 flex flex-col gap-4">
+  <section class="pt-8 pb-16 md:pt-16 lg:container lg:mx-auto px-4 lg:px-32 flex flex-col gap-4">
     <h1 class="text-4xl font-bold font-unbounded mb-8">Works</h1>
     <AudioSection @TagSelectorToggled="handleTagSelectorToggle"/>
     <GallerySection/>
-    <Modal
-        v-if="showTagEditionModal && tempTrack"
-        :icon="Tag"
-        :buttons="[
-          { label: 'Cancel', type: 'cancel', action: () => showTagEditionModal = false },
-          { label: 'Confirm', type: 'confirm', action: onConfirmTagEdition }
-        ]"
-        @close="showTagEditionModal = false"
-    >
-      <template #header>{{ tempTrack?.title }}</template>
-      <div class="flex flex-col">
-        <div v-for="(tag, index) in tempTrack.tags" :key="index" class="flex flex-col">
-          <div class="flex">
-            <input type="text"
-                   disabled
-                   class="border-x border-t border-gray-300/50 px-2 py-1 w-full focus:outline-none text-lg text-white"
-                   :class="{'rounded-tl-2xl': index === 0}"
-                   :value="tag">
+    <Modal v-if="showTagEditionModal && tempTrack"
+           :icon="Tag"
+           :buttons="[{ label: 'Cancel', type: 'cancel', action: () => showTagEditionModal = false },
+                      { label: 'Confirm', type: 'confirm', action: onConfirmTagEdition }]"
+           @close="showTagEditionModal = false">
+      <template #header>{{ tempTrack.title }}</template>
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-wrap gap-2 min-h-10">
+          <span v-if="tempTrack.tags.length === 0" class="text-gray-400 text-sm italic">No tags yet</span>
+          <span v-for="(tag, index) in tempTrack.tags"
+                :key="index"
+                class="flex items-center gap-1 bg-gray-100 border border-gray-300 text-sm px-3 py-1 rounded-full">
+            {{ tag }}
             <button @click="removeTag(index)"
-                    class="bg-red-700 hover:bg-red-800 transition border-t border-r border-gray-300/50 px-2 py-1"
-                    :class="{'rounded-tr-2xl': index === 0}">
-              <Trash2 class="text-white"/>
+                    class="w-6 h-6 p-1 flex items-center justify-center rounded-full text-gray-400 hover:text-red-600 hover:bg-red-100 transition ml-1">
+              <X/>
             </button>
-          </div>
+          </span>
         </div>
-        <div class="flex">
+        <div class="flex gap-2">
           <input type="text"
-                 class="border-y border-l border-gray-300/50 px-2 py-1 w-full rounded-bl-2xl focus:outline-none text-lg placeholder:text-gray-400 placeholder:text-sm"
-                 :class="{'rounded-tl-2xl': tempTrack.tags.length === 0}"
+                 class="border border-gray-300 rounded-xl px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-lime-500 text-sm"
                  placeholder="Add a tag..."
-                 v-model="newTag"/>
-          <button @click="addTag()"
-                  class="bg-lime-600 hover:bg-lime-700 transition px-2 py-1 rounded-br-2xl border border-gray-300/50"
-                  :class="{'rounded-tr-2xl': tempTrack.tags.length === 0}">
-            <Plus class="text-white"/>
+                 v-model="newTag"
+                 @keydown.enter.prevent="addTag"/>
+          <button @click="addTag"
+                  class="bg-lime-600 hover:bg-lime-700 transition px-3 py-2 rounded-xl border border-gray-300/50 shrink-0">
+            <Plus class="text-white w-4 h-4"/>
           </button>
         </div>
       </div>
