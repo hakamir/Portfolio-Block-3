@@ -34,18 +34,24 @@ onUnmounted(() => {
             <p class="pt-4">Feel free to reach out to me for any inquiries, collaborations, or just to say hello.
               I'm always open to new opportunities and excited to hear from you!</p>
           </div>
-          <form v-if="status !== 'submitted'" id="form-contact" class="flex flex-col"
+          <form v-if="status !== 'success'" id="form-contact" class="flex flex-col"
                 @submit.prevent="store.sendMessage">
-            <div class="relative flex items-center border rounded-t-xl bg-white h-14 border-gray-300 group focus-within:inset-shadow-[0_0_5px_rgba(0,0,0,0.5)] focus-within:bg-white/70 ring-inset ring-black/50 transition">
-              <label v-if="!isMobile || !formData.name.trim()" for="name" class="block font-unbounded px-4 w-24 group-focus-within:-translate-x-1 group-focus-within:text-black/0 md:group-focus-within:text-black/80 transition select-none">Name</label>
-              <input id="name" type="text" v-model="formData.name" class="absolute md:relative w-full h-12 outline-none px-4" required>
+            <div
+                class="relative flex items-center border rounded-t-xl bg-white h-14 border-gray-300 group focus-within:inset-shadow-[0_0_5px_rgba(0,0,0,0.5)] focus-within:bg-white/70 ring-inset ring-black/50 transition">
+              <label v-if="!isMobile || !formData.name.trim()" for="name"
+                     class="block font-unbounded px-4 w-24 group-focus-within:-translate-x-1 group-focus-within:text-black/0 md:group-focus-within:text-black/80 transition select-none">Name</label>
+              <input id="name" type="text" v-model="formData.name"
+                     class="absolute md:relative w-full h-12 outline-none px-4" required>
             </div>
             <div
                 class="relative flex items-center border-x bg-white h-14 border-gray-300 group focus-within:inset-shadow-[0_0_5px_rgba(0,0,0,0.5)] focus-within:bg-white/70 ring-inset ring-black/50 transition">
-              <label v-if="!isMobile || !formData.email.trim()" for="email" class="block font-unbounded px-4 w-24 group-focus-within:-translate-x-1 group-focus-within:text-black/0 md:group-focus-within:text-black/80 transition select-none">Email</label>
-              <input id="email" type="email" name="email" v-model="formData.email" class="absolute md:relative w-full h-12 outline-none px-4" required>
+              <label v-if="!isMobile || !formData.email.trim()" for="email"
+                     class="block font-unbounded px-4 w-24 group-focus-within:-translate-x-1 group-focus-within:text-black/0 md:group-focus-within:text-black/80 transition select-none">Email</label>
+              <input id="email" type="email" name="email" v-model="formData.email"
+                     class="absolute md:relative w-full h-12 outline-none px-4" required>
             </div>
-            <div class="flex flex-col border border-gray-300 bg-white group focus-within:inset-shadow-[0_0_5px_rgba(0,0,0,0.5)] focus-within:bg-white/70 ring-inset ring-black/50 transition">
+            <div
+                class="flex flex-col border border-gray-300 bg-white group focus-within:inset-shadow-[0_0_5px_rgba(0,0,0,0.5)] focus-within:bg-white/70 ring-inset ring-black/50 transition">
               <textarea id="message" placeholder="Your message..." v-model="formData.message"
                         class="px-4 py-2 w-full min-h-70 outline-none placeholder:font-unbounded focus:placeholder:opacity-50 placeholder:text-sm placeholder:font-extralight"
                         required autocomplete="off"></textarea>
@@ -61,9 +67,15 @@ onUnmounted(() => {
                 <LoaderCircle v-else class="animate-spin"/>
               </button>
               <div v-if="status === 'error'" class="flex justify-center mt-2">
-                <span class="px-3 py-2 rounded-xl text-red-500 bg-red-100 text-sm flex items-center">
+                <span class="px-3 py-2 rounded-xl text-red-600 bg-red-100 text-sm flex items-center">
                   <TriangleAlert class="inline-block mr-2"/>
                   An error occurred while sending your message. Please try again later.
+                </span>
+              </div>
+              <div v-else-if="status === 'tooMany'" class="flex justify-center mt-2">
+                <span class="px-3 py-2 rounded-xl text-amber-600 bg-amber-100 text-sm flex items-center">
+                  <TriangleAlert class="inline-block mr-2"/>
+                  Too many attempts. Please try again later.
                 </span>
               </div>
             </div>

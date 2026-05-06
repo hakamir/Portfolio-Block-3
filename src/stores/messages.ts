@@ -2,6 +2,7 @@ import {defineStore} from "pinia";
 import {computed, ref} from "vue";
 import {instance} from "../api/axios.ts";
 import messageApi from "../api/messages.ts"
+import type {Tab} from "@/types"
 
 interface Message {
     _id: string;
@@ -12,8 +13,6 @@ interface Message {
     read: boolean;
     trashed: boolean;
 }
-
-export type Tab = 'inbox' | 'trash'
 
 export const useMessagesStore = defineStore('messages', () => {
     const allMessages = ref<Message[]>([])

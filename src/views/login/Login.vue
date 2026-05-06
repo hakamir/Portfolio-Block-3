@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import Footer from "@components/layout/footer/Footer.vue";
 import {LoaderCircle, TriangleAlert} from "@lucide/vue";
-import {reactive, ref} from "vue";
+import {reactive} from "vue";
 import {useAuthStore} from "@stores";
+import {storeToRefs} from "pinia";
 
 
 interface LoginForm {
@@ -15,21 +16,11 @@ const formData = reactive<LoginForm>({
   pwd: ''
 })
 
-const status = ref<'idle' | 'loading' | 'success' | 'error' | 'invalid' | 'tooMany'>('idle')
-
 const authStore = useAuthStore()
+const {status} = storeToRefs(authStore)
 
 const handleSubmit = async () => {
-  status.value = 'loading'
-  try {
-    await authStore.login(formData.email, formData.pwd)
-    status.value = 'success'
-  } catch (error: any) {
-    const code = error.response?.status
-    if (code === 401) status.value = 'invalid'
-    else if (code === 429) status.value = 'tooMany'
-    else status.value = 'error'
-  }
+  await authStore.login(formData.email, formData.pwd)
 }
 
 </script>
@@ -62,19 +53,19 @@ const handleSubmit = async () => {
               </button>
             </div>
             <div v-if="status === 'invalid'" class="flex justify-center mt-2">
-                <span class="px-3 py-2 rounded-xl text-amber-500 bg-amber-100 text-sm flex items-center">
+                <span class="px-3 py-2 rounded-xl text-amber-600 bg-amber-100 text-sm flex items-center">
                   <TriangleAlert class="inline-block mr-2"/>
                   Invalid email of password.
                 </span>
             </div>
             <div v-else-if="status === 'error'" class="flex justify-center mt-2">
-                <span class="px-3 py-2 rounded-xl text-red-500 bg-red-100 text-sm flex items-center">
+                <span class="px-3 py-2 rounded-xl text-red-600 bg-red-100 text-sm flex items-center">
                   <TriangleAlert class="inline-block mr-2"/>
                   An error occurred while attempting to login. Please try again later.
                 </span>
             </div>
             <div v-else-if="status === 'tooMany'" class="flex justify-center mt-2">
-              <span class="px-3 py-2 rounded-xl text-amber-500 bg-amber-100 text-sm flex items-center">
+              <span class="px-3 py-2 rounded-xl text-amber-600 bg-amber-100 text-sm flex items-center">
                 <TriangleAlert class="inline-block mr-2"/>
                 Too many login attempts. Please try again later.
               </span>
@@ -83,6 +74,6 @@ const handleSubmit = async () => {
         </form>
       </section>
     </div>
-    <Footer />
+    <Footer/>
   </div>
 </template>
