@@ -9,18 +9,18 @@ import ChangePassword from "@views/dashboard/settings/components/ChangePassword.
 const audioStore = useAudioStore()
 const showDeleteModal = ref(false)
 const orphansToDelete = ref<string[]>([])
-const orphansRefreshKey = ref(0);
 
+// Receive delete request from child and open confirmation modal with selected items
 const onRequestDelete = (srcs: string[]) => {
   orphansToDelete.value = srcs
   showDeleteModal.value = true
 }
 
+// Confirm deletion, call store, then reset modal state and trigger list refresh
 const onConfirmDelete = async () => {
   await audioStore.deleteOrphans(orphansToDelete.value)
   showDeleteModal.value = false
   orphansToDelete.value = []
-  orphansRefreshKey.value += 1;
 }
 
 </script>
@@ -30,7 +30,7 @@ const onConfirmDelete = async () => {
     <h1 class="text-4xl font-bold font-unbounded mb-8">Settings</h1>
     <div class="flex flex-col gap-8">
       <ChangePassword/>
-      <OrphansAudio @request-delete="onRequestDelete" :key="orphansRefreshKey"/>
+      <OrphansAudio @request-delete="onRequestDelete"/>
     </div>
     <Modal
         v-if="showDeleteModal"

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import {ref, computed} from 'vue'
+import {ref, computed, onMounted} from 'vue'
 import {Eye, EyeOff, KeyRound, Check, X} from '@lucide/vue'
 import {useAuthStore} from "@stores";
+import {storeToRefs} from "pinia";
 
 const currentPwd = ref('')
 const newPwd = ref('')
@@ -11,8 +12,8 @@ const showCurrent = ref(false)
 const showNew = ref(false)
 const showConfirm = ref(false)
 
-const status = ref<'idle' | 'loading' | 'success' | 'error' | 'invalid'>('idle')
 
+// Reactive password validation rules (length, character requirements, difference from current, confirmation match)
 const rules = computed(() => ({
   minLength: newPwd.value.length >= 12,
   hasLower: /[a-z]/.test(newPwd.value),
@@ -23,23 +24,24 @@ const rules = computed(() => ({
   matches: newPwd.value === confirmPwd.value && confirmPwd.value !== '',
 }))
 
+// Aggregate validation state: true only if all rules pass
 const isValid = computed(() => Object.values(rules.value).every(Boolean))
 
 const authStore = useAuthStore()
+const {status} = storeToRefs(authStore)
 
+// Reset auth status when component mounts
+onMounted(async () => {
+  status.value = 'idle'
+})
+
+// Submit password change, handle loading/success/error states, and reset form on success
 const handleSubmit = async () => {
   if (!isValid.value) return
-  status.value = 'loading'
-  try {
-    await authStore.changePassword(currentPwd.value, newPwd.value)
-    status.value = 'success'
-    currentPwd.value = ''
-    newPwd.value = ''
-    confirmPwd.value = ''
-    setTimeout(() => status.value = 'idle', 3000)
-  } catch (err: any) {
-    status.value = err.response?.status === 401 ? 'invalid' : 'error'
-  }
+  await authStore.changePassword(currentPwd.value, newPwd.value)
+  currentPwd.value = ''
+  newPwd.value = ''
+  confirmPwd.value = ''
 }
 </script>
 
@@ -82,7 +84,8 @@ const handleSubmit = async () => {
                  v-model="currentPwd"
                  placeholder="••••••••"
                  class="flex-1 px-4 py-2 text-sm focus:outline-none bg-transparent"/>
-          <button @click="showCurrent = !showCurrent" class="px-3 text-gray-400 hover:text-gray-600 transition" tabindex="-1">
+          <button @click="showCurrent = !showCurrent" class="px-3 text-gray-400 hover:text-gray-600 transition"
+                  tabindex="-1">
             <Eye v-if="!showCurrent" :size="16"/>
             <EyeOff v-else :size="16"/>
           </button>
@@ -114,7 +117,8 @@ const handleSubmit = async () => {
                  v-model="confirmPwd"
                  placeholder="••••••••"
                  class="flex-1 px-4 py-2 text-sm focus:outline-none bg-transparent"/>
-          <button @click="showConfirm = !showConfirm" class="px-3 text-gray-400 hover:text-gray-600 transition" tabindex="-1">
+          <button @click="showConfirm = !showConfirm" class="px-3 text-gray-400 hover:text-gray-600 transition"
+                  tabindex="-1">
             <Eye v-if="!showConfirm" :size="16"/>
             <EyeOff v-else :size="16"/>
           </button>
@@ -146,22 +150,22 @@ const handleSubmit = async () => {
 
     </div>
     <div v-if="newPwd.length > 0" class="flex md:hidden flex-col gap-1 mt-4">
-        <div v-for="(valid, rule) in rules" :key="rule"
-             class="flex items-center gap-2 text-md opacity-70"
-             :class="valid ? 'text-lime-700' : 'text-red-700'">
-          <Check v-if="valid" class="w-5 h-5"/>
-          <X v-else class="w-5 h-5"/>
-          <span class="text-sm"
-          >{{
-              rule === 'minLength' ? 'At least 12 characters' :
-                  rule === 'hasLower' ? 'One lowercase letter' :
-                      rule === 'hasUpper' ? 'One uppercase letter' :
-                          rule === 'hasNumber' ? 'One number' :
-                              rule === 'hasSpecial' ? 'One special character' :
-                                  rule === 'notSame' ? 'Different from current password' :
-                                      'Passwords match'
-            }}</span>
-        </div>
+      <div v-for="(valid, rule) in rules" :key="rule"
+           class="flex items-center gap-2 text-md opacity-70"
+           :class="valid ? 'text-lime-700' : 'text-red-700'">
+        <Check v-if="valid" class="w-5 h-5"/>
+        <X v-else class="w-5 h-5"/>
+        <span class="text-sm"
+        >{{
+            rule === 'minLength' ? 'At least 12 characters' :
+                rule === 'hasLower' ? 'One lowercase letter' :
+                    rule === 'hasUpper' ? 'One uppercase letter' :
+                        rule === 'hasNumber' ? 'One number' :
+                            rule === 'hasSpecial' ? 'One special character' :
+                                rule === 'notSame' ? 'Different from current password' :
+                                    'Passwords match'
+          }}</span>
       </div>
+    </div>
   </div>
 </template>

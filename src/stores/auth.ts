@@ -45,7 +45,16 @@ export const useAuthStore = defineStore("auth", () => {
     }
 
     const changePassword = async (currentPwd: string, newPwd: string) => {
-        await instance.put(authApi.changePassword, {currentPwd, newPwd})
+        status.value = 'loading'
+        try {
+            await instance.put(authApi.changePassword, {currentPwd, newPwd})
+            status.value = 'success'
+            // Reset status to idle after a delay to clear success feedback
+            setTimeout(() => status.value = 'idle', 3000)
+        } catch (error: any) {
+            // Map 401 response to 'invalid' (wrong current password), otherwise generic error
+            status.value = error.response?.status === 401 ? 'invalid' : 'error'
+        }
     }
 
     const isTokenExpired = (token: string) => {
