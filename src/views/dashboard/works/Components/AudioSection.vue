@@ -26,6 +26,7 @@ onMounted(async () => {
   })
 })
 
+// Add a new artist with a random slug and empty albums and tracks, order is set to the last artist's order + 1
 const addArtist = () => {
   audioStore.artists.push({
     _id: '',
@@ -36,6 +37,7 @@ const addArtist = () => {
   });
 }
 
+// Add a new album to a given artist with a random slug and empty tracks, order is set to the last album's order + 1
 const addAlbum = (artist: Artist) => {
   artist.albums.push({
     slug: uuidv4(),
@@ -45,6 +47,7 @@ const addAlbum = (artist: Artist) => {
   });
 }
 
+// Add a new track to a given album with a random slug and empty tags, trackNumber is set to the last track's trackNumber + 1
 const addTrack = (album: Album) => {
   album.tracks.push({
     trackNumber: album.tracks.length + 1,
@@ -54,16 +57,19 @@ const addTrack = (album: Album) => {
   });
 }
 
+// Delete an artist and all its albums and tracks
 const deleteArtist = (artist: Artist) => {
   const index = audioStore.artists.indexOf(artist);
   audioStore.artists.splice(index, 1);
 }
 
+// Delete an album and all its tracks
 const deleteAlbum = (artist: Artist, album: Album) => {
   const index = artist.albums.indexOf(album);
   artist.albums.splice(index, 1);
 }
 
+// Delete a track from an album
 const deleteTrack = (album: Album, track: Track) => {
   const index = album.tracks.indexOf(track);
   album.tracks.splice(index, 1);
@@ -72,35 +78,42 @@ const deleteTrack = (album: Album, track: Track) => {
 const collapsedArtists = ref<Set<string>>(new Set());
 const collapsedAlbums = ref<Set<string>>(new Set());
 
+// Collapse the section of an artist
 const toggleArtistCollapse = (slug: string) => {
   collapsedArtists.value.has(slug) ? collapsedArtists.value.delete(slug) : collapsedArtists.value.add(slug);
 }
 
+// Collapse the section of an album
 const toggleAlbumCollapse = (slug: string) => {
   collapsedAlbums.value.has(slug) ? collapsedAlbums.value.delete(slug) : collapsedAlbums.value.add(slug);
 }
 
-const reorderTracks = (album: Album) => {
-  album.tracks.forEach((track, index) => {
-    track.trackNumber = index + 1;
-  })
-}
 
-const reorderAlbums = (artist: Artist) => {
-  artist.albums.forEach((album, index) => {
-    album.order = index + 1
-  })
-}
-
+// Handle drag and drop reordering of artists
 const reorderArtists = () => {
   audioStore.artists.forEach((artist, index) => {
     artist.order = index + 1
   })
 }
 
+// Handle drag and drop reordering of albums within an artist
+const reorderAlbums = (artist: Artist) => {
+  artist.albums.forEach((album, index) => {
+    album.order = index + 1
+  })
+}
+
+// Handle drag and drop reordering of tracks within an album
+const reorderTracks = (album: Album) => {
+  album.tracks.forEach((track, index) => {
+    track.trackNumber = index + 1;
+  })
+}
+
 const refreshKey = ref(0);
 const {fetchStatus, uploadedFileName} = storeToRefs(audioStore);
 
+// Save audios then metadata to the database, then refresh the page if it succeeds
 const onSave = async () => {
   try {
     if (await audioStore.saveAudios()) {
