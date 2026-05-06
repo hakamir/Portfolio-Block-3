@@ -6,18 +6,22 @@ import {SearchX, Undo2, Trash2, Reply} from "@lucide/vue"
 
 const route = useRoute()
 const messageStore = useMessagesStore()
+
+// Get current message by id
 const message = computed(() =>
     messageStore.allMessages.find(m => m._id === route.params.id)
 )
 
 let hasMarked = false
 
+// In case the message is access directly without going through the inbox -> fetch messages
 onMounted(async () => {
   if (!messageStore.allMessages.length) {
-    await messageStore.loadMessages()
+    await messageStore.fetchMessages()
   }
 })
 
+// Check if message is read and mark it as read if not
 watch(() => message.value, async (msg) => {
       if (!msg || hasMarked) return
       if (!msg.read) {

@@ -3,6 +3,7 @@ import {ref, watch} from 'vue'
 import {useMessagesStore} from '@stores/messages'
 import {storeToRefs} from 'pinia'
 import {Inbox, Mail, Reply, Trash2, Shredder} from "@lucide/vue";
+import {format_date} from "@utils/formatters.ts";
 
 const props = defineProps<{ selectedIds: string[] }>()
 const emit = defineEmits<{ 'update:selectedIds': [value: string[]] }>()
@@ -81,25 +82,6 @@ const onTouchEnd = async (id: string) => {
 
 const getSwipeDelta = (id: string) => swipeState.value[id]?.deltaX ?? 0
 
-const format_date = (input: Date | string) => {
-  const date = new Date(input)
-  const now = Date.now()
-  const diff = (now - date.getTime()) / 1000
-  if (diff < 60) return 'Just now'
-  if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`
-  if (diff < 86400) return date.toLocaleTimeString()
-
-  const nowDate = new Date()
-
-  if (nowDate.getFullYear() === date.getFullYear()) {
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric'
-    }).format(date)
-  }
-
-  return date.toLocaleDateString()
-}
 </script>
 
 <template>
