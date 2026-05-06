@@ -1,0 +1,27 @@
+# Dev overrides — chargé automatiquement avec: docker compose up
+# NE PAS utiliser avec -f en production
+services:
+  mongodb:
+    ports:
+      - "27018:27017"
+
+  backend:
+    environment:
+      FLASK_ENV: development
+    volumes:
+      - ./backend:/app
+    ports:
+      - "5000:5000"
+    command: flask run --host=0.0.0.0 --debug
+    develop:
+      watch:
+        - path: ./backend
+          action: rebuild
+
+  frontend:
+    volumes:
+      - ./src:/app/src
+    develop:
+      watch:
+        - path: ./src
+          action: rebuild

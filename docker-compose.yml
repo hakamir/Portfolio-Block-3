@@ -11,8 +11,6 @@ services:
     volumes:
       - mongodb_data:/data/db
       - ./mongo-init.js:/docker-entrypoint-initdb.d/init.js:ro
-    ports:
-      - "27018:27017"
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand('ping').ok"]
       interval: 10s
@@ -41,19 +39,11 @@ services:
       JWT_COOKIE_SECURE: "false"
       JWT_COOKIE_SAMESITE: Strict
       JWT_COOKIE_CSRF_PROTECT: "false"
-      FLASK_ENV: development
     volumes:
       - backend_uploads:/app/uploads
-      - ./backend:/app
-    ports:
-      - "5000:5000"
     depends_on:
       mongodb:
         condition: service_healthy
-    develop:
-      watch:
-        - path: ./backend
-          action: rebuild
 
   # -------------- Seeder ------------------------------- #
   seeder:
@@ -88,12 +78,6 @@ services:
       - "80:80"
     depends_on:
       - backend
-    volumes:
-      - ./src:/app/src
-    develop:
-      watch:
-        - path: ./src
-          action: rebuild
 
 volumes:
   mongodb_data:

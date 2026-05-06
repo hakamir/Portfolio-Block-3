@@ -15,6 +15,7 @@ services:
 
   backend:
     environment:
+      FLASK_ENV: production
       FRONTEND_URL: https://deviance.studio
       FRONTEND_PORT: 443
       JWT_COOKIE_SECURE: "true"
