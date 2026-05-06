@@ -19,8 +19,8 @@ def get_messages():
     messages = Message.objects().order_by('-date')
     return jsonify([msg.to_json_dict() for msg in messages]), 200
 
-@limiter.limit("1/minute")
 @messages_bp.route('/messages', methods=['POST'])
+@limiter.limit("1/minute")
 @handle_db_timeout
 def create_message():
     try:
