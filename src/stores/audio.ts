@@ -2,6 +2,7 @@ import {defineStore} from "pinia";
 import {instance} from "@api/axios.ts";
 import {ref, watch} from "vue";
 import audiosApi from "@api/audios.ts";
+import type {TrackUploadStatus} from "@/types";
 
 export interface Track {
     trackNumber: number
@@ -30,7 +31,7 @@ export const useAudioStore = defineStore('audio', () => {
     const loading = ref(false)
     const fetchStatus = ref<'idle' | 'loading' | 'error'>('idle')
     const isSubmitted = ref(false);
-    const uploadedFileName = ref<string | undefined>(undefined);
+    const uploadStatuses = ref<Map<Track, TrackUploadStatus>>(new Map())
     const orphans = ref<string[]>([])
 
     // Convert string to slug format ("Track Title" to "track_title")
@@ -65,14 +66,20 @@ export const useAudioStore = defineStore('audio', () => {
         }
     }
 
-    const checkAudioExists = async (src: string | undefined) => {
+    const checkAudioExists = async (src: string | undefined, track?: Track) => {
         if (!src) return false
         try {
             await instance.head(src)
+            if (track) uploadStatuses.value.set(track, 'uploaded')
             return true
         } catch {
             return false
         }
+    }
+
+    const addPendingUpload = (track: Track, file: File) => {
+        pendingUploads.value.set(track, file)
+        uploadStatuses.value.set(track, 'pending')
     }
 
     const uploadTrack = async (file: File, albumSlug: string, track: Track) => {
@@ -102,36 +109,44 @@ export const useAudioStore = defineStore('audio', () => {
 
     // Upload all pending audio files
     const uploadPendingAudios = async () => {
-        for (const [track, file] of pendingUploads.value.entries()) {
-            const {artist, album} = findTrackContext(track)
-            // Skip if required data is missing
-            if (!artist || !album || !track.src) continue
+        const results = await Promise.allSettled(
+            [...pendingUploads.value.entries()].map(async ([track, file]) => {
+                const {artist, album} = findTrackContext(track)
+                if (!artist || !album || !track.src) return
 
-            const formData = new FormData()
-            formData.append('file', file)
-            formData.append('artistSlug', artist.slug)
-            formData.append('albumSlug', album.slug)
-            formData.append('trackSrc', track.src)
-            // Store current file name for UI feedback during upload
-            uploadedFileName.value = file.name
-            await instance.post(audiosApi.uploadAudio, formData)
-        }
+                const formData = new FormData()
+                formData.append('file', file)
+                formData.append('artistSlug', artist.slug)
+                formData.append('albumSlug', album.slug)
+                formData.append('trackSrc', track.src)
+
+                uploadStatuses.value.set(track, 'uploading')
+                try {
+                    await instance.post(audiosApi.uploadAudio, formData)
+                    uploadStatuses.value.set(track, 'uploaded')
+                } catch (err) {
+                    uploadStatuses.value.set(track, 'pending')
+                    throw err
+                }
+            })
+        )
+
+        results.forEach((result) => {
+            if (result.status === 'rejected') {
+                console.error('Upload failed', result.reason)
+            }
+        })
         // Clear upload state after all files are processed
         pendingUploads.value.clear()
-        uploadedFileName.value = undefined
     }
 
-    // Find corresponding artist and album for the track
+    // Return corresponding artist and album of the track when it is found, both undefined if not found
     const findTrackContext = (track: Track) => {
-        const artist = artists.value.find(artist =>
-            artist.albums.some(album =>
-                album.tracks.includes(track)
-            )
-        )
-        const album = artist?.albums.find(album =>
-            album.tracks.includes(track)
-        )
-        return {artist, album}
+        for (const artist of artists.value) {
+            const album = artist.albums.find(album => album.tracks.includes(track))
+            if (album) return {artist, album}
+        }
+        return {artist: undefined, album: undefined}
     }
 
     const syncDeletedArtists = async () => {
@@ -189,7 +204,7 @@ export const useAudioStore = defineStore('audio', () => {
     }
 
     return {
-        artists, loading, fetchStatus, uploadedFileName, pendingUploads, orphans, isSubmitted,
-        fetchAudios, fetchOrphans, checkAudioExists, uploadTrack, saveAudios, deleteOrphans
+        artists, loading, fetchStatus, uploadStatuses, pendingUploads, orphans, isSubmitted,
+        fetchAudios, fetchOrphans, checkAudioExists, uploadTrack, addPendingUpload, saveAudios, deleteOrphans
     }
 })

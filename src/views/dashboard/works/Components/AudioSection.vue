@@ -111,7 +111,7 @@ const reorderTracks = (album: Album) => {
 }
 
 const refreshKey = ref(0);
-const {fetchStatus, uploadedFileName} = storeToRefs(audioStore);
+const {fetchStatus} = storeToRefs(audioStore);
 
 // Save audios then metadata to the database, then refresh the page if it succeeds
 const onSave = async () => {
@@ -240,7 +240,7 @@ const onSave = async () => {
     <div class="flex justify-end items-center mt-4 gap-4">
       <div v-if="fetchStatus == 'error'" class="flex items-center gap-2 text-red-800 bg-red-100 rounded-full p-2">
         <Ban/>
-        <span class="text-sm font-semibold">Error</span>
+        <span class="text-sm font-semibold">An error occurred. Some files may not have been uploaded.</span>
       </div>
       <button v-if="fetchStatus == 'idle' || fetchStatus == 'error'" @click="onSave"
               class="px-6 py-2 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 transition flex items-center gap-2">
@@ -250,8 +250,7 @@ const onSave = async () => {
       <button v-if="fetchStatus == 'loading'" @click="onSave"
               class="px-6 py-2 bg-gray-700 text-white rounded-2xl transition flex items-center gap-2 cursor-not-allowed!">
         <LoaderCircle class="animate-spin"/>
-        <span class="font-unbounded">Uploading: </span>
-        <span class="text-blue-400 italic">{{ uploadedFileName }}</span>
+        <span class="font-unbounded">Uploading...</span>
       </button>
     </div>
   </div>
