@@ -131,7 +131,7 @@ TEST_USER_PASSWORD=your_admin_password
 docker compose up --build
 ```
 
-This starts four services:
+This runs four services:
 
 |  Service   | URL                   | Description                        |
 |:----------:|-----------------------|------------------------------------|
@@ -153,16 +153,51 @@ docker compose logs backend  # view backend logs
 docker compose cp backend/uploads/. backend:/app/uploads/  # restore local uploads
 ```
 
-**Connect to MongoDB via Compass:**
+**Connect to MongoDB via Compass (dev only):**
 ```
 mongodb://root:<MONGO_ROOT_PASSWORD>@localhost:27018/?authSource=admin
 ```
+Or :
+```
+mongodb://<MONGODB_USER>:<MONGO_PASSWORD>@localhost:27018/?authSource=admin
+```
+
+### Production
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose-prod.yml up --build
+```
+
+Both `docker-compose.yml` and `docker-compose.prod.yml` should be specified for the production build.
 
 ---
 
 ### Option B — Local development
 
-**Prerequisites:** Node.js ≥ 18, Python ≥ 3.14, MongoDB running on `localhost:27017`
+#### Prerequisites
+
+Node.js ≥ 18, Python ≥ 3.14, MongoDB running on `localhost:27017`
+
+#### FFmpeg (required for audio conversion)
+
+Audio files uploaded in formats other than `.mp3` are automatically converted server-side via FFmpeg.
+
+**Supported audio formats:** `mp3` `wma` `aac` `flac` `ogg` `wav` `aiff` `alac` `amr` `m4a`
+
+**macOS**
+```bash
+brew install ffmpeg
+```
+
+**Ubuntu / Debian**
+```bash
+sudo apt update && sudo apt install ffmpeg
+```
+
+**Windows**
+1. Download the latest build from [ffmpeg.org/download.html](https://ffmpeg.org/download.html)
+2. Extract the archive and add the `bin/` folder to your `PATH`
+3. Verify: `ffmpeg -version`
 
 **Backend**
 
@@ -200,3 +235,4 @@ MongoDB collections, created automatically on first Docker startup:
 | `biography` | Single document                                |
 | `messages`  | Contact form submissions                       |
 
+Flask Limiter creates two additional collections automatically: `counter` and `windows`, used to store rate-limits by IP address.

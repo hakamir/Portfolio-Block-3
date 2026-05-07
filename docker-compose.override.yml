@@ -1,5 +1,5 @@
-# Dev overrides — chargé automatiquement avec: docker compose up
-# NE PAS utiliser avec -f en production
+# Dev overrides - automatically loaded with: docker compose up
+# NEVER USE IN PRODUCTION
 services:
   mongodb:
     ports:
