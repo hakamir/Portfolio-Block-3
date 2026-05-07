@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import {ref, onMounted, onBeforeUnmount} from 'vue'
-import {CirclePlay, CirclePause, Check, CircleDotDashed} from '@lucide/vue'
+import {CirclePlay, CirclePause, Check, CircleDotDashed, Loader} from '@lucide/vue'
 import {useAudioPlayerStore} from "@stores"
 import Tooltip from "@components/layout/Tooltip.vue";
 
 const props = defineProps<{
   src: string,
   className?: string,
-  isLocal?: boolean
+  status?: string
   title?: string
   subtitle?: string
 }>()
@@ -39,16 +39,20 @@ onBeforeUnmount(() => audioRef.value?.removeEventListener('pause', onPause))
 <template>
   <div :class="[props.className]">
     <div class="relative group/tooltip w-max">
-      <div v-if="isLocal">
+      <div v-if="status === 'uploading'">
+        <Tooltip message="Uploading..." :icon="Loader" iconBgColor="bg-yellow-500/50" side="left">
+          <Loader class="bg-yellow-500/50 text-yellow-700 p-1 rounded-full w-6 h-6 animate-spin"/>
+        </Tooltip>
+      </div>
+      <div v-else-if="status === 'pending'">
         <Tooltip message="Ready for upload" :icon="CircleDotDashed" iconBgColor="bg-blue-500/50" side="left">
           <CircleDotDashed class="bg-blue-500/50 text-blue-700 p-1 rounded-full w-6 h-6"/>
         </Tooltip>
       </div>
-      <div v-else>
+      <div v-else-if="status === 'uploaded'">
         <Tooltip message="Already uploaded on the server" :icon="Check" iconBgColor="bg-lime-500/50" side="left">
           <Check class="bg-lime-500/50 text-lime-700 p-1 rounded-full w-6 h-6"/>
         </Tooltip>
-
       </div>
     </div>
     <button @click="togglePlay" class="-m-2 p-2">

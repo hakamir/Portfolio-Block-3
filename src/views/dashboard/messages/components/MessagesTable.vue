@@ -3,6 +3,7 @@ import {ref, watch} from 'vue'
 import {useMessagesStore} from '@stores/messages'
 import {storeToRefs} from 'pinia'
 import {Inbox, Mail, Reply, Trash2, Shredder} from "@lucide/vue";
+import {format_date} from "@utils/formatters.ts";
 
 const props = defineProps<{ selectedIds: string[] }>()
 const emit = defineEmits<{ 'update:selectedIds': [value: string[]] }>()
@@ -10,6 +11,7 @@ const emit = defineEmits<{ 'update:selectedIds': [value: string[]] }>()
 const store = useMessagesStore()
 const {filteredMessages, fetchStatus} = storeToRefs(store)
 
+// Toggle the selection of a message
 const toggleSelect = (id: string) => {
   const set = new Set(props.selectedIds)
   if (set.has(id)) set.delete(id)
@@ -17,10 +19,12 @@ const toggleSelect = (id: string) => {
   emit('update:selectedIds', [...set])
 }
 
+// Reset selectedIds when the filteredMessages change
 watch(filteredMessages, () => {
   emit('update:selectedIds', [])
 })
 
+// Track the swipe state for each message (by id)
 const swipeState = ref<Record<string, {
   startX: number
   startY: number
@@ -29,6 +33,7 @@ const swipeState = ref<Record<string, {
   locked: boolean
 }>>({})
 
+// Initialize swipe state with the initial touch position
 const onTouchStart = (id: string, e: TouchEvent) => {
   swipeState.value[id] = {
     startX: e.touches[0].clientX,
@@ -39,6 +44,7 @@ const onTouchStart = (id: string, e: TouchEvent) => {
   }
 }
 
+// Detect swipe direction, ignore small movements (5px), lock vertical gestures, and handle horizontal swipe
 const onTouchMove = (id: string, e: TouchEvent) => {
   const state = swipeState.value[id]
   if (!state) return
@@ -59,6 +65,7 @@ const onTouchMove = (id: string, e: TouchEvent) => {
   swipeState.value[id] = {...state, swiping: true, deltaX}
 }
 
+// Trigger actions based on swipe distance and direction (threshold 200px), depending on the current tab, then reset selection and swipe state
 const onTouchEnd = async (id: string) => {
   const state = swipeState.value[id]
   const delta = state?.deltaX ?? 0
@@ -79,27 +86,9 @@ const onTouchEnd = async (id: string) => {
   swipeState.value[id] = {startX: 0, startY: 0, deltaX: 0, locked: false, swiping: false}
 }
 
+// Return the current horizontal swipe offset
 const getSwipeDelta = (id: string) => swipeState.value[id]?.deltaX ?? 0
 
-const format_date = (input: Date | string) => {
-  const date = new Date(input)
-  const now = Date.now()
-  const diff = (now - date.getTime()) / 1000
-  if (diff < 60) return 'Just now'
-  if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`
-  if (diff < 86400) return date.toLocaleTimeString()
-
-  const nowDate = new Date()
-
-  if (nowDate.getFullYear() === date.getFullYear()) {
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric'
-    }).format(date)
-  }
-
-  return date.toLocaleDateString()
-}
 </script>
 
 <template>

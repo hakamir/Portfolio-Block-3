@@ -17,6 +17,7 @@ const emit = defineEmits<{ requestDelete: [srcs: string[]] }>()
 const orphansUrl = ref<string[]>([])
 const orphans = ref<OrphanAudio[]>([])
 
+// Fetch orphan audio files from store and transform them into structured data for UI
 onMounted(async () => {
   await audioStore.fetchOrphans()
       .then(() => {
@@ -26,6 +27,7 @@ onMounted(async () => {
       .catch(error => console.error('Error fetching orphans:', error))
 })
 
+// Group orphan tracks by artist, then by album for hierarchical display
 const groupedOrphans = computed(() => {
   return orphans.value.reduce((acc, orphan) => {
     if (!acc[orphan.artist]) acc[orphan.artist] = {}
@@ -35,6 +37,7 @@ const groupedOrphans = computed(() => {
   }, {} as Record<string, Record<string, OrphanAudio[]>>)
 })
 
+// Toggle selection of all tracks
 const toggleSelectAll = () => {
   if (selectedOrphans.value.length === orphans.value.length) {
     selectedOrphans.value = []
@@ -42,7 +45,7 @@ const toggleSelectAll = () => {
     selectedOrphans.value = orphans.value.map(o => o.src)
   }
 }
-
+// Toggle selection of all tracks for a given artist
 const toggleSelectArtist = (artistName: string) => {
   const artistSrcs = Object.values(groupedOrphans.value[artistName])
       .flat()
@@ -57,6 +60,7 @@ const toggleSelectArtist = (artistName: string) => {
   }
 }
 
+// Toggle selection of all tracks for a given album
 const toggleSelectAlbum = (artistName: string, albumName: string) => {
   const albumSrcs = groupedOrphans.value[artistName][albumName].map(o => o.src)
 
@@ -69,6 +73,7 @@ const toggleSelectAlbum = (artistName: string, albumName: string) => {
   }
 }
 
+// Toggle selection of a single track
 const toggleSelectTrack = (src: string) => {
   if (selectedOrphans.value.includes(src)) {
     selectedOrphans.value = selectedOrphans.value.filter(s => s !== src)
@@ -77,21 +82,26 @@ const toggleSelectTrack = (src: string) => {
   }
 }
 
+// Check if all tracks of an artist are currently selected
 const isArtistSelected = (artistName: string) => {
   const artistSrcs = Object.values(groupedOrphans.value[artistName]).flat().map(o => o.src)
   return artistSrcs.every(src => selectedOrphans.value.includes(src))
 }
 
+// Check if all tracks of an album are currently selected
 const isAlbumSelected = (artistName: string, albumName: string) => {
   const albumSrcs = groupedOrphans.value[artistName][albumName].map(o => o.src)
   return albumSrcs.every(src => selectedOrphans.value.includes(src))
 }
 
+// Convert raw file paths into structured objects with human-readable labels
 const formatData = () => {
   orphans.value = orphansUrl.value.map(url => {
+    // Split the URL into artist, album, and track slugs
     const [artistSlug, albumSlug, trackSrc] = url.split('/')
+    // Convert slug (e.g., "my_track.mp3") into "My Track" for readability
     const toLabel = (slug: string) => slug
-        .replace(/\.[^.]+$/, '')     // retire l'extension (.mp3)
+        .replace(/\.[^.]+$/, '')     // remove extension (e.g., .mp3)
         .split('_')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ')

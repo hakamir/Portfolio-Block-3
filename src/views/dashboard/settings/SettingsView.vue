@@ -11,11 +11,13 @@ const showDeleteModal = ref(false)
 const orphansToDelete = ref<string[]>([])
 const orphansRefreshKey = ref(0);
 
+// Receive delete request from child and open confirmation modal with selected items
 const onRequestDelete = (srcs: string[]) => {
   orphansToDelete.value = srcs
   showDeleteModal.value = true
 }
 
+// Confirm deletion, call store, then reset modal state and trigger list refresh
 const onConfirmDelete = async () => {
   await audioStore.deleteOrphans(orphansToDelete.value)
   showDeleteModal.value = false

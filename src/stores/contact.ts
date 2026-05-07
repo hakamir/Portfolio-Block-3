@@ -1,9 +1,8 @@
 import { defineStore } from 'pinia'
 import { reactive, ref } from 'vue'
-import { instance } from '../api/axios'
-import messageApi from '../api/messages'
-
-type Status = 'idle' | 'loading' | 'submitted' | 'error'
+import { instance } from '@api/axios'
+import messageApi from '@api/messages'
+import type {Status} from '@/types';
 
 interface ContactForm {
     name: string
@@ -40,9 +39,14 @@ export const useContactStore = defineStore('contact', () => {
         status.value = 'loading'
         try {
             await instance.post(messageApi.createMessage, formData)
-            status.value = 'submitted'
-        } catch (error) {
-            status.value = 'error'
+            status.value = 'success'
+        } catch (error: any) {
+            const code = error.response?.status
+            if (code === 429) {
+                status.value = 'tooMany'
+            } else {
+                status.value = 'error'
+            }
         }
     }
 

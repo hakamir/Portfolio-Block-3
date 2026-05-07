@@ -9,7 +9,7 @@ import {onMounted, ref} from "vue";
 const store = useMessagesStore()
 const selectedIds = ref<string[]>([])
 
-onMounted(() => store.loadMessages())
+onMounted(() => store.fetchMessages())
 
 </script>
 

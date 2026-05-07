@@ -3,15 +3,28 @@ import {ref} from "vue";
 import router from "../router";
 import {instance} from "@api/axios.ts";
 import authApi from "@api/auth.ts";
+import type {Status} from "@/types";
+
 
 export const useAuthStore = defineStore("auth", () => {
     const token = ref<string | null>()
     const isInitialized = ref<boolean>(false)
 
+    const status = ref<Status>('idle')
+
     const login = async (email: string, pwd: string) => {
-        const res = await instance.post(authApi.login, {email, pwd})
-        token.value = res.data.token
-        await router.push('/dashboard')
+        status.value = 'loading'
+        try {
+            const res = await instance.post(authApi.login, {email, pwd})
+            token.value = res.data.token
+            status.value = 'success'
+            await router.push('/dashboard')
+        } catch (error: any) {
+            const code = error.response?.status
+            if (code === 401) status.value = 'invalid'
+            else if (code === 429) status.value = 'tooMany'
+            else status.value = 'error'
+        }
     }
 
     const logout = async () => {
@@ -32,7 +45,16 @@ export const useAuthStore = defineStore("auth", () => {
     }
 
     const changePassword = async (currentPwd: string, newPwd: string) => {
-        await instance.put(authApi.changePassword, {currentPwd, newPwd})
+        status.value = 'loading'
+        try {
+            await instance.put(authApi.changePassword, {currentPwd, newPwd})
+            status.value = 'success'
+            // Reset status to idle after a delay to clear success feedback
+            setTimeout(() => status.value = 'idle', 3000)
+        } catch (error: any) {
+            // Map 401 response to 'invalid' (wrong current password), otherwise generic error
+            status.value = error.response?.status === 401 ? 'invalid' : 'error'
+        }
     }
 
     const isTokenExpired = (token: string) => {
@@ -53,5 +75,5 @@ export const useAuthStore = defineStore("auth", () => {
         return true;
     }
 
-    return {token, isInitialized, login, logout, refresh, changePassword, isAuthenticated}
+    return {token, isInitialized, status, login, logout, refresh, changePassword, isAuthenticated}
 })

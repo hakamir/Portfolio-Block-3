@@ -19,6 +19,8 @@ def create_app():
     app.config['JWT_COOKIE_SECURE'] = settings.jwt_cookie_secure
     app.config['JWT_COOKIE_SAMESITE'] = settings.jwt_cookie_samesite
     app.config['JWT_COOKIE_CSRF_PROTECT'] = settings.jwt_cookie_csrf_protect
+    app.config["RATELIMIT_STORAGE_URI"] = settings.mongo_uri
+    app.config["RATELIMIT_STORAGE_OPTIONS"] = {"database_name": "Portfolio"}
 
     standard_ports = {80, 443}
     if settings.frontend_port in standard_ports:

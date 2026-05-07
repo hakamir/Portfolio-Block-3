@@ -16,6 +16,9 @@ const props = defineProps<{
 }>()
 const fileExists = ref(false)
 const audioStore = useAudioStore()
+
+const uploadStatus = computed(() => props.track ? audioStore.uploadStatuses.get(props.track) : undefined)
+
 const model = defineModel<string>({required: true})
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
@@ -28,13 +31,13 @@ const handleUpload = () => {
 const handleFileChange = (e: Event) => {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file || !props.track) return
-  audioStore.pendingUploads.set(props.track, file)
+  audioStore.addPendingUpload(props.track, file)
   localSrc.value = URL.createObjectURL(file)
 }
 
 onMounted(async () => {
   if (props.type === 'track' && props.src) {
-    fileExists.value = await audioStore.checkAudioExists(props.src)
+    fileExists.value = await audioStore.checkAudioExists(props.src, props.track)
   }
 })
 
@@ -49,7 +52,7 @@ watch(() => props.src, (newSrc) => {
   if (debounceTimer) clearTimeout(debounceTimer)
 
   debounceTimer = setTimeout(async () => {
-    fileExists.value = await audioStore.checkAudioExists(newSrc)
+    fileExists.value = await audioStore.checkAudioExists(newSrc, props.track)
   }, props.debounceTime || 750)
 })
 
@@ -83,22 +86,12 @@ const labelText = {
   </label>
 
   <div v-if="type === 'track'" class="flex items-center">
-    <!-- File waiting to be uploaded -->
     <AudioPlayerMini
-        v-if="localSrc"
-        :src="localSrc"
+        v-if="localSrc || fileExists"
+        :src="localSrc ?? src ?? ''"
         :title="track?.title"
         :subtitle="`${artist?.title} - ${album?.title}`"
-        :isLocal="true"
-        className="work-upload-btn min-w-16 group flex items-center justify-center"
-    />
-    <!-- File already on the server -->
-    <AudioPlayerMini
-        v-else-if="fileExists"
-        :src="`${src}`"
-        :title="track?.title"
-        :subtitle="`${artist?.title} - ${album?.title}`"
-        :isLocal="false"
+        :status="uploadStatus"
         className="work-upload-btn min-w-16 group flex items-center justify-center"
     />
 

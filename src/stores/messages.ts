@@ -2,6 +2,7 @@ import {defineStore} from "pinia";
 import {computed, ref} from "vue";
 import {instance} from "../api/axios.ts";
 import messageApi from "../api/messages.ts"
+import type {Tab} from "@/types"
 
 interface Message {
     _id: string;
@@ -12,8 +13,6 @@ interface Message {
     read: boolean;
     trashed: boolean;
 }
-
-export type Tab = 'inbox' | 'trash'
 
 export const useMessagesStore = defineStore('messages', () => {
     const allMessages = ref<Message[]>([])
@@ -27,17 +26,12 @@ export const useMessagesStore = defineStore('messages', () => {
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     )
 
-    // truncate a message to a maximum length
-    function truncateMessage(text: string, maxLength = 100) {
-        return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
-    }
-
     const getMessageById = (id: string) => {
         return allMessages.value.find(m => m._id === id)
     }
 
     // load messages from API
-    const loadMessages = async () => {
+    const fetchMessages = async () => {
         fetchStatus.value = 'loading'
         try {
             const res = await instance.get(messageApi.getMessages)
@@ -88,6 +82,6 @@ export const useMessagesStore = defineStore('messages', () => {
 
     return {
         allMessages, currentTab, fetchStatus, filteredMessages,
-        truncateMessage, loadMessages, markAsRead, trashMessage, deleteMessage, applyToSelected, getMessageById
+        fetchMessages, markAsRead, trashMessage, deleteMessage, applyToSelected, getMessageById
     }
 })

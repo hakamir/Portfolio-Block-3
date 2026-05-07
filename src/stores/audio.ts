@@ -2,6 +2,7 @@ import {defineStore} from "pinia";
 import {instance} from "@api/axios.ts";
 import {ref, watch} from "vue";
 import audiosApi from "@api/audios.ts";
+import type {TrackUploadStatus} from "@/types";
 
 export interface Track {
     trackNumber: number
@@ -30,8 +31,10 @@ export const useAudioStore = defineStore('audio', () => {
     const loading = ref(false)
     const fetchStatus = ref<'idle' | 'loading' | 'error'>('idle')
     const isSubmitted = ref(false);
-    const uploadedFileName = ref<string | undefined>(undefined);
+    const uploadStatuses = ref<Map<Track, TrackUploadStatus>>(new Map())
+    const orphans = ref<string[]>([])
 
+    // Convert string to slug format ("Track Title" to "track_title")
     const toSlug = (str: string) => str.toLowerCase().trim().replace(/\s+/g, '_')
 
     const pendingUploads = ref<Map<Track, File>>(new Map())
@@ -63,14 +66,20 @@ export const useAudioStore = defineStore('audio', () => {
         }
     }
 
-    const checkAudioExists = async (src: string | undefined) => {
+    const checkAudioExists = async (src: string | undefined, track?: Track) => {
         if (!src) return false
         try {
             await instance.head(src)
+            if (track) uploadStatuses.value.set(track, 'uploaded')
             return true
         } catch {
             return false
         }
+    }
+
+    const addPendingUpload = (track: Track, file: File) => {
+        pendingUploads.value.set(track, file)
+        uploadStatuses.value.set(track, 'pending')
     }
 
     const uploadTrack = async (file: File, albumSlug: string, track: Track) => {
@@ -85,11 +94,9 @@ export const useAudioStore = defineStore('audio', () => {
         }
     }
 
-    const saveAudios = async () => {
-        // Upload pending tracks
-        isSubmitted.value = true;
-        fetchStatus.value = 'loading';
-        const hasEmpty = artists.value.some(artist =>
+    // Validate: ensure no artist, album, or track has an empty title
+    const hasEmptyFields = (): boolean => {
+        return artists.value.some(artist =>
             !artist.title?.trim() ||
             artist.albums.some(album =>
                 !album.title?.trim() ||
@@ -98,47 +105,85 @@ export const useAudioStore = defineStore('audio', () => {
                 )
             )
         )
-        if (hasEmpty) {
-            return false
-        }
-        for (const [track, file] of pendingUploads.value.entries()) {
-            const artist = artists.value.find(
-                artist => artist.albums.some(
-                    album => album.tracks.includes(track)
-                )
-            )
-            const album = artist?.albums.find(
-                album => album.tracks.includes(track)
-            )
-            if (!artist || !album || !track.src) continue
+    }
 
-            const formData = new FormData()
-            formData.append('file', file)
-            formData.append('artistSlug', artist.slug)
-            formData.append('albumSlug', album.slug)
-            formData.append('trackSrc', track.src)
-            uploadedFileName.value = pendingUploads.value.get(track)?.name;
-            await instance.post(audiosApi.uploadAudio, formData)
-        }
+    // Upload all pending audio files
+    const uploadPendingAudios = async () => {
+        const results = await Promise.allSettled(
+            [...pendingUploads.value.entries()].map(async ([track, file]) => {
+                const {artist, album} = findTrackContext(track)
+                if (!artist || !album || !track.src) return
+
+                const formData = new FormData()
+                formData.append('file', file)
+                formData.append('artistSlug', artist.slug)
+                formData.append('albumSlug', album.slug)
+                formData.append('trackSrc', track.src)
+
+                uploadStatuses.value.set(track, 'uploading')
+                try {
+                    await instance.post(audiosApi.uploadAudio, formData)
+                    uploadStatuses.value.set(track, 'uploaded')
+                } catch (err) {
+                    uploadStatuses.value.set(track, 'pending')
+                    throw err
+                }
+            })
+        )
+
+        results.forEach((result) => {
+            if (result.status === 'rejected') {
+                console.error('Upload failed', result.reason)
+            }
+        })
+        // Clear upload state after all files are processed
         pendingUploads.value.clear()
-        uploadedFileName.value = undefined;
-        // Get ids from existing artists
-        const existingIds = (await instance.get(audiosApi.getAudios)).data.map((a: Artist) => a._id)
+    }
 
-        // If an artist id exists on the server but not in the store, delete it
-        const currentIds = artists.value.map(a => a._id).filter(id => id)
+    // Return corresponding artist and album of the track when it is found, both undefined if not found
+    const findTrackContext = (track: Track) => {
+        for (const artist of artists.value) {
+            const album = artist.albums.find(album => album.tracks.includes(track))
+            if (album) return {artist, album}
+        }
+        return {artist: undefined, album: undefined}
+    }
+
+    const syncDeletedArtists = async () => {
+        // Fetch existing artists from server to detect deletions
+        const existingIds = (await instance.get(audiosApi.getAudios))
+            .data.map((a: Artist) => a._id)
+
+        // Compute artists that exist on server but were removed locally
+        const currentIds = artists.value.map(a => a._id).filter(Boolean)
         const toDelete = existingIds.filter((id: string) => !currentIds.includes(id))
+
+        // Delete removed artists from server
         for (const id of toDelete) {
             await instance.delete(audiosApi.deleteArtist(id))
         }
+    }
 
-        // Save artists
+    const saveAudios = async () => {
+        // Mark form as submitted and set loading state
+        isSubmitted.value = true;
+        fetchStatus.value = 'loading';
+
+        // Abort if validation fails
+        if (hasEmptyFields()) {
+            return false
+        }
+        // Upload pending audios
+        await uploadPendingAudios()
+        // Sync deleted artists
+        await syncDeletedArtists()
+        // Persist current artists state to server
         await instance.put(audiosApi.updateAudios, artists.value)
+
+        // Reset loading state
         fetchStatus.value = 'idle';
         return true;
     }
-
-    const orphans = ref<string[]>([])
 
     const fetchOrphans = async () => {
         try {
@@ -159,18 +204,7 @@ export const useAudioStore = defineStore('audio', () => {
     }
 
     return {
-        artists,
-        loading,
-        fetchStatus,
-        uploadedFileName,
-        fetchAudios,
-        checkAudioExists,
-        pendingUploads,
-        uploadTrack,
-        saveAudios,
-        fetchOrphans,
-        orphans,
-        deleteOrphans,
-        isSubmitted
+        artists, loading, fetchStatus, uploadStatuses, pendingUploads, orphans, isSubmitted,
+        fetchAudios, fetchOrphans, checkAudioExists, uploadTrack, addPendingUpload, saveAudios, deleteOrphans
     }
 })
