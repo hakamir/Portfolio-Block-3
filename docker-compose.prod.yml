@@ -8,10 +8,12 @@ services:
       args:
         VITE_API_URL: https://deviance.studio
     ports:
+      - "80:80"
       - "443:443"
     volumes:
       - ./nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /etc/letsencrypt/live/deviance.studio:/etc/letsencrypt/live/deviance.studio:ro
+      - /etc/letsencrypt/archive/deviance.studio:/etc/letsencrypt/archive/deviance.studio:ro
 
   backend:
     environment:
