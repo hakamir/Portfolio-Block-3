@@ -1,12 +1,11 @@
 import os
-
 from bson import ObjectId
 from flask import Blueprint, jsonify, request, current_app
 from flask_jwt_extended import jwt_required
 from mongoengine import DoesNotExist
 from pydantic import ValidationError
 from Schemas.gallery import GalleryIn
-from helpers import handle_db_timeout
+from utils.decorators import handle_db_timeout
 from models.gallery import Gallery, GalleryImage
 
 gallery_bp = Blueprint('gallery', __name__)

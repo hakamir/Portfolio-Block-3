@@ -208,7 +208,7 @@ const onSave = async () => {
                           <WorkAudioInput type="track"
                                           placeholder="Track title"
                                           v-model="track.title"
-                                          :src="`${apiUrl}/uploads/audio/${artist.slug}/${album.slug}/${track.src}`"
+                                          :src="`${apiUrl}/upload/audio/${artist.slug}/${album.slug}/${track.src}`"
                                           :track="track"
                                           :album="album"
                                           :artist="artist"

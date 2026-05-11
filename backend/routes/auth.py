@@ -7,7 +7,7 @@ from pydantic import ValidationError
 from werkzeug.exceptions import UnsupportedMediaType
 from Schemas.auth import Login, PasswordUpdate
 from extensions import limiter
-from helpers import handle_db_timeout
+from utils.decorators import handle_db_timeout
 from models.user import User
 
 auth_bp = Blueprint('auth', __name__)

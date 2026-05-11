@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required
 from mongoengine import ValidationError, DoesNotExist
 from pydantic import ValidationError as PydanticValidationError
 from Schemas.artist import ArtistIn
-from helpers import handle_db_timeout
+from utils.decorators import handle_db_timeout
 from models.artist import Artist, Track, Album
 
 artists_bp = Blueprint('artists', __name__)

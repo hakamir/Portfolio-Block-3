@@ -1,5 +1,5 @@
 export default {
-    uploadAudio: `/api/audio/upload`,
-    getOrphans: `/api/audio/orphans`,
-    deleteOrphans: `/api/audio/orphans`,
+    uploadAudio: `/api/upload/audio`,
+    getOrphans: `/api/orphans/audio`,
+    deleteOrphans: `/api/orphans/audio`,
 }

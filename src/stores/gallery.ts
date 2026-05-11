@@ -26,6 +26,7 @@ export const useGalleriesStore = defineStore('galleries', () => {
     const pendingUploads = ref<Map<Image, File>>(new Map())
     const fetchStatus = ref<'idle' | 'loading' | 'error'>('idle')
     const uploadedFileName = ref<string | undefined>(undefined);
+    const orphans = ref<string[]>([])
 
     const fetchGalleries = async () => {
         const res = await instance.get(galleryApi.getGalleries)
@@ -68,10 +69,10 @@ export const useGalleriesStore = defineStore('galleries', () => {
         // Upload pending images
         const hasEmpty = galleries.value.some(gallery => {
             !gallery.title?.trim() ||
-                gallery.images.some(image => {
+            gallery.images.some(image => {
                 !image.title?.trim() ||
                 !image.location?.trim()
-                })
+            })
         })
         if (hasEmpty) {
             return false
@@ -108,5 +109,26 @@ export const useGalleriesStore = defineStore('galleries', () => {
         return true
     }
 
-    return {galleries, fetchGalleries, saveGalleries, pendingUploads, checkImageExists, fetchStatus, uploadedFileName}
+    const fetchOrphans = async () => {
+        try {
+            const res = await instance.get(galleryApi.getOrphans)
+            orphans.value = res.data
+        } catch (err) {
+            console.error('Error fetching orphans:', err)
+        }
+    }
+
+    const deleteOrphans = async (files: string[]) => {
+        try {
+            await instance.delete(galleryApi.deleteOrphans, {data: {files}})
+            await fetchOrphans()
+        } catch (err) {
+            console.error('Error deleting orphans:', err)
+        }
+    }
+
+    return {
+        galleries, orphans, pendingUploads, fetchStatus, uploadedFileName,
+        fetchGalleries, saveGalleries, checkImageExists, fetchOrphans, deleteOrphans,
+    }
 });

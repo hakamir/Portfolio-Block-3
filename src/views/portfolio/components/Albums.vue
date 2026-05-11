@@ -104,7 +104,7 @@ const filteredArtists = computed(() => {
                 v-for="track in album.tracks"
                 :key="track.trackNumber"
                 :title="track.title"
-                :src="`${apiUrl}/uploads/audio/${artist.slug}/${album.slug}/${track.src}`"
+                :src="`${apiUrl}/upload/audio/${artist.slug}/${album.slug}/${track.src}`"
                 :subtitle="`${artist.title} - ${album.title}`"
             />
           </Card>

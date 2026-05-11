@@ -17,7 +17,7 @@ const localSrc = ref<string | null>(null)
 const fileExists = ref(false)
 
 const fullSrc = computed(() =>
-    `${apiUrl}/uploads/gallery/${props.gallerySlug}/${props.image.src}`
+    `${apiUrl}/upload/gallery/${props.gallerySlug}/${props.image.src}`
 )
 
 const showPreview = ref(false)

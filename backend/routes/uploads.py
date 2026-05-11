@@ -3,19 +3,22 @@ from flask import Blueprint, jsonify, request, send_from_directory, current_app
 from flask_jwt_extended import jwt_required
 from werkzeug.utils import secure_filename
 
-from helpers import handle_db_timeout, AudioConverter
 from models.artist import Artist
+from models.gallery import Gallery
+from utils.AudioConverter import AudioConverter
+from utils.decorators import handle_db_timeout
+from utils.filesystem import cleanup_empty_dirs, get_files
 
 uploads_bp = Blueprint('uploads', __name__)
 
 
-@uploads_bp.route('/uploads/<path:filename>')
+@uploads_bp.route('/upload/<path:filename>')
 def uploaded_file(filename):
     settings = current_app.config['settings']
     return send_from_directory(settings.upload_folder, filename)
 
 
-@uploads_bp.route('/audio/upload', methods=['POST'])
+@uploads_bp.route('/upload/audio', methods=['POST'])
 @jwt_required()
 def upload_audio():
     settings = current_app.config['settings']
@@ -51,7 +54,7 @@ def upload_audio():
     return jsonify({'uploaded': True}), 201
 
 
-@uploads_bp.route('/audio/orphans', methods=['GET'])
+@uploads_bp.route('/orphans/audio', methods=['GET'])
 @jwt_required()
 @handle_db_timeout
 def get_orphan_audio():
@@ -64,19 +67,12 @@ def get_orphan_audio():
                 tracked_files.add(path)
                 tracked_files.add(path.replace('\\', '/'))
 
-    orphans = []
-    audio_folder = os.path.join(settings.upload_folder, 'audio')
-    for root, dirs, files in os.walk(audio_folder):
-        for file in files:
-            full_path = os.path.join(root, file)
-            relative_path = os.path.relpath(full_path, audio_folder)
-            relative_path = relative_path.replace('\\', '/')
-            if relative_path not in tracked_files:
-                orphans.append(relative_path)
+    # Get all files in the audio folder
+    orphans = get_files(os.path.join(settings.upload_folder, 'audio'), tracked_files)
     return jsonify(orphans), 200
 
 
-@uploads_bp.route('/audio/orphans', methods=['DELETE'])
+@uploads_bp.route('/orphans/audio', methods=['DELETE'])
 @jwt_required()
 def delete_orphan_audio():
     settings = current_app.config['settings']
@@ -91,16 +87,11 @@ def delete_orphan_audio():
             deleted.append(file)
 
     # Clean up empty directories
-    audio_folder = os.path.join(settings.upload_folder, 'audio')
-    for root, dirs, files in os.walk(audio_folder, topdown=False):
-        for dir in dirs:
-            dir_path = os.path.join(root, dir)
-            if not os.listdir(dir_path):
-                os.rmdir(dir_path)
+    cleanup_empty_dirs(os.path.join(settings.upload_folder, 'audio'))
     return jsonify({'deleted': deleted}), 200
 
 
-@uploads_bp.route('/gallery/upload', methods=['POST'])
+@uploads_bp.route('/upload/gallery', methods=['POST'])
 @jwt_required()
 def upload_image():
     settings = current_app.config['settings']
@@ -127,3 +118,37 @@ def upload_image():
     os.makedirs(dest, exist_ok=True)
     file.save(os.path.join(dest, image_src))
     return jsonify({'uploaded': image_src}), 201
+
+@uploads_bp.route('/orphans/gallery', methods=['GET'])
+@jwt_required()
+@handle_db_timeout
+def get_orphan_gallery():
+    settings = current_app.config['settings']
+    tracked_files = set()
+    for gallery in Gallery.objects():
+        for image in gallery.images:
+            path = os.path.join(gallery.slug, image.src)
+            tracked_files.add(path)
+            tracked_files.add(path.replace('\\', '/'))
+
+    # Get all files in the gallery folder
+    orphans = get_files(os.path.join(settings.upload_folder, 'gallery'), tracked_files)
+    return jsonify(orphans), 200
+
+@uploads_bp.route('/orphans/gallery', methods=['DELETE'])
+@jwt_required()
+@handle_db_timeout
+def delete_orphan_gallery():
+    settings = current_app.config['settings']
+    data = request.get_json()
+    files = data.get('files', [])
+    deleted = []
+    for file in files:
+        full_path = os.path.join(settings.upload_folder, 'gallery', file)
+        if os.path.exists(full_path):
+            os.remove(full_path)
+            deleted.append(file)
+
+    # Clean up empty directories
+    cleanup_empty_dirs(os.path.join(settings.upload_folder, 'gallery'))
+    return jsonify({'deleted': deleted}), 200

@@ -3,7 +3,7 @@ from bson import ObjectId
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 from mongoengine.errors import ValidationError, DoesNotExist
-from helpers import handle_db_timeout
+from utils.decorators import handle_db_timeout
 from extensions import limiter
 from models.message import Message
 from pydantic import ValidationError as PydanticValidationError

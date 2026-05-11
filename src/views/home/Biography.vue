@@ -18,9 +18,9 @@ onMounted(async () => {
   <section v-if="biography" class="relative sm:min-h-screen bg-neutral-300 sm:snap-start">
     <div class="grid grid-cols-1 md:landscape:grid-cols-1 lg:landscape:grid-cols-2 min-h-screen">
       <div class="lg:sticky lg:top-0 lg:h-screen lg:w-full">
-        <ProgressiveImage :src512="`${baseURL}/uploads${biography.image.sm}`"
-                          :src1024="`${baseURL}/uploads${biography.image.md}`"
-                          :src2048="`${baseURL}/uploads${biography.image.lg}`"
+        <ProgressiveImage :src512="`${baseURL}/upload${biography.image.sm}`"
+                          :src1024="`${baseURL}/upload${biography.image.md}`"
+                          :src2048="`${baseURL}/upload${biography.image.lg}`"
                           :alt="biography.title"
                           :responsive=true
                           class="w-full h-full object-cover"/>
