@@ -41,6 +41,11 @@ onMounted(async () => {
   }
 })
 
+watch(() => props.track, async (newTrack) => {
+  if (!newTrack || props.type !== 'track' || !props.src) return
+  fileExists.value = await audioStore.checkAudioExists(props.src, newTrack)
+})
+
 onBeforeUnmount(() => {
   if (localSrc.value) URL.revokeObjectURL(localSrc.value)
 })

@@ -2,6 +2,7 @@ import {defineStore} from "pinia";
 import {instance} from "@api/axios.ts";
 import {ref, watch} from "vue";
 import audiosApi from "@api/audios.ts";
+import artistsApi from "@api/artists.ts";
 import type {TrackUploadStatus} from "@/types";
 
 export interface Track {
@@ -56,7 +57,7 @@ export const useAudioStore = defineStore('audio', () => {
         loading.value = true
         fetchStatus.value = 'loading'
         try {
-            const res = await instance.get(audiosApi.getAudios)
+            const res = await instance.get(artistsApi.getArtists)
             artists.value = res.data
             fetchStatus.value = 'idle'
         } catch (err) {
@@ -151,7 +152,7 @@ export const useAudioStore = defineStore('audio', () => {
 
     const syncDeletedArtists = async () => {
         // Fetch existing artists from server to detect deletions
-        const existingIds = (await instance.get(audiosApi.getAudios))
+        const existingIds = (await instance.get(artistsApi.getArtists))
             .data.map((a: Artist) => a._id)
 
         // Compute artists that exist on server but were removed locally
@@ -160,7 +161,7 @@ export const useAudioStore = defineStore('audio', () => {
 
         // Delete removed artists from server
         for (const id of toDelete) {
-            await instance.delete(audiosApi.deleteArtist(id))
+            await instance.delete(artistsApi.deleteArtist(id))
         }
     }
 
@@ -178,7 +179,7 @@ export const useAudioStore = defineStore('audio', () => {
         // Sync deleted artists
         await syncDeletedArtists()
         // Persist current artists state to server
-        await instance.put(audiosApi.updateAudios, artists.value)
+        await instance.put(artistsApi.updateArtists, artists.value)
 
         // Reset loading state
         fetchStatus.value = 'idle';
