@@ -283,7 +283,7 @@ const onSave = async () => {
     </div>
 
     <!-- MOBILE -->
-    <div v-else class="flex flex-col gap-4">
+    <div v-else class="flex flex-col">
       <VueDraggable v-model="audioStore.artists"
                     handle=".drag-handle"
                     group="artists"
@@ -409,6 +409,22 @@ const onSave = async () => {
           </CollapseTransition>
         </div>
       </VueDraggable>
+      <div class="flex items-center">
+        <div v-if="fetchStatus == 'error'" class="flex items-center gap-2 text-red-800 bg-red-100 rounded-full p-2">
+          <Ban/>
+          <span class="text-sm font-semibold">An error occurred. Some files may not have been uploaded.</span>
+        </div>
+        <button v-if="fetchStatus == 'idle' || fetchStatus == 'error'" @click="onSave"
+                class="px-6 py-4 w-full bg-black text-white rounded-b-xl transition flex items-center justify-center gap-2">
+          <Save class="w-6 h-6"/>
+          <span class="font-unbounded">Save</span>
+        </button>
+        <button v-if="fetchStatus == 'loading'" @click="onSave"
+                class="px-6 py-4 w-full bg-gray-700 text-white rounded-b-xl transition flex items-center justify-center gap-2 cursor-not-allowed!">
+          <LoaderCircle class="animate-spin"/>
+          <span class="font-unbounded">Uploading...</span>
+        </button>
+      </div>
     </div>
   </div>
 </template>
