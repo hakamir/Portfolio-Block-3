@@ -10,6 +10,7 @@ const props = defineProps<{
   status?: string
   title?: string
   subtitle?: string
+  isMobile?: boolean
 }>()
 
 const playerStore = useAudioPlayerStore()
@@ -38,7 +39,27 @@ onBeforeUnmount(() => audioRef.value?.removeEventListener('pause', onPause))
 
 <template>
   <div :class="[props.className]">
-    <div class="relative group/tooltip w-max">
+    <!-- Mobile -->
+    <div v-if="isMobile" class="relative w-max">
+      <div v-if="status === 'uploading'" class="flex items-center gap-2">
+        <span class="text-sm font-light font-unbounded text-gray-600">Uploading</span>
+        <Loader class="bg-yellow-500/50 text-yellow-700 p-1 rounded-full w-6 h-6 animate-spin"/>
+      </div>
+      <div v-else-if="status === 'pending'" class="flex items-center gap-2">
+        <span class="text-sm font-light font-unbounded text-gray-600">Pending</span>
+        <CircleDotDashed class="bg-blue-500/50 text-blue-700 p-1 rounded-full w-6 h-6"/>
+      </div>
+      <div v-else-if="status === 'uploaded'" class="flex items-center gap-2">
+        <span class="text-sm font-light font-unbounded text-gray-600">Uploaded</span>
+        <Check class="bg-lime-500/50 text-lime-700 p-1 rounded-full w-6 h-6"/>
+      </div>
+      <div v-else class="flex items-center gap-2">
+        <span class="text-sm font-light font-unbounded text-gray-600">No file</span>
+      </div>
+    </div>
+
+    <!-- Desktop -->
+    <div v-else class="relative group/tooltip w-max">
       <div v-if="status === 'uploading'">
         <Tooltip message="Uploading..." :icon="Loader" iconBgColor="bg-yellow-500/50" side="left">
           <Loader class="bg-yellow-500/50 text-yellow-700 p-1 rounded-full w-6 h-6 animate-spin"/>
