@@ -94,7 +94,7 @@ All routes are prefixed with `/api`.
 |-------:|-----------------------|------|---------------------|
 |   POST | `/api/upload/audio`   | JWT  | Upload audio file   |
 |   POST | `/api/upload/gallery` | JWT  | Upload image        |
-|    GET | `/api/uploads/<path>` | —    | Serve uploaded file |
+|    GET | `/api/upload/<path>` | —    | Serve uploaded file |
 
 ### Orphaned files management
 | Method | Path                   | Auth | Description                 |
