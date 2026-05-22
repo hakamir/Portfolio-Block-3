@@ -16,8 +16,8 @@ const model = defineModel<string>({required: true})
   <label :class="['border-y border-gray-300 pr-4 py-2 font-semibold flex items-center',
                   'gap-2 cursor-grab select-none group',
                   labelColor]"
-
-         class="drag-handle">
+         class="drag-handle"
+         aria-label="Drag to reorder images">
     <GripVertical class="text-gray-400 group-hover:text-gray-500 transition"/>
     {{ label }}
   </label>
@@ -29,5 +29,6 @@ const model = defineModel<string>({required: true})
         inputColor]"
       :placeholder="placeholder"
       v-model="model"
+      aria-label="Image title"
   />
 </template>

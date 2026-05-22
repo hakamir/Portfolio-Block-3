@@ -62,16 +62,17 @@ onBeforeUnmount(() => {
         <input
             class="flex-1 bg-white px-2 py-3 border border-gray-300 rounded-md focus:outline-none text-sm placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75"
             v-model="image.location"
-            placeholder="Location"/>
+            placeholder="Location"
+            aria-label="Image location"/>
       </div>
       <div class="flex items-center gap-2">
         <DatePicker v-model="image.date" :isMobile="true"/>
       </div>
       <div class="flex items-center gap-2">
-        <button v-if="localSrc || fileExists" @click="showPreview = true" class="shrink-0">
-          <img :src="localSrc ?? fullSrc" class="w-10 h-10 object-cover rounded-lg border border-gray-300"/>
+        <button v-if="localSrc || fileExists" @click="showPreview = true" class="shrink-0" aria-label="Preview image">
+          <img :src="localSrc ?? fullSrc" class="w-10 h-10 object-cover rounded-lg border border-gray-300" :alt="image.alt ?? 'Image preview'"/>
         </button>
-        <button @click="handleUpload"
+        <button @click="handleUpload" aria-label="Upload image"
                 class="flex items-center gap-2 px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-sm hover:bg-gray-200 transition"
                 :class="(localSrc || fileExists) ? 'opacity-60 hover:opacity-100' : 'flex-1 justify-center'">
           <Upload class="w-4 h-4 text-gray-600"/>
@@ -86,7 +87,7 @@ onBeforeUnmount(() => {
              class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm cursor-pointer">
           <img :src="localSrc ?? fullSrc"
                class="max-w-[90vw] max-h-[90vh] object-contain rounded-2xl shadow-[0_0_20px_rgba(0,0,0,0.5)] cursor-pointer"
-               @click="showPreview = false"
+               @click="showPreview = false" :alt="image.alt ?? 'Image preview'"
           />
         </div>
       </Transition>
@@ -104,23 +105,25 @@ onBeforeUnmount(() => {
       </div>
       <input
           class="bg-white px-3 py-2 border-l border-b border-gray-300 focus:outline-none placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75 font-semibold"
-          v-model="image.location"/>
+          v-model="image.location" aria-label="Image location"/>
       <div class="px-3 py-2 bg-orange-200/50 font-semibold border-l border-b border-gray-300">Date</div>
       <DatePicker v-model="image.date"/>
 
       <button v-if="localSrc" @click="showPreview = true"
-              class="px-1 border-b border-r border-gray-300 bg-gray-200/50 hover:bg-gray-300/50 transition">
-        <img v-if="localSrc" :src="localSrc"
+              class="px-1 border-b border-r border-gray-300 bg-gray-200/50 hover:bg-gray-300/50 transition"
+              aria-label="Preview image">
+        <img v-if="localSrc" :src="localSrc" :alt="image.alt ?? 'Image preview'"
              class="w-10 h-10 object-cover rounded-lg border border-gray-300"/>
       </button>
       <button v-else-if="fileExists" @click="showPreview = true"
               class="px-1 border-b border-r border-gray-300 bg-gray-200/50 hover:bg-gray-300/50 transition">
-        <img :src="fullSrc"
+        <img :src="fullSrc" :alt="image.alt ?? 'Image preview'"
              class="w-10 h-10 object-cover rounded-lg border border-gray-300"/>
       </button>
       <button @click="handleUpload"
               class="px-3 py-2 border-b border-r border-gray-300 bg-gray-200/50 hover:bg-gray-300/50 transition rounded-br-2xl"
-              :class="(localSrc || fileExists) ? 'opacity-60 hover:opacity-100' : ''">
+              :class="(localSrc || fileExists) ? 'opacity-60 hover:opacity-100' : ''"
+              aria-label="Upload image">
         <Upload class="text-gray-600 group-hover:text-gray-800 group-hover:translate-x-1 transition"/>
       </button>
       <Teleport to="body">
@@ -128,7 +131,7 @@ onBeforeUnmount(() => {
           <div v-if="showPreview"
                @click="showPreview = false"
                class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm cursor-pointer">
-            <img :src="localSrc ?? fullSrc"
+            <img :src="localSrc ?? fullSrc" :alt="image.alt ?? 'Image preview'"
                  class="max-w-[90vw] max-h-[90vh] object-contain rounded-2xl shadow-[0_0_20px_rgba(0,0,0,0.5)] cursor-pointer"
                  @click="showPreview = false"
             />
@@ -136,7 +139,7 @@ onBeforeUnmount(() => {
         </Transition>
       </Teleport>
       <input ref="fileInputRef" type="file" accept=".jpg,.jpeg,.png,.gif,.webp" class="hidden"
-             @change="handleFileChange"/>
+             @change="handleFileChange" aria-label="Upload image input" aria-hidden="true"/>
     </div>
   </template>
 </template>

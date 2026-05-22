@@ -178,7 +178,7 @@ const onSave = async () => {
               <!-- Collapse button -->
               <CollapseButton :collapsed="collapsedArtists.has(`artist-${artistIndex}`)"
                               @toggle="toggleArtistCollapse(`artist-${artistIndex}`)"
-                              color="bg-primary-300/30"/>
+                              color="bg-primary-300/30" aria-label="collapse artist"/>
               <!-- Artist input -->
               <WorkAudioInput type="artist" placeholder="Artist name" v-model="artist.title"/>
             </div>
@@ -191,7 +191,7 @@ const onSave = async () => {
                   class="hidden md:block text-sm text-blue-600 group-hover:text-blue-700 group-hover:translate-x-1 transition">New album</span>
             </button>
             <!-- Delete artist button -->
-            <DeleteButton @delete="deleteArtist(artist)" customClass="rounded-r-full" assignedFor="artist"/>
+            <DeleteButton @delete="deleteArtist(artist)" customClass="rounded-r-full" assignedFor="artist" aria-label="delete artist"/>
           </div>
 
           <!-- ALBUMS -->
@@ -210,12 +210,13 @@ const onSave = async () => {
                     <!-- Collapse button -->
                     <CollapseButton :collapsed="collapsedAlbums.has(`album-${artistIndex}-${albumIndex}`)"
                                     @toggle="toggleAlbumCollapse(`album-${artistIndex}-${albumIndex}`)"
-                                    color="bg-yellow-300/30"/>
+                                    color="bg-yellow-300/30"
+                                    aria-label="collapse album"/>
                     <!-- Album input -->
                     <WorkAudioInput type="album" placeholder="Album title" v-model="album.title"/>
                     <!-- Delete album button -->
                     <DeleteButton @delete="deleteAlbum(artist, album)" customClass="rounded-tr-2xl"
-                                  assignedFor="album"/>
+                                  assignedFor="album" aria-label="delete album"/>
                   </div>
 
                   <!-- TRACKS -->
@@ -293,15 +294,16 @@ const onSave = async () => {
         <div v-for="(artist, artistIndex) in audioStore.artists" :key="refreshKey">
           <div
               class="flex items-center outline-none bg-primary-500/20 focus:bg-primary-500/40 hover:bg-primary-500/30 border border-primary-900/20 transition py-3 px-1">
-            <label class="drag-handle">
+            <label class="drag-handle" aria-label="Reorder artists">
               <GripVertical class="text-gray-400 group-hover:text-gray-500 transition mx-1"/>
             </label>
             <input
                 class="w-full focus:bg-white border transition-all duration-300 border-transparent focus:border-gray-300 rounded-md px-2 py-1 mr-2 outline-none"
                 v-model="artist.title"
-                type="text" placeholder="Artist name"/>
+                type="text" placeholder="Artist name"
+                aria-label="Artist name input"/>
             <div class="flex items-center gap-2">
-              <button @click="toggleArtistCollapse(`artist-${artistIndex}`)">
+              <button @click="toggleArtistCollapse(`artist-${artistIndex}`)" aria-label="Toggle artist collapse">
                 <ChevronDown
                     class="transition-transform duration-200 p-1 w-8 h-8 border border-gray-300 rounded-full"
                     :class="collapsedArtists.has(`artist-${artistIndex}`)  ? 'rotate-180 bg-white text-black' : 'bg-white/50 text-gray-400'"/>
@@ -309,14 +311,17 @@ const onSave = async () => {
               <div ref="menuRef" class="relative">
                 <button
                     @click.stop="toggleMenu(`artist-${artistIndex}`)"
+                    aria-label="Artist options menu"
                     class="bg-white/50 transition p-1 w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-white">
                   <MoreHorizontal class="w-4 h-4 text-gray-600"/>
                 </button>
                 <div v-if="openedMenu === `artist-${artistIndex}`"
-                     class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-50">
+                     class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-50"
+                     aria-label="Artist options menu">
                   <button
                       @click.stop="deleteArtist(artist)"
-                      class="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 transition">
+                      class="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 transition"
+                      aria-label="Delete artist">
                     <Trash2 class="inline-block mr-2 w-5 h-5"/>
                     Delete
                   </button>
@@ -342,14 +347,15 @@ const onSave = async () => {
                 <div
                     class="flex w-full outline-none bg-yellow-500/20 focus:bg-yellow-500/40 hover:bg-yellow-500/30 border border-yellow-900/20 transition py-3 px-1">
                   <!-- Grip -->
-                  <label class="drag-handle">
+                  <label class="drag-handle" aria-label="Reorder albums">
                     <GripVertical class="text-gray-400 group-hover:text-gray-500 transition"/>
                   </label>
                   <!-- Album name -->
                   <input class="w-full bg-white border border-gray-300 rounded-md px-2 py-1" v-model="album.title"
-                         type="text" placeholder="Album name"/>
+                         type="text" placeholder="Album name"
+                         aria-label="Album name input"/>
                   <!-- Collapse button -->
-                  <button @click="toggleAlbumCollapse(`album-${artistIndex}-${albumIndex}`)" class="px-2">
+                  <button @click="toggleAlbumCollapse(`album-${artistIndex}-${albumIndex}`)" class="px-2" aria-label="Toggle album collapse">
                     <ChevronDown
                         class="group-hover:text-gray-500 transition p-1 w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center"
                         :class="collapsedAlbums.has(`album-${artistIndex}-${albumIndex}`) ? 'rotate-180 bg-white text-black' : 'bg-white/50 text-gray-400'"/>
@@ -358,14 +364,17 @@ const onSave = async () => {
                   <div ref="menuRef" class="relative">
                     <button
                         @click.stop="toggleMenu(`album-${artistIndex}-${albumIndex}`)"
-                        class="bg-white/50 transition p-1 w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-white">
+                        class="bg-white/50 transition p-1 w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-white"
+                        aria-label="Album options menu">
                       <MoreHorizontal class="w-4 h-4 text-gray-600"/>
                     </button>
                     <div v-if="openedMenu === `album-${artistIndex}-${albumIndex}`"
-                         class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-50">
+                         class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-50"
+                         aria-label="Album options menu">
                       <button
                           @click.stop="deleteAlbum(artist, album)"
-                          class="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 transition">
+                          class="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 transition"
+                          aria-label="Delete album">
                         <Trash2 class="inline-block mr-2 w-5 h-5"/>
                         Delete
                       </button>

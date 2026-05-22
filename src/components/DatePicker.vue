@@ -113,6 +113,7 @@ onUnmounted(() => {
       type="date"
       v-model="nativeValue"
       class="bg-white border w-full border-gray-300 rounded-lg px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-gray-400"
+      aria-label="Select date"
   />
 
   <!-- DESKTOP -->
@@ -124,10 +125,12 @@ onUnmounted(() => {
           placeholder="YYYY/MM/DD"
           class="bg-white px-3 py-2 w-32 focus:outline-none placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75 font-semibold"
           @click="openPicker"
+          aria-label="Selected date"
       />
       <button ref="triggerRef"
               @click="openPicker"
-              class="px-2 py-2 bg-gray-200/50 border-x border-gray-300 hover:bg-gray-300/50 transition group">
+              class="px-2 py-2 bg-gray-200/50 border-x border-gray-300 hover:bg-gray-300/50 transition group"
+              aria-label="Select date">
         <Calendar class="w-6 h-6 text-gray-600 group-hover:text-gray-800 transition"/>
       </button>
     </div>

@@ -93,7 +93,7 @@ const labelText = {
   <!-- MOBILE -->
   <template v-if="isMobile && type === 'track'">
     <div class="flex">
-      <label class="drag-handle flex items-center border-b border-r border-gray-300 px-2">
+      <label class="drag-handle flex items-center border-b border-r border-gray-300 px-2" aria-label="Reorder track">
         <GripVertical class="text-gray-400 group-hover:text-gray-500 transition"/>
       </label>
       <input
@@ -103,6 +103,7 @@ const labelText = {
          'placeholder:text-gray-400 placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75 py-3!']"
           :placeholder="placeholder"
           v-model="model"
+          aria-label="title input"
       />
     </div>
     <div class="flex items-center col-span-full">
@@ -117,7 +118,8 @@ const labelText = {
       />
       <button @click="handleUpload"
               class="work-upload-btn group w-16 flex items-center justify-center"
-              :class="!(localSrc || fileExists) ? 'w-full' : ''">
+              :class="!(localSrc || fileExists) ? 'w-full' : ''"
+              aria-label="Upload audio">
         <Upload class="text-gray-600 group-hover:text-gray-800 group-hover:translate-x-1 transition"/>
       </button>
       <input
@@ -126,15 +128,18 @@ const labelText = {
           accept=".mp3,.wma,.aac,.flac,.ogg,.wav,.aiff,.alac,.amr,.m4a"
           class="hidden"
           @change="handleFileChange"
+          aria-label="Upload audio input"
+          aria-hidden="true"
       />
-      <TagSelector v-if="track" v-model="track.tags" @toggle="emit('TagSelectorToggled', track)"/>
-      <DeleteButton v-if="album && track" @delete="emit('deleteTrack', album, track)" assignedFor="track"/>
+      <TagSelector v-if="track" v-model="track.tags" @toggle="emit('TagSelectorToggled', track)" aria-label="Edit tags"/>
+      <DeleteButton v-if="album && track" @delete="emit('deleteTrack', album, track)" assignedFor="track"
+                    aria-label="Delete track"/>
     </div>
   </template>
 
   <!-- DESKTOP -->
   <template v-else>
-    <label :class="[labelClass[type], 'group']" class="drag-handle">
+    <label :class="[labelClass[type], 'group']" class="drag-handle" aria-label="Drag to reorder">
       <GripVertical class="text-gray-400 group-hover:text-gray-500 transition"/>
       {{ labelText[type] }}
     </label>
@@ -151,7 +156,7 @@ const labelText = {
       <!-- Upload button : visible if no file OR to replace existing -->
       <button @click="handleUpload"
               class="work-upload-btn group min-w-16 flex items-center justify-center"
-              :class="(localSrc || fileExists) ? 'opacity-60 hover:opacity-100' : ''">
+              :class="(localSrc || fileExists) ? 'opacity-60 hover:opacity-100' : ''" aria-label="Upload audio">
         <Upload class="text-gray-600 group-hover:text-gray-800 group-hover:translate-x-1 transition"/>
       </button>
 
@@ -161,6 +166,8 @@ const labelText = {
           accept=".mp3,.wma,.aac,.flac,.ogg,.wav,.aiff,.alac,.amr,.m4a"
           class="hidden"
           @change="handleFileChange"
+          aria-label="Upload audio input"
+          aria-hidden="true"
       />
     </div>
     <!-- Input field -->
@@ -171,12 +178,14 @@ const labelText = {
          'placeholder:text-gray-400 placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75']"
         :placeholder="placeholder"
         v-model="model"
+        aria-label="title input"
     />
     <!-- Tag selector -->
-    <TagSelector v-if="track && type === 'track'" v-model="track.tags" @toggle="emit('TagSelectorToggled', track)"/>
+    <TagSelector v-if="track && type === 'track'" v-model="track.tags" @toggle="emit('TagSelectorToggled', track)"
+                 aria-label="Edit tags"/>
     <!-- Delete track button -->
     <DeleteButton v-if="album && track && type === 'track'" @delete="emit('deleteTrack', album, track)"
                   assignedFor="track"
-                  :customClass="index === album.tracks.length - 1 ? 'rounded-br-2xl' : ''"/>
+                  :customClass="index === album.tracks.length - 1 ? 'rounded-br-2xl' : ''" aria-label="Delete track"/>
   </template>
 </template>

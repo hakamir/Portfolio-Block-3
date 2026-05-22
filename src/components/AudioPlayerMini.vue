@@ -76,7 +76,7 @@ onBeforeUnmount(() => audioRef.value?.removeEventListener('pause', onPause))
         </Tooltip>
       </div>
     </div>
-    <button @click="togglePlay" class="-m-2 p-2">
+    <button @click="togglePlay" class="-m-2 p-2" aria-label="Play/Pause">
       <CirclePlay v-if="!isPlaying" class="max-w-6 h-6 text-blue-700/70"/>
       <CirclePause v-else class="w-6 h-6 text-red-700/70"/>
     </button>

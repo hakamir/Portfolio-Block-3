@@ -139,7 +139,7 @@ const reorderImages = (gallery: Gallery) => {
               <!-- Collapse button -->
               <CollapseButton :collapsed="collapsedGalleries.has(gallery.slug)"
                               @toggle="toggleGalleryCollapse(gallery.slug)"
-                              color="bg-primary-300/30"/>
+                              color="bg-primary-300/30" aria-label="collapse gallery"/>
               <!-- Gallery input -->
               <WorkInput label="Gallery" v-model="gallery.title" labelColor="bg-primary-300/30"
                          inputColor="focus:bg-primary-200/20"/>
@@ -152,7 +152,8 @@ const reorderImages = (gallery: Gallery) => {
                   class="text-sm text-blue-600 group-hover:text-blue-700 group-hover:translate-x-1 transition">New image</span>
             </button>
             <!-- Delete gallery button -->
-            <DeleteButton @delete="deleteGallery(gallery)" customClass="rounded-r-full" assignedFor="artist"/>
+            <DeleteButton @delete="deleteGallery(gallery)" customClass="rounded-r-full" assignedFor="artist"
+                          aria-label="delete gallery"/>
           </div>
           <CollapseTransition :show="!collapsedGalleries.has(gallery.slug)" customClass="flex">
             <div class="w-2 bg-primary-200/30 border-x border-b border-gray-400/30 mx-4 mb-1 rounded-b-full"/>
@@ -168,13 +169,14 @@ const reorderImages = (gallery: Gallery) => {
                     <!-- Collapse button -->
                     <CollapseButton :collapsed="collapsedImages.has(image.src)"
                                     @toggle="toggleImageCollapse(image.src)"
-                                    color="bg-yellow-300/30"/>
+                                    color="bg-yellow-300/30"
+                                    aria-label="collapse image"/>
                     <!-- Image input -->
                     <WorkInput label="Image" v-model="image.title" labelColor="bg-yellow-300/30"
                                inputColor="focus:bg-yellow-200/20"/>
                     <!-- Delete image button -->
                     <DeleteButton @delete="deleteImage(gallery, image)" customClass="rounded-r-full"
-                                  assignedFor="album"/>
+                                  assignedFor="album" aria-label="delete image"/>
                   </div>
                   <CollapseTransition :show="!collapsedImages.has(image.src)" customClass="flex" :delay="100">
                     <ImageInput :image="image" :gallerySlug="gallery.slug"/>
@@ -215,30 +217,34 @@ const reorderImages = (gallery: Gallery) => {
         <div v-for="(gallery, galleryIndex) in galleriesStore.galleries" :key="refreshKey">
           <div
               class="flex items-center outline-none bg-primary-500/20 hover:bg-primary-500/30 border border-primary-900/20 transition py-3 px-1">
-            <label class="drag-handle">
+            <label class="drag-handle" aria-label="Reorder gallery">
               <GripVertical class="text-gray-400 mx-1"/>
             </label>
             <input
                 class="w-full focus:bg-white border transition-all duration-300 border-transparent focus:border-gray-300 rounded-md px-2 py-1 mr-2 outline-none"
                 v-model="gallery.title"
-                type="text" placeholder="Gallery name"/>
+                type="text" placeholder="Gallery name"
+                aria-label="Gallery name input"/>
             <div class="flex items-center gap-2">
               <button @click="toggleGalleryCollapse(gallery.slug)">
                 <ChevronDown
                     class="transition-transform duration-200 p-1 w-8 h-8 border border-gray-300 rounded-full"
-                    :class="collapsedGalleries.has(gallery.slug) ? 'rotate-180 bg-white text-black' : 'bg-white/50 text-gray-400'"/>
+                    :class="collapsedGalleries.has(gallery.slug) ? 'rotate-180 bg-white text-black' : 'bg-white/50 text-gray-400'"
+                    aria-label="collapse gallery"/>
               </button>
               <div class="relative">
                 <button
                     @click.stop="toggleMenu(`gallery-${galleryIndex}`)"
-                    class="bg-white/50 transition p-1 w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-white">
+                    class="bg-white/50 transition p-1 w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-white"
+                    aria-label="more options">
                   <MoreHorizontal class="w-4 h-4 text-gray-600"/>
                 </button>
                 <div v-if="openedMenu === `gallery-${galleryIndex}`"
                      class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-50">
                   <button
                       @click.stop="deleteGallery(gallery)"
-                      class="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 transition">
+                      class="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 transition"
+                      aria-label="delete gallery">
                     <Trash2 class="inline-block mr-2 w-5 h-5"/>
                     Delete
                   </button>
@@ -264,12 +270,13 @@ const reorderImages = (gallery: Gallery) => {
               <div v-for="(image, imageIndex) in gallery.images">
                 <div
                     class="flex w-full outline-none bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-900/20 transition py-3 px-1">
-                  <label class="drag-handle">
+                  <label class="drag-handle" aria-label="Reorder image">
                     <GripVertical class="text-gray-400"/>
                   </label>
                   <input class="w-full bg-white border border-gray-300 rounded-md px-2 py-1"
                          v-model="image.title"
-                         type="text" placeholder="Image title"/>
+                         type="text" placeholder="Image title"
+                         aria-label="Image title input"/>
                   <button @click="toggleImageCollapse(`image-m-${galleryIndex}-${imageIndex}`)" class="px-2">
                     <ChevronDown
                         class="transition-transform duration-200 p-1 w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center"
@@ -278,6 +285,7 @@ const reorderImages = (gallery: Gallery) => {
                   <div class="relative">
                     <button
                         @click.stop="toggleMenu(`image-${galleryIndex}-${imageIndex}`)"
+                        aria-label="Image options menu"
                         class="bg-white/50 transition p-1 w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-white">
                       <MoreHorizontal class="w-4 h-4 text-gray-600"/>
                     </button>
@@ -285,7 +293,8 @@ const reorderImages = (gallery: Gallery) => {
                          class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-50">
                       <button
                           @click.stop="deleteImage(gallery, image)"
-                          class="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 transition">
+                          class="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 transition"
+                          aria-label="delete image">
                         <Trash2 class="inline-block mr-2 w-5 h-5"/>
                         Delete
                       </button>
