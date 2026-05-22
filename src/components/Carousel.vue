@@ -63,11 +63,11 @@ watch(current, (newIndex) => {
     </div>
 
     <button @click="prev"
-            class="absolute left-8 top-1/2 -translate-y-1/2 p-4 rounded-full opacity-50 hover:opacity-100 bg-black/30 border border-white/20 text-white backdrop-blur-sm hover:bg-black/50 transition-colors">
+            class="absolute left-8 top-1/2 -translate-y-1/2 p-4 rounded-full opacity-50 hover:opacity-100 bg-black/30 border border-white/20 text-white backdrop-blur-sm hover:bg-black/50 transition-colors" aria-label="Previous image">
       <ChevronLeft :size="24"/>
     </button>
     <button @click="next"
-            class="absolute right-8 top-1/2 -translate-y-1/2 p-4 rounded-full opacity-50 hover:opacity-100 bg-black/30 border border-white/20 text-white backdrop-blur-sm hover:bg-black/50 transition-colors">
+            class="absolute right-8 top-1/2 -translate-y-1/2 p-4 rounded-full opacity-50 hover:opacity-100 bg-black/30 border border-white/20 text-white backdrop-blur-sm hover:bg-black/50 transition-colors" aria-label="Next image">
       <ChevronRight :size="24"/>
     </button>
 
@@ -77,7 +77,9 @@ watch(current, (newIndex) => {
           :key="index"
           @click="current = index"
           class="w-2 h-2 rounded-full transition-all duration-300"
-          :class="index === current ? 'bg-white scale-125' : 'bg-white/40'"/>
+          :class="index === current ? 'bg-white scale-125' : 'bg-white/40'"
+          aria-label="Select image">
+      </button>
     </div>
   </div>
 </template>

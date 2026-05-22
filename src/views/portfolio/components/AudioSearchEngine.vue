@@ -72,6 +72,8 @@ const typeLabels: Record<string, string> = {
             @input="onInput"
             @blur="onBlur"
             @focus="onInput"
+            aria-label="Search"
+            role="searchbox"
         />
       </div>
       <!-- Dropdown -->

@@ -16,6 +16,7 @@ const apiUrl = import.meta.env.VITE_API_URL + '/api'
                       alt="Portfolio Background"
                       blur scale
                       class="fixed inset-0 w-full h-full object-cover -z-20"
+                      role="presentation"
     />
     <div class="fixed inset-0 bg-linear-180 from-black/0 to-black -z-10"></div>
 

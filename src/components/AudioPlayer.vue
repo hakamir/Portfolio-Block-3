@@ -102,7 +102,7 @@ const seek = (event: MouseEvent | TouchEvent) => {
 <template>
   <div class="flex items-center gap-4">
     <button @click="togglePlay"
-            class="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:bg-neutral-200 transition">
+            class="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:bg-neutral-200 transition" aria-label="Play/Pause">
       <Play v-if="!isPlaying" class="w-5 h-5 ml-0.5"/>
       <Pause v-else class="w-5 h-5"/>
     </button>
