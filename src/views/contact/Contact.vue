@@ -54,7 +54,7 @@ onUnmounted(() => {
                 class="flex flex-col border border-gray-300 bg-white group focus-within:inset-shadow-[0_0_5px_rgba(0,0,0,0.5)] focus-within:bg-white/70 ring-inset ring-black/50 transition">
               <textarea id="message" placeholder="Your message..." v-model="formData.message"
                         class="px-4 py-2 w-full min-h-70 outline-none placeholder:font-unbounded focus:placeholder:opacity-50 placeholder:text-sm placeholder:font-extralight"
-                        required autocomplete="off"></textarea>
+                        required autocomplete="off" aria-label="Message"></textarea>
             </div>
             <div class="flex flex-col justify-end">
               <button id="submit-button" type="submit"
