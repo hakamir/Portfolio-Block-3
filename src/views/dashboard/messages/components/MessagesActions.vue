@@ -31,26 +31,26 @@ const deletePermanently = async () => {
   <div class="flex justify-start items-center">
     <div class="relative group flex justify-center items-center mx-2">
       <span class="tooltip">Mark as unread</span>
-      <button @click="markUnread">
+      <button @click="markUnread" aria-label="Mark as unread">
         <Mail />
       </button>
     </div>
     <div v-if="currentTab === 'inbox'" class="relative group flex justify-center items-center mx-2">
       <span class="tooltip">Move to trash</span>
-      <button @click="moveToTrash">
+      <button @click="moveToTrash" aria-label="Move to trash">
         <Trash2 />
       </button>
     </div>
     <template v-if="currentTab === 'trash'">
       <div class="relative group flex justify-center items-center mx-2">
         <span class="tooltip">Permanently delete</span>
-        <button @click="deletePermanently">
+        <button @click="deletePermanently" aria-label="Permanently delete">
           <Shredder />
         </button>
       </div>
       <div class="relative group flex justify-center items-center mx-2">
         <span class="tooltip">Move to inbox</span>
-        <button @click="moveToInbox">
+        <button @click="moveToInbox" aria-label="Move to inbox">
           <Inbox />
         </button>
       </div>
