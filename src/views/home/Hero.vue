@@ -8,21 +8,22 @@ const apiUrl = import.meta.env.VITE_API_URL + '/api'
 
 <template>
   <section
-      class="grid grid-rows-2 sm:relative bg-black text-white overflow-hidden lg:min-h-screen lg:h-screen sm:flex sm:items-center sm:snap-start">
+      class="grid grid-rows-2 sm:relative bg-black text-white overflow-hidden lg:min-h-screen lg:h-screen sm:flex sm:items-center sm:snap-start" aria-labelledby="hero-title">
     <!-- Hero Image -->
     <div class="sm:absolute sm:right-0 sm:top-0 sm:w-2/3 sm:h-full z-0">
-      <ProgressiveImage :src512="`${apiUrl}/uploads/background/hero/hero-512.webp`"
-                        :src1024="`${apiUrl}/uploads/background/hero/hero-1024.webp`"
-                        :src2048="`${apiUrl}/uploads/background/hero/hero-2048.webp`" alt="Block1 Logo"
+      <ProgressiveImage :src512="`${apiUrl}/upload/background/hero/hero-512.webp`"
+                        :src1024="`${apiUrl}/upload/background/hero/hero-1024.webp`"
+                        :src2048="`${apiUrl}/upload/background/hero/hero-2048.webp`" alt=""
                         blur
                         :responsive=true
-                        class="w-full h-full object-cover"/>
-      <div class="hidden sm:block absolute top-0 left-0 h-full w-50 bg-linear-to-l from-black/0 to-black"></div>
+                        class="w-full h-full object-cover"
+                        role="presentation"/>
+      <div class="hidden sm:block absolute top-0 -left-10 h-full w-60 bg-linear-to-l from-black/0 to-black"></div>
     </div>
     <!-- Hero -->
     <div class="relative px-5 landscape:mt-40 container mx-auto py-8 z-20 sm:snap-center">
       <div class="pb-6">
-        <h1 class="hero-title font-unbounded"><span>Let's</span><span>Make Music</span>
+        <h1 id="hero-title" class="hero-title font-unbounded"><span>Let's</span><span>Make Music</span>
           <span>Together</span>
         </h1>
       </div>
@@ -32,7 +33,7 @@ const apiUrl = import.meta.env.VITE_API_URL + '/api'
             show.</p>
         </div>
         <div class="pt-6">
-          <RouterLink to="/portfolio" class="btn-primary wave-btn bg-primary text-black group" v-wave>
+          <RouterLink to="/portfolio" class="btn-primary wave-btn bg-primary text-black group" v-wave aria-label="Listen to my music on the Portfolio page">
             Listen now
           </RouterLink>
         </div>

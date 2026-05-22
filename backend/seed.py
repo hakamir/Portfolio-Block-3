@@ -3,7 +3,6 @@ import bcrypt
 from urllib.parse import quote_plus
 from mongoengine import connect
 
-from models.gallery import Gallery, GalleryImage
 from models.user import User
 from models.biography import Biography, ImageSize, Section
 

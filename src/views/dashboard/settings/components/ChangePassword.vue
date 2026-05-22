@@ -77,15 +77,18 @@ const handleSubmit = async () => {
 
       <!-- Current password -->
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-gray-700">Current password</label>
+        <label class="text-sm font-medium text-gray-700" aria-labelledby="current-password-input">Current
+          password</label>
         <div class="flex items-center border border-gray-300 rounded-xl bg-white overflow-hidden"
              :class="status === 'invalid' ? 'border-red-400' : ''">
           <input :type="showCurrent ? 'text' : 'password'"
                  v-model="currentPwd"
                  placeholder="••••••••"
-                 class="flex-1 px-4 py-2 text-sm focus:outline-none bg-transparent"/>
+                 class="flex-1 px-4 py-2 text-sm focus:outline-none bg-transparent"
+                 id="current-password-input"
+                 aria-label="Current password input"/>
           <button @click="showCurrent = !showCurrent" class="px-3 text-gray-400 hover:text-gray-600 transition"
-                  tabindex="-1">
+                  tabindex="-1" aria-label="Toggle password visibility">
             <Eye v-if="!showCurrent" :size="16"/>
             <EyeOff v-else :size="16"/>
           </button>
@@ -95,13 +98,16 @@ const handleSubmit = async () => {
 
       <!-- New password -->
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-gray-700">New password</label>
+        <label class="text-sm font-medium text-gray-700" aria-labelledby="new-password-input">New password</label>
         <div class="flex items-center border border-gray-300 rounded-xl bg-white overflow-hidden">
           <input :type="showNew ? 'text' : 'password'"
                  v-model="newPwd"
                  placeholder="••••••••"
-                 class="flex-1 px-4 py-2 text-sm focus:outline-none bg-transparent"/>
-          <button @click="showNew = !showNew" class="px-3 text-gray-400 hover:text-gray-600 transition" tabindex="-1">
+                 class="flex-1 px-4 py-2 text-sm focus:outline-none bg-transparent"
+                 id="new-password-input"
+                 aria-label="New password input"/>
+          <button @click="showNew = !showNew" class="px-3 text-gray-400 hover:text-gray-600 transition"
+                  tabindex="-1" aria-label="Toggle password visibility">
             <Eye v-if="!showNew" :size="16"/>
             <EyeOff v-else :size="16"/>
           </button>
@@ -110,15 +116,18 @@ const handleSubmit = async () => {
 
       <!-- Confirm password -->
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-gray-700">Confirm new password</label>
+        <label class="text-sm font-medium text-gray-700" aria-labelledby="confirm-password-input">Confirm new
+          password</label>
         <div class="flex items-center border border-gray-300 rounded-xl bg-white overflow-hidden"
              :class="confirmPwd.length > 0 && !rules.matches ? 'border-red-400' : ''">
           <input :type="showConfirm ? 'text' : 'password'"
                  v-model="confirmPwd"
                  placeholder="••••••••"
-                 class="flex-1 px-4 py-2 text-sm focus:outline-none bg-transparent"/>
+                 class="flex-1 px-4 py-2 text-sm focus:outline-none bg-transparent"
+                 id="confirm-password-input"
+                 aria-label="Confirm new password input"/>
           <button @click="showConfirm = !showConfirm" class="px-3 text-gray-400 hover:text-gray-600 transition"
-                  tabindex="-1">
+                  tabindex="-1" aria-label="Toggle password visibility">
             <Eye v-if="!showConfirm" :size="16"/>
             <EyeOff v-else :size="16"/>
           </button>

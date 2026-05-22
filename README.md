@@ -58,6 +58,7 @@ All routes are prefixed with `/api`.
 |-------:|----------------------|------|-------------------|
 |   POST | `/api/auth/login`    | —    | Login (5 req/min) |
 |   POST | `/api/auth/logout`   | JWT  | Logout            |
+|   POST | `/api/auth/refresh`  | JWT  | Refresh token     |
 |    PUT | `/api/auth/password` | JWT  | Change password   |
 
 ### Artists
@@ -79,7 +80,6 @@ All routes are prefixed with `/api`.
 |    GET | `/api/gallery`        | —    | All galleries with images      |
 |    PUT | `/api/gallery`        | JWT  | Create/update galleries (bulk) |
 | DELETE | `/api/gallery/<id>`   | JWT  | Delete gallery                 |
-|   POST | `/api/gallery/upload` | JWT  | Upload image                   |
 
 ### Messages
 | Method | Path                 | Auth | Description                 |
@@ -92,14 +92,17 @@ All routes are prefixed with `/api`.
 ### Uploads
 | Method | Path                  | Auth | Description         |
 |-------:|-----------------------|------|---------------------|
-|   POST | `/api/audio/upload`   | JWT  | Upload audio file   |
-|    GET | `/api/uploads/<path>` | —    | Serve uploaded file |
+|   POST | `/api/upload/audio`   | JWT  | Upload audio file   |
+|   POST | `/api/upload/gallery` | JWT  | Upload image        |
+|    GET | `/api/upload/<path>` | —    | Serve uploaded file |
 
 ### Orphaned files management
-| Method | Path                 | Auth | Description                 |
-|-------:|----------------------|------|-----------------------------|
-|    GET | `/api/audio/orphans` | JWT  | List orphaned audio files   |
-| DELETE | `/api/audio/orphans` | JWT  | Delete orphaned audio files |
+| Method | Path                   | Auth | Description                 |
+|-------:|------------------------|------|-----------------------------|
+|    GET | `/api/orphans/audio`   | JWT  | List orphaned audio files   |
+| DELETE | `/api/orphans/audio`   | JWT  | Delete orphaned audio files |
+|    GET | `/api/orphans/gallery` | JWT  | List orphaned image files   |
+| DELETE | `/api/orphans/gallery` | JWT  | Delete orphaned image files |
 
 ---
 

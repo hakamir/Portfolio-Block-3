@@ -138,15 +138,18 @@ const getSwipeDelta = (id: string) => swipeState.value[id]?.deltaX ?? 0
                     class="checkbox"
                     :checked="selectedIds?.includes(message._id)"
                     @change="toggleSelect(message._id)"
+                    aria-label="Select message"
                 />
               </div>
               <div class="flex items-center justify-center">
                 <button
-                    class="hidden md:flex w-10 h-10 hover:text-blue-600 hover:border hover:bg-white group border-gray-200 rounded-full items-center justify-center">
+                    class="hidden md:flex w-10 h-10 hover:text-blue-600 hover:border hover:bg-white group border-gray-200 rounded-full items-center justify-center"
+                    aria-label="Reply to message"
+                >
                   <Reply class="group-hover:scale-110 transition-transform"/>
                 </button>
               </div>
-              <RouterLink :to="`/dashboard/messages/${message._id}`" class="md:flex min-w-0">
+              <RouterLink :to="`/dashboard/messages/${message._id}`" class="md:flex min-w-0" aria-label="View message">
                 <div class="px-4 py-2 select-none truncate min-w-50 font-medium">{{ message.name }}</div>
                 <div class="px-4 py-2 select-none truncate text-sm md:text-base">{{ message.message }}</div>
               </RouterLink>

@@ -8,7 +8,7 @@ defineProps({
   <footer id="footer">
     <div :class="`${customClass} text-white pt-8 pb-4 md:pt-16`">
       <div class="flex flex-col items-center justify-center gap-4 mb-12">
-        <h6 class="font-unbounded text-lg pb-2">Follow me</h6>
+        <span class="font-unbounded text-lg pb-2">Follow me</span>
         <div class="grid grid-cols-2 md:block">
           <a class="social-link" href="https://www.instagram.com/">
             <svg class="w-8 h-8 fill-white inline" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">

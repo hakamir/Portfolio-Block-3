@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required
 from mongoengine import DoesNotExist, ValidationError
 from pydantic import ValidationError as PydanticValidationError
 from Schemas.biography import BiographyIn
-from helpers import handle_db_timeout
+from utils.decorators import handle_db_timeout
 from models.biography import Biography, ImageSize, Section
 from datetime import datetime, timezone
 

@@ -2,10 +2,23 @@
 import {ref, computed, onMounted, onUnmounted} from 'vue'
 import {ChevronLeft, ChevronRight, Calendar} from '@lucide/vue'
 
+defineProps<{
+  isMobile?: boolean
+}>()
+
 const model = defineModel<string>({required: true})
+
+// Native input date value (YYYY-MM-DD)
+const nativeValue = computed({
+  get: () => model.value ? model.value.split('T')[0] : '',
+  set: (val: string) => {
+    model.value = val ? `${val}T00:00:00Z` : ''
+  }
+})
 
 const showPicker = ref(false)
 const triggerRef = ref<HTMLElement | null>(null)
+const pickerRef = ref<HTMLElement | null>(null)
 const pickerTop = ref(0)
 const pickerLeft = ref(0)
 
@@ -73,12 +86,10 @@ const isSelected = (day: number | null) => {
       selected.getDate() === day
 }
 
-const pickerRef = ref<HTMLElement | null>(null)
-
 const handleClickOutside = (e: MouseEvent) => {
   if (
-    triggerRef.value && !triggerRef.value.contains(e.target as Node) &&
-    pickerRef.value && !pickerRef.value.contains(e.target as Node)
+      triggerRef.value && !triggerRef.value.contains(e.target as Node) &&
+      pickerRef.value && !pickerRef.value.contains(e.target as Node)
   ) {
     showPicker.value = false
   }
@@ -96,7 +107,17 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="relative">
+  <!-- MOBILE -->
+  <input
+      v-if="isMobile"
+      type="date"
+      v-model="nativeValue"
+      class="bg-white border w-full border-gray-300 rounded-lg px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-gray-400"
+      aria-label="Select date"
+  />
+
+  <!-- DESKTOP -->
+  <div v-else class="relative">
     <div class="flex items-center border-l border-b border-gray-300">
       <input
           :value="displayDate"
@@ -104,10 +125,12 @@ onUnmounted(() => {
           placeholder="YYYY/MM/DD"
           class="bg-white px-3 py-2 w-32 focus:outline-none placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75 font-semibold"
           @click="openPicker"
+          aria-label="Selected date"
       />
       <button ref="triggerRef"
               @click="openPicker"
-              class="px-2 py-2 bg-gray-200/50 border-x border-gray-300 hover:bg-gray-300/50 transition group">
+              class="px-2 py-2 bg-gray-200/50 border-x border-gray-300 hover:bg-gray-300/50 transition group"
+              aria-label="Select date">
         <Calendar class="w-6 h-6 text-gray-600 group-hover:text-gray-800 transition"/>
       </button>
     </div>

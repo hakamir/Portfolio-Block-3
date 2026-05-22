@@ -47,8 +47,9 @@ const store = useAuthStore()
               to="/login"
               active-class="selected"
               class="nav-item"
-              v-tilt>
-            <LogIn />
+              v-tilt
+              aria-label="Login">
+            <LogIn/>
           </RouterLink>
         </li>
         <li v-if="store.isAuthenticated()">
@@ -64,7 +65,8 @@ const store = useAuthStore()
           <button
               @click="store.logout"
               class="nav-item"
-              v-tilt>
+              v-tilt
+              aria-label="Logout">
             <LogOut/>
           </button>
         </li>
