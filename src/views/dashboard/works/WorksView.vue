@@ -113,9 +113,9 @@ const onConfirmTagEdition = () => {
     <Modal v-if="showUnsavedChangesModal"
            :buttons="[{ label: 'Stay', type: 'cancel', action: onCancelLeave },
                   { label: 'Leave anyway', type: 'delete', action: onConfirmLeave }]"
-           @close="onCancelLeave">
+           @close="onCancelLeave" :closeOnBackdrop="true">
       <template #header>Unsaved changes</template>
-      <p class="text-sm text-gray-500">You have unsaved changes. Are you sure you want to leave?</p>
+      <p class="text-sm text-gray-800">You have unsaved changes. Are you sure you want to leave?</p>
     </Modal>
   </section>
 </template>
