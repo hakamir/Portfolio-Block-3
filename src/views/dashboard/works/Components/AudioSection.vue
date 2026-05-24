@@ -181,7 +181,11 @@ const onSave = async () => {
                               @toggle="toggleArtistCollapse(`artist-${artistIndex}`)"
                               color="bg-primary-300/30" aria-label="collapse artist"/>
               <!-- Artist input -->
-              <WorkAudioInput type="artist" placeholder="Artist name" v-model="artist.title"/>
+              <WorkAudioInput type="artist"
+                              placeholder="Artist name"
+                              v-model="artist.title"
+                              :artist="artist"
+              />
             </div>
             <!-- Add album button -->
             <button
@@ -214,7 +218,12 @@ const onSave = async () => {
                                     color="bg-yellow-300/30"
                                     aria-label="collapse album"/>
                     <!-- Album input -->
-                    <WorkAudioInput type="album" placeholder="Album title" v-model="album.title"/>
+                    <WorkAudioInput type="album"
+                                    placeholder="Album title"
+                                    v-model="album.title"
+                                    :artist="artist"
+                                    :album="album"
+                    />
                     <!-- Delete album button -->
                     <DeleteButton @delete="deleteAlbum(artist, album)" customClass="rounded-tr-2xl"
                                   assignedFor="album" aria-label="delete album"/>
@@ -239,9 +248,9 @@ const onSave = async () => {
                                             placeholder="Track title"
                                             v-model="track.title"
                                             :src="`${apiUrl}/upload/audio/${artist.slug}/${album.slug}/${track.src}`"
-                                            :track="track"
-                                            :album="album"
                                             :artist="artist"
+                                            :album="album"
+                                            :track="track"
                                             @TagSelectorToggled="emit('TagSelectorToggled', track)"
                                             @deleteTrack="deleteTrack(album, track)"
                                             :index="index"
@@ -272,7 +281,8 @@ const onSave = async () => {
           <span class="text-sm font-semibold">An error occurred. Some files may not have been uploaded.</span>
         </div>
         <button v-if="fetchStatus == 'idle' || fetchStatus == 'error'" @click="onSave"
-                class="px-6 py-2 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 transition flex items-center gap-2">
+                :class="audioStore.hasDuplicates() ? 'cursor-not-allowed! bg-gray-400/70' : 'bg-blue-500 hover:bg-blue-600 transition'"
+                class="px-6 py-2 text-white rounded-2xl flex items-center gap-2">
           <Save class="w-6 h-6"/>
           <span class="font-unbounded">Save</span>
         </button>

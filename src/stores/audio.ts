@@ -113,6 +113,33 @@ export const useAudioStore = defineStore('audio', () => {
         )
     }
 
+    const isArtistDuplicate = (artist: Artist): boolean => {
+        if (!artist.title?.trim()) return false // Avoid UI to trigger duplication check if empty
+        return artists.value.filter(a => a.slug === artist.slug).length > 1
+    }
+
+    const isAlbumDuplicate = (album: Album, artist: Artist): boolean => {
+        if (!album.title?.trim()) return false // Avoid UI to trigger duplication check if empty
+        return artist.albums.filter(a => a.slug === album.slug).length > 1
+    }
+
+    const isTrackDuplicate = (track: Track, album: Album): boolean => {
+        if (!track.title?.trim()) return false // Avoid UI to trigger duplication check if empty
+        return album.tracks.filter(t => t.src === track.src).length > 1
+    }
+
+    const hasDuplicates = (): boolean => {
+        return artists.value.some(artist =>
+            isArtistDuplicate(artist) ||
+            artist.albums.some(album =>
+                isAlbumDuplicate(album, artist) ||
+                album.tracks.some(track =>
+                    isTrackDuplicate(track, album)
+                )
+            )
+        )
+    }
+
     // Upload all pending audio files
     const uploadPendingAudios = async () => {
         const results = await Promise.allSettled(
@@ -174,7 +201,7 @@ export const useAudioStore = defineStore('audio', () => {
         isSubmitted.value = true;
 
         // Abort if validation fails
-        if (hasEmptyFields()) {
+        if (hasEmptyFields() || hasDuplicates()) {
             return false
         }
         fetchStatus.value = 'loading';
@@ -218,7 +245,24 @@ export const useAudioStore = defineStore('audio', () => {
     }
 
     return {
-        artists, loading, fetchStatus, uploadStatuses, pendingUploads, orphans, isSubmitted,
-        fetchAudios, fetchOrphans, checkAudioExists, removeTrackState, uploadTrack, addPendingUpload, saveAudios, deleteOrphans
+        artists,
+        loading,
+        fetchStatus,
+        uploadStatuses,
+        pendingUploads,
+        orphans,
+        isSubmitted,
+        fetchAudios,
+        fetchOrphans,
+        checkAudioExists,
+        removeTrackState,
+        uploadTrack,
+        addPendingUpload,
+        saveAudios,
+        deleteOrphans,
+        isArtistDuplicate,
+        isAlbumDuplicate,
+        isTrackDuplicate,
+        hasDuplicates,
     }
 })
