@@ -1,6 +1,6 @@
 import {defineStore} from "pinia";
 import {instance} from "@api/axios.ts";
-import {ref, watch} from "vue";
+import {nextTick, ref, watch} from "vue";
 import audiosApi from "@api/audios.ts";
 import artistsApi from "@api/artists.ts";
 import type {TrackUploadStatus} from "@/types";
@@ -34,6 +34,8 @@ export const useAudioStore = defineStore('audio', () => {
     const isSubmitted = ref(false);
     const uploadStatuses = ref<Map<Track, TrackUploadStatus>>(new Map())
     const orphans = ref<string[]>([])
+    const isDirty = ref(false)
+    let isInitialized = false
 
     // Convert string to slug format ("Track Title" to "track_title")
     const toSlug = (str: string) => str.toLowerCase().trim().replace(/\s+/g, '_')
@@ -42,6 +44,7 @@ export const useAudioStore = defineStore('audio', () => {
 
     watch(() => artists.value, (artists) => {
         isSubmitted.value = false;
+        if (isInitialized) isDirty.value = true;
         artists.forEach(artist => {
             artist.slug = toSlug(artist.title)
             artist.albums.forEach(album => {
@@ -59,6 +62,9 @@ export const useAudioStore = defineStore('audio', () => {
         try {
             const res = await instance.get(artistsApi.getArtists)
             artists.value = res.data
+            await nextTick()
+            isInitialized = true;
+            isDirty.value = false;
             fetchStatus.value = 'idle'
         } catch (err) {
             fetchStatus.value = 'error'
@@ -223,6 +229,7 @@ export const useAudioStore = defineStore('audio', () => {
 
         // Reset loading state
         fetchStatus.value = 'idle';
+        isDirty.value = false;
         return true;
     }
 
@@ -252,6 +259,7 @@ export const useAudioStore = defineStore('audio', () => {
         pendingUploads,
         orphans,
         isSubmitted,
+        isDirty,
         fetchAudios,
         fetchOrphans,
         checkAudioExists,

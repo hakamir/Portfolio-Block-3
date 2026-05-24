@@ -1,15 +1,38 @@
 <script setup lang="ts">
 import AudioSection from "@views/dashboard/works/Components/AudioSection.vue";
 import GallerySection from "@views/dashboard/works/Components/GallerySection.vue";
-import type {Track} from "@stores";
+import {type Track, useAudioStore} from "@stores";
 import {ref, toRaw} from "vue";
 import {Tag, Plus, X} from "@lucide/vue";
 import Modal from "@components/Modal.vue";
+import {onBeforeRouteLeave} from "vue-router";
 
 const selectedTrack = ref<Track | null>(null)
 const tempTrack = ref<Track | null>(null)
 const showTagEditionModal = ref(false)
 const newTag = ref('')
+const audioStore = useAudioStore()
+const showUnsavedChangesModal = ref(false)
+let resolveNavigation: ((confirm: boolean) => void) | null = null
+
+onBeforeRouteLeave(() => {
+  if (!audioStore.isDirty) return true
+
+  showUnsavedChangesModal.value = true
+  return new Promise(resolve => {
+    resolveNavigation = resolve
+  })
+})
+
+const onConfirmLeave = () => {
+  showUnsavedChangesModal.value = false
+  resolveNavigation?.(true)
+}
+
+const onCancelLeave = () => {
+  showUnsavedChangesModal.value = false
+  resolveNavigation?.(false)
+}
 
 const handleTagSelectorToggle = (track: Track) => {
   selectedTrack.value = track
@@ -49,6 +72,8 @@ const onConfirmTagEdition = () => {
     <h1 class="text-4xl font-bold font-unbounded mb-8">Works</h1>
     <AudioSection @TagSelectorToggled="handleTagSelectorToggle"/>
     <GallerySection/>
+
+    <!-- Tag edition modal -->
     <Modal v-if="showTagEditionModal && tempTrack"
            :icon="Tag"
            :buttons="[{ label: 'Cancel', type: 'cancel', action: () => showTagEditionModal = false },
@@ -80,6 +105,15 @@ const onConfirmTagEdition = () => {
           </button>
         </div>
       </div>
+    </Modal>
+
+    <!-- Confirm leave modal -->
+    <Modal v-if="showUnsavedChangesModal"
+           :buttons="[{ label: 'Stay', type: 'cancel', action: onCancelLeave },
+                  { label: 'Leave anyway', type: 'delete', action: onConfirmLeave }]"
+           @close="onCancelLeave">
+      <template #header>Unsaved changes</template>
+      <p class="text-sm text-gray-500">You have unsaved changes. Are you sure you want to leave?</p>
     </Modal>
   </section>
 </template>
