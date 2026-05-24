@@ -67,7 +67,19 @@ watch(() => props.src, (newSrc) => {
 })
 
 const isInvalid = computed(() => {
-  return audioStore.isSubmitted && !model.value?.trim()
+  const empty = audioStore.isSubmitted && !model.value?.trim()
+
+  if (props.type === 'artist' && props.artist) {
+    return empty || audioStore.isArtistDuplicate(props.artist)
+  }
+  if (props.type === 'album' && props.album && props.artist) {
+    return empty || audioStore.isAlbumDuplicate(props.album, props.artist)
+  }
+  if (props.type === 'track' && props.track && props.album) {
+    return empty || audioStore.isTrackDuplicate(props.track, props.album)
+  }
+
+  return empty
 })
 
 const labelClass = {

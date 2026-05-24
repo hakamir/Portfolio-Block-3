@@ -1,6 +1,6 @@
 import {defineStore} from "pinia";
 import {instance} from "@api/axios.ts";
-import {ref, watch} from "vue";
+import {nextTick, ref, watch} from "vue";
 import audiosApi from "@api/audios.ts";
 import artistsApi from "@api/artists.ts";
 import type {TrackUploadStatus} from "@/types";
@@ -34,6 +34,8 @@ export const useAudioStore = defineStore('audio', () => {
     const isSubmitted = ref(false);
     const uploadStatuses = ref<Map<Track, TrackUploadStatus>>(new Map())
     const orphans = ref<string[]>([])
+    const isDirty = ref(false)
+    let isInitialized = false
 
     // Convert string to slug format ("Track Title" to "track_title")
     const toSlug = (str: string) => str.toLowerCase().trim().replace(/\s+/g, '_')
@@ -42,6 +44,7 @@ export const useAudioStore = defineStore('audio', () => {
 
     watch(() => artists.value, (artists) => {
         isSubmitted.value = false;
+        if (isInitialized) isDirty.value = true;
         artists.forEach(artist => {
             artist.slug = toSlug(artist.title)
             artist.albums.forEach(album => {
@@ -59,6 +62,9 @@ export const useAudioStore = defineStore('audio', () => {
         try {
             const res = await instance.get(artistsApi.getArtists)
             artists.value = res.data
+            await nextTick()
+            isInitialized = true;
+            isDirty.value = false;
             fetchStatus.value = 'idle'
         } catch (err) {
             fetchStatus.value = 'error'
@@ -76,6 +82,11 @@ export const useAudioStore = defineStore('audio', () => {
         } catch {
             return false
         }
+    }
+
+    const removeTrackState = (track: Track) => {
+        pendingUploads.value.delete(track)
+        uploadStatuses.value.delete(track)
     }
 
     const addPendingUpload = (track: Track, file: File) => {
@@ -108,6 +119,33 @@ export const useAudioStore = defineStore('audio', () => {
         )
     }
 
+    const isArtistDuplicate = (artist: Artist): boolean => {
+        if (!artist.title?.trim()) return false // Avoid UI to trigger duplication check if empty
+        return artists.value.filter(a => a.slug === artist.slug).length > 1
+    }
+
+    const isAlbumDuplicate = (album: Album, artist: Artist): boolean => {
+        if (!album.title?.trim()) return false // Avoid UI to trigger duplication check if empty
+        return artist.albums.filter(a => a.slug === album.slug).length > 1
+    }
+
+    const isTrackDuplicate = (track: Track, album: Album): boolean => {
+        if (!track.title?.trim()) return false // Avoid UI to trigger duplication check if empty
+        return album.tracks.filter(t => t.src === track.src).length > 1
+    }
+
+    const hasDuplicates = (): boolean => {
+        return artists.value.some(artist =>
+            isArtistDuplicate(artist) ||
+            artist.albums.some(album =>
+                isAlbumDuplicate(album, artist) ||
+                album.tracks.some(track =>
+                    isTrackDuplicate(track, album)
+                )
+            )
+        )
+    }
+
     // Upload all pending audio files
     const uploadPendingAudios = async () => {
         const results = await Promise.allSettled(
@@ -126,8 +164,7 @@ export const useAudioStore = defineStore('audio', () => {
                     await instance.post(audiosApi.uploadAudio, formData)
                     uploadStatuses.value.set(track, 'uploaded')
                 } catch (err) {
-                    uploadStatuses.value.set(track, 'pending')
-                    throw err
+                    uploadStatuses.value.set(track, 'error')
                 }
             })
         )
@@ -168,14 +205,23 @@ export const useAudioStore = defineStore('audio', () => {
     const saveAudios = async () => {
         // Mark form as submitted and set loading state
         isSubmitted.value = true;
-        fetchStatus.value = 'loading';
 
         // Abort if validation fails
-        if (hasEmptyFields()) {
+        if (hasEmptyFields() || hasDuplicates()) {
             return false
         }
+        fetchStatus.value = 'loading';
+
         // Upload pending audios
         await uploadPendingAudios()
+
+        // If at least one upload failed, stop processing here
+        const hasUploadErrors = [...uploadStatuses.value.values()].includes('error')
+        if (hasUploadErrors) {
+            fetchStatus.value = 'error';
+            return false;
+        }
+
         // Sync deleted artists
         await syncDeletedArtists()
         // Persist current artists state to server
@@ -183,6 +229,7 @@ export const useAudioStore = defineStore('audio', () => {
 
         // Reset loading state
         fetchStatus.value = 'idle';
+        isDirty.value = false;
         return true;
     }
 
@@ -205,7 +252,25 @@ export const useAudioStore = defineStore('audio', () => {
     }
 
     return {
-        artists, loading, fetchStatus, uploadStatuses, pendingUploads, orphans, isSubmitted,
-        fetchAudios, fetchOrphans, checkAudioExists, uploadTrack, addPendingUpload, saveAudios, deleteOrphans
+        artists,
+        loading,
+        fetchStatus,
+        uploadStatuses,
+        pendingUploads,
+        orphans,
+        isSubmitted,
+        isDirty,
+        fetchAudios,
+        fetchOrphans,
+        checkAudioExists,
+        removeTrackState,
+        uploadTrack,
+        addPendingUpload,
+        saveAudios,
+        deleteOrphans,
+        isArtistDuplicate,
+        isAlbumDuplicate,
+        isTrackDuplicate,
+        hasDuplicates,
     }
 })

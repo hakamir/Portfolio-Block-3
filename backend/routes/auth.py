@@ -7,7 +7,6 @@ from pydantic import ValidationError
 from werkzeug.exceptions import UnsupportedMediaType
 from Schemas.auth import Login, PasswordUpdate
 from extensions import limiter
-from utils.decorators import handle_db_timeout
 from models.user import User
 
 auth_bp = Blueprint('auth', __name__)
@@ -15,7 +14,6 @@ auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/auth/login', methods=['POST'])
 @limiter.limit("5/minute")
-@handle_db_timeout
 def login():
     try:
         data = Login.model_validate(request.get_json())
@@ -38,7 +36,6 @@ def login():
 
 @auth_bp.route('/auth/refresh', methods=['POST'])
 @jwt_required(refresh=True)
-@handle_db_timeout
 def refresh():
     identity = get_jwt_identity()
     new_access_token = create_access_token(identity=identity)
@@ -55,7 +52,6 @@ def logout():
 @auth_bp.route('/auth/password', methods=['PUT'])
 @jwt_required()
 @limiter.limit("5/minute")
-@handle_db_timeout
 def update_password():
     try:
         data = PasswordUpdate.model_validate(request.get_json())
@@ -72,8 +68,10 @@ def update_password():
     except DoesNotExist:
         return jsonify({'error': 'user not found'}), 404
     except ValidationError as e:
-        errors = {
-            err['loc'][0]: err['msg'].replace('Value error, ', '')
-            for err in e.errors()
-        }
+        errors = []
+        for err in e.errors():
+            loc = err.get('loc', ())
+            field = loc[0] if len(loc) > 0 else 'model_error'
+            errors.append({"field": field, "message": err.get('msg').replace('Value error, ', '')})
+
         return jsonify({'error': {'Invalid payload': errors}}), 400

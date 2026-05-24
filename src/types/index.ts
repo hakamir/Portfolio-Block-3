@@ -2,4 +2,4 @@ export type Status = 'idle' | 'loading' | 'success' | 'error' | 'invalid' | 'too
 
 export type Tab = 'inbox' | 'trash'
 
-export type TrackUploadStatus = 'pending' | 'uploading' | 'uploaded'
+export type TrackUploadStatus = 'pending' | 'uploading' | 'uploaded' | 'error'

@@ -3,7 +3,6 @@ from bson import ObjectId
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 from mongoengine.errors import ValidationError, DoesNotExist
-from utils.decorators import handle_db_timeout
 from extensions import limiter
 from models.message import Message
 from pydantic import ValidationError as PydanticValidationError
@@ -14,14 +13,12 @@ messages_bp = Blueprint('messages', __name__)
 
 @messages_bp.route('/messages', methods=['GET'])
 @jwt_required()
-@handle_db_timeout
 def get_messages():
     messages = Message.objects().order_by('-date')
     return jsonify([msg.to_json_dict() for msg in messages]), 200
 
 @messages_bp.route('/messages', methods=['POST'])
 @limiter.limit("1/minute")
-@handle_db_timeout
 def create_message():
     try:
         data = MessageIn.model_validate(request.get_json())
@@ -46,7 +43,6 @@ def create_message():
 
 @messages_bp.route('/messages/<id>', methods=['PATCH'])
 @jwt_required()
-@handle_db_timeout
 def update_message(id):
     data = request.get_json()
     try:
@@ -57,7 +53,6 @@ def update_message(id):
 
 @messages_bp.route('/messages/<id>', methods=['DELETE'])
 @jwt_required()
-@handle_db_timeout
 def delete_message(id):
     if not ObjectId.is_valid(id):
         return jsonify({'error': 'Invalid ID'}), 400

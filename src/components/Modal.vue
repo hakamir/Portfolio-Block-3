@@ -29,7 +29,7 @@ const buttonClass: Record<string, string> = {
     <div class="bg-gray-100 rounded-2xl shadow-xl max-w-sm w-full mx-4 flex flex-col overflow-hidden">
 
       <!-- Header -->
-      <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-700">
+      <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-300">
         <component v-if="icon" :is="icon" class="w-5 h-5 text-gray-500 shrink-0"/>
         <span class="font-semibold text-gray-800 grow">
           <slot name="header"/>
@@ -45,7 +45,7 @@ const buttonClass: Record<string, string> = {
       </div>
 
       <!-- Footer -->
-      <div v-if="buttons?.length" class="flex justify-end gap-2 px-6 py-4 border-t border-gray-700">
+      <div v-if="buttons?.length" class="flex justify-end gap-2 px-6 py-4 border-t border-gray-300">
         <button
             v-for="btn in buttons"
             :key="btn.label"

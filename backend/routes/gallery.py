@@ -5,21 +5,18 @@ from flask_jwt_extended import jwt_required
 from mongoengine import DoesNotExist
 from pydantic import ValidationError
 from Schemas.gallery import GalleryIn
-from utils.decorators import handle_db_timeout
 from models.gallery import Gallery, GalleryImage
 
 gallery_bp = Blueprint('gallery', __name__)
 
 
 @gallery_bp.route('/gallery', methods=['GET'])
-@handle_db_timeout
 def get_gallery():
     return jsonify([gallery.to_json_dict() for gallery in Gallery.objects()]), 200
 
 
 @gallery_bp.route('/gallery', methods=['PUT'])
 @jwt_required()
-@handle_db_timeout
 def update_galleries():
     if not request.is_json:
         return jsonify({"error": "invalid content-type"}), 415
@@ -49,7 +46,6 @@ def update_galleries():
 
 @gallery_bp.route('/gallery/<id>', methods=['DELETE'])
 @jwt_required()
-@handle_db_timeout
 def delete_gallery(id):
     if not ObjectId.is_valid(id):
         return jsonify({'error': 'Invalid ID'}), 400

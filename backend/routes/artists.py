@@ -4,21 +4,18 @@ from flask_jwt_extended import jwt_required
 from mongoengine import ValidationError, DoesNotExist
 from pydantic import ValidationError as PydanticValidationError
 from Schemas.artist import ArtistIn
-from utils.decorators import handle_db_timeout
 from models.artist import Artist, Track, Album
 
 artists_bp = Blueprint('artists', __name__)
 
 
 @artists_bp.route('/artists', methods=['GET'])
-@handle_db_timeout
 def get_artists():
     return jsonify([artist.to_json_dict() for artist in Artist.objects()]), 200
 
 
 @artists_bp.route('/artists', methods=['PUT'])
 @jwt_required()
-@handle_db_timeout
 def update_artists():
     if not request.is_json:
         return jsonify({'error': 'Invalid content-type'}), 415
@@ -62,7 +59,6 @@ def update_artists():
 
 @artists_bp.route('/artists/<id>', methods=['DELETE'])
 @jwt_required()
-@handle_db_timeout
 def delete_artist(id):
     if not ObjectId.is_valid(id):
         return jsonify({'error': 'Invalid ID'}), 400
