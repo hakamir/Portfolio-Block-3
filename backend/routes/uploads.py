@@ -6,7 +6,6 @@ from werkzeug.utils import secure_filename
 from models.artist import Artist
 from models.gallery import Gallery
 from utils.AudioConverter import AudioConverter
-from utils.decorators import handle_db_timeout
 from utils.filesystem import cleanup_empty_dirs, get_files
 
 uploads_bp = Blueprint('uploads', __name__)
@@ -56,7 +55,6 @@ def upload_audio():
 
 @uploads_bp.route('/orphans/audio', methods=['GET'])
 @jwt_required()
-@handle_db_timeout
 def get_orphan_audio():
     settings = current_app.config['settings']
     tracked_files = set()
@@ -121,7 +119,6 @@ def upload_image():
 
 @uploads_bp.route('/orphans/gallery', methods=['GET'])
 @jwt_required()
-@handle_db_timeout
 def get_orphan_gallery():
     settings = current_app.config['settings']
     tracked_files = set()
@@ -137,7 +134,6 @@ def get_orphan_gallery():
 
 @uploads_bp.route('/orphans/gallery', methods=['DELETE'])
 @jwt_required()
-@handle_db_timeout
 def delete_orphan_gallery():
     settings = current_app.config['settings']
     data = request.get_json()

@@ -3,7 +3,6 @@ from flask_jwt_extended import jwt_required
 from mongoengine import DoesNotExist, ValidationError
 from pydantic import ValidationError as PydanticValidationError
 from Schemas.biography import BiographyIn
-from utils.decorators import handle_db_timeout
 from models.biography import Biography, ImageSize, Section
 from datetime import datetime, timezone
 
@@ -11,7 +10,6 @@ biography_bp = Blueprint('biography', __name__)
 
 
 @biography_bp.route('/biography', methods=['GET'])
-@handle_db_timeout
 def get_biography():
     biography = Biography.objects.first()
     if biography is None:
@@ -21,7 +19,6 @@ def get_biography():
 
 @biography_bp.route('/biography', methods=['PUT'])
 @jwt_required()
-@handle_db_timeout
 def update_biography():
     if not request.is_json:
         return jsonify({"error": "invalid content-type"}), 415

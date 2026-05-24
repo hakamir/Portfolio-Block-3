@@ -4,6 +4,7 @@ from flask_cors import CORS
 from config import load_settings
 from extensions import jwt, limiter, init_db
 from routes import register_routes
+from errors import register_errors
 
 settings = load_settings()
 
@@ -42,6 +43,7 @@ def create_app():
     init_db(settings)
     jwt.init_app(app)
     register_routes(app)
+    register_errors(app)
 
     return app
 
