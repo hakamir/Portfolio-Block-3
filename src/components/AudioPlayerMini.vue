@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {ref, onMounted, onBeforeUnmount} from 'vue'
-import {CirclePlay, CirclePause, Check, CircleDotDashed, Loader} from '@lucide/vue'
+import {CirclePlay, CirclePause, Check, CircleDotDashed, Loader, X} from '@lucide/vue'
 import {useAudioPlayerStore} from "@stores"
 import Tooltip from "@components/layout/Tooltip.vue";
 
@@ -73,6 +73,11 @@ onBeforeUnmount(() => audioRef.value?.removeEventListener('pause', onPause))
       <div v-else-if="status === 'uploaded'">
         <Tooltip message="Already uploaded on the server" :icon="Check" iconBgColor="bg-lime-500/50" side="left">
           <Check class="bg-lime-500/50 text-lime-700 p-1 rounded-full w-6 h-6"/>
+        </Tooltip>
+      </div>
+      <div v-else-if="status === 'error'">
+        <Tooltip message="Upload failed" :icon="X" iconBgColor="bg-red-500/50" side="left">
+          <X class="bg-red-500/50 text-red-700 p-1 rounded-full w-6 h-6"/>
         </Tooltip>
       </div>
     </div>

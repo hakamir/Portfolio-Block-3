@@ -78,6 +78,11 @@ export const useAudioStore = defineStore('audio', () => {
         }
     }
 
+    const removeTrackState = (track: Track) => {
+        pendingUploads.value.delete(track)
+        uploadStatuses.value.delete(track)
+    }
+
     const addPendingUpload = (track: Track, file: File) => {
         pendingUploads.value.set(track, file)
         uploadStatuses.value.set(track, 'pending')
@@ -126,8 +131,7 @@ export const useAudioStore = defineStore('audio', () => {
                     await instance.post(audiosApi.uploadAudio, formData)
                     uploadStatuses.value.set(track, 'uploaded')
                 } catch (err) {
-                    uploadStatuses.value.set(track, 'pending')
-                    throw err
+                    uploadStatuses.value.set(track, 'error')
                 }
             })
         )
@@ -168,14 +172,23 @@ export const useAudioStore = defineStore('audio', () => {
     const saveAudios = async () => {
         // Mark form as submitted and set loading state
         isSubmitted.value = true;
-        fetchStatus.value = 'loading';
 
         // Abort if validation fails
         if (hasEmptyFields()) {
             return false
         }
+        fetchStatus.value = 'loading';
+
         // Upload pending audios
         await uploadPendingAudios()
+
+        // If at least one upload failed, stop processing here
+        const hasUploadErrors = [...uploadStatuses.value.values()].includes('error')
+        if (hasUploadErrors) {
+            fetchStatus.value = 'error';
+            return false;
+        }
+
         // Sync deleted artists
         await syncDeletedArtists()
         // Persist current artists state to server
@@ -206,6 +219,6 @@ export const useAudioStore = defineStore('audio', () => {
 
     return {
         artists, loading, fetchStatus, uploadStatuses, pendingUploads, orphans, isSubmitted,
-        fetchAudios, fetchOrphans, checkAudioExists, uploadTrack, addPendingUpload, saveAudios, deleteOrphans
+        fetchAudios, fetchOrphans, checkAudioExists, removeTrackState, uploadTrack, addPendingUpload, saveAudios, deleteOrphans
     }
 })

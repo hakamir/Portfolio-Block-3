@@ -41,8 +41,6 @@ def upload_audio():
 
     try:
         file = AudioConverter.to_mp3(file, extension)
-        extension = 'mp3'
-        track_src = track_src.replace(f'.{extension}', '.mp3')
     except ValueError:
         return jsonify({'error': "File conversion failed"}), 500
 

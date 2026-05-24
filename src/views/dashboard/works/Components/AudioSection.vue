@@ -96,6 +96,7 @@ const deleteAlbum = (artist: Artist, album: Album) => {
 const deleteTrack = (album: Album, track: Track) => {
   const index = album.tracks.indexOf(track);
   album.tracks.splice(index, 1);
+  audioStore.removeTrackState(track);
 }
 
 const collapsedArtists = ref<Set<string>>(new Set());
