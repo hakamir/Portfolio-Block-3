@@ -13,15 +13,7 @@ services:
     ports:
       - "5000:5000"
     command: flask run --host=0.0.0.0 --debug
-    develop:
-      watch:
-        - path: ./backend
-          action: rebuild
 
   frontend:
     volumes:
       - ./src:/app/src
-    develop:
-      watch:
-        - path: ./src
-          action: rebuild
