@@ -1,5 +1,5 @@
 import {defineStore} from "pinia";
-import {ref, watch} from "vue";
+import {nextTick, ref, watch} from "vue";
 import {instance} from "@api/axios.ts";
 import galleryApi from "@api/gallery.ts";
 
@@ -27,6 +27,8 @@ export const useGalleriesStore = defineStore('galleries', () => {
     const fetchStatus = ref<'idle' | 'loading' | 'error'>('idle')
     const uploadedFileName = ref<string | undefined>(undefined);
     const orphans = ref<string[]>([])
+    const isDirty = ref(false)
+    let isInitialized = false
 
     const fetchGalleries = async () => {
         const res = await instance.get(galleryApi.getGalleries)
@@ -35,6 +37,9 @@ export const useGalleriesStore = defineStore('galleries', () => {
         galleries.value.forEach(gallery => {
             gallery.images.sort((a, b) => a.order - b.order)
         })
+        await nextTick()
+        isInitialized = true
+        isDirty.value = false
     }
 
     const getNextSrc = async (gallerySlug: string): Promise<string> => {
@@ -45,6 +50,7 @@ export const useGalleriesStore = defineStore('galleries', () => {
     const toSlug = (str: string) => str.toLowerCase().trim().replace(/\s+/g, '_')
 
     watch(() => galleries.value, (galleries) => {
+        if (isInitialized) isDirty.value = true
         galleries.forEach(gallery => {
             gallery.slug = toSlug(gallery.title)
             gallery.images.forEach(image => {
@@ -106,6 +112,7 @@ export const useGalleriesStore = defineStore('galleries', () => {
         // Save galleries
         await instance.put(galleryApi.updateGalleries, galleries.value)
         fetchStatus.value = 'idle'
+        isDirty.value = false
         return true
     }
 
@@ -128,7 +135,7 @@ export const useGalleriesStore = defineStore('galleries', () => {
     }
 
     return {
-        galleries, orphans, pendingUploads, fetchStatus, uploadedFileName,
+        galleries, orphans, pendingUploads, fetchStatus, uploadedFileName, isDirty,
         fetchGalleries, saveGalleries, checkImageExists, fetchOrphans, deleteOrphans,
     }
 });
