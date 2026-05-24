@@ -10,12 +10,12 @@ class Login(BaseModel):
 
 
 class PasswordUpdate(BaseModel):
-    currentPwd: str = Field(min_length=12)
+    currentPwd: str
     newPwd: str = Field(min_length=12)
 
     model_config = {'extra': 'forbid'}
 
-    @field_validator('currentPwd', 'newPwd')
+    @field_validator('newPwd')
     @classmethod
     def validate_new_password(cls, v):
         """ Validate a new password format (at least one uppercase letter, one lowercase letter, one digit, one special character) """
@@ -31,8 +31,6 @@ class PasswordUpdate(BaseModel):
 
     @model_validator(mode='after')
     def validate_passwords_differ(self):
-        if not (self.currentPwd or self.newPwd):
-            raise ValueError('Current or new password must be provided')
         if self.currentPwd == self.newPwd:
             raise ValueError('Current and new passwords cannot be the same')
         return self

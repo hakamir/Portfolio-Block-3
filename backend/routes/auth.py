@@ -68,8 +68,10 @@ def update_password():
     except DoesNotExist:
         return jsonify({'error': 'user not found'}), 404
     except ValidationError as e:
-        errors = {
-            err['loc'][0]: err['msg'].replace('Value error, ', '')
-            for err in e.errors()
-        }
+        errors = []
+        for err in e.errors():
+            loc = err.get('loc', ())
+            field = loc[0] if len(loc) > 0 else 'model_error'
+            errors.append({"field": field, "message": err.get('msg').replace('Value error, ', '')})
+
         return jsonify({'error': {'Invalid payload': errors}}), 400
