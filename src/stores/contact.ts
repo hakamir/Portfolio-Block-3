@@ -8,9 +8,6 @@ interface ContactForm {
     name: string
     email: string
     message: string
-    date: string
-    read: boolean
-    trashed: boolean
 }
 
 export const useContactStore = defineStore('contact', () => {
@@ -18,9 +15,6 @@ export const useContactStore = defineStore('contact', () => {
         name: '',
         email: '',
         message: '',
-        date: new Date().toISOString(),
-        read: false,
-        trashed: false
     })
 
     const status = ref<Status>('idle')
@@ -30,7 +24,6 @@ export const useContactStore = defineStore('contact', () => {
         formData.name = ''
         formData.email = ''
         formData.message = ''
-        formData.date = new Date().toISOString()
         status.value = 'idle'
     }
 

@@ -2,6 +2,7 @@
 import { Shredder, Trash2, Mail, Inbox } from '@lucide/vue';
 import { useMessagesStore } from '@stores/messages'
 import { storeToRefs } from 'pinia'
+import Tooltip from "@components/layout/Tooltip.vue";
 
 const props = defineProps<{ selectedIds: string[] }>()
 const emit = defineEmits<{ 'update:selectedIds': [value: string[]] }>()
@@ -14,11 +15,11 @@ const markUnread = async () => {
   emit('update:selectedIds', [])
 }
 const moveToTrash = async () => {
-  await store.applyToSelected(props.selectedIds, id => store.trashMessage(id, true))
+  await store.applyToSelected(props.selectedIds, id => store.markAsTrashed(id, true))
   emit('update:selectedIds', [])
 }
 const moveToInbox = async () => {
-  await store.applyToSelected(props.selectedIds, id => store.trashMessage(id, false))
+  await store.applyToSelected(props.selectedIds, id => store.markAsTrashed(id, false))
   emit('update:selectedIds', [])
 }
 const deletePermanently = async () => {
@@ -29,31 +30,27 @@ const deletePermanently = async () => {
 
 <template>
   <div class="flex justify-start items-center">
-    <div class="relative group flex justify-center items-center mx-2">
-      <span class="tooltip">Mark as unread</span>
-      <button @click="markUnread" aria-label="Mark as unread">
+    <Tooltip message="Mark as unread">
+      <button @click="markUnread" aria-label="Mark as unread" class="mx-2 flex">
         <Mail />
       </button>
-    </div>
-    <div v-if="currentTab === 'inbox'" class="relative group flex justify-center items-center mx-2">
-      <span class="tooltip">Move to trash</span>
-      <button @click="moveToTrash" aria-label="Move to trash">
+    </Tooltip>
+    <Tooltip message="Move to trash" v-if="currentTab === 'inbox'">
+      <button @click="moveToTrash" class=" mx-2 flex" aria-label="Move to trash">
         <Trash2 />
       </button>
-    </div>
+    </Tooltip>
     <template v-if="currentTab === 'trash'">
-      <div class="relative group flex justify-center items-center mx-2">
-        <span class="tooltip">Permanently delete</span>
-        <button @click="deletePermanently" aria-label="Permanently delete">
+      <Tooltip message="Permanently delete">
+        <button @click="deletePermanently" class="mx-2 flex" aria-label="Permanently delete">
           <Shredder />
         </button>
-      </div>
-      <div class="relative group flex justify-center items-center mx-2">
-        <span class="tooltip">Move to inbox</span>
-        <button @click="moveToInbox" aria-label="Move to inbox">
+      </Tooltip>
+      <Tooltip message="Move to inbox">
+        <button @click="moveToInbox" class="mx-2 flex" aria-label="Move to inbox">
           <Inbox />
         </button>
-      </div>
+      </Tooltip>
     </template>
   </div>
 </template>

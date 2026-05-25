@@ -9,6 +9,8 @@ class Message(Document):
     date = DateTimeField(default=datetime.now(timezone.utc))
     read = BooleanField(default=False)
     trashed = BooleanField(default=False)
+    replied = BooleanField(default=False)
+    replied_at = DateTimeField(default=None)
     meta = {'collection': 'messages'}
 
     def to_json_dict(self):
