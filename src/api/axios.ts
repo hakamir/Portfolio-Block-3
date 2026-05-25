@@ -9,7 +9,8 @@ export const instance = axios.create({
 
 instance.interceptors.request.use((config) => {
     const authStore = useAuthStore();
-    if (authStore.token) {
+    const url = config.url ?? ''
+    if (authStore.token && !url.includes('/auth/refresh')) {
         config.headers.Authorization = `Bearer ${authStore.token}`;
     }
 
