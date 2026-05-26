@@ -30,25 +30,25 @@ const deletePermanently = async () => {
 </script>
 
 <template>
-  <div class="flex justify-start items-center gap-4">
+  <div class="flex justify-start items-center gap-2">
     <Tooltip message="Mark as unread">
-      <button @click="markUnread" aria-label="Mark as unread" class="flex">
+      <button @click="markUnread" aria-label="Mark as unread" class="action-button hover:text-blue-600 transition">
         <Mail/>
       </button>
     </Tooltip>
     <Tooltip message="Move to trash" v-if="currentTab === 'inbox'">
-      <button @click="moveToTrash" class="flex" aria-label="Move to trash">
+      <button @click="moveToTrash" class="action-button hover:text-red-600 transition" aria-label="Move to trash">
         <Trash2/>
       </button>
     </Tooltip>
     <template v-if="currentTab === 'trash'">
       <Tooltip message="Permanently delete">
-        <button @click="deletePermanently" class="flex" aria-label="Permanently delete">
+        <button @click="deletePermanently" class="action-button hover:text-red-600 transition" aria-label="Permanently delete">
           <Shredder/>
         </button>
       </Tooltip>
       <Tooltip message="Move to inbox">
-        <button @click="moveToInbox" class="flex" aria-label="Move to inbox">
+        <button @click="moveToInbox" class="action-button hover:text-blue-600 transition" aria-label="Move to inbox">
           <Inbox/>
         </button>
       </Tooltip>

@@ -5,6 +5,7 @@ import {useRoute} from "vue-router"
 import {SearchX, Undo2, Trash2, Reply, Check, Undo} from "@lucide/vue"
 import {buildMailtoLink} from "@utils/formatters.ts";
 import Tooltip from "@components/layout/Tooltip.vue";
+import router from "@/router";
 
 
 const route = useRoute()
@@ -16,6 +17,12 @@ const message = computed(() =>
 )
 
 let hasMarked = false
+
+const moveToTrash = async (msg: Message) => {
+  if (!msg) return
+  await messageStore.markAsTrashed(msg._id, true)
+  await router.push('/dashboard/messages')
+}
 
 const markAsReplied = async (msg: Message) => {
   if (!msg) return
@@ -61,7 +68,7 @@ watch(() => message.value, async (msg) => {
         </a>
       </Tooltip>
       <Tooltip message="Move to trash">
-        <button v-if="message"
+        <button v-if="message" @click="moveToTrash(message)"
                 class="p-1.5 border border-gray-300 bg-white rounded-full hover:scale-105 transition hover:text-red-600 flex">
           <Trash2/>
         </button>
