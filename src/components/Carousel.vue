@@ -42,14 +42,14 @@ watch(current, (newIndex) => {
 <template>
   <div class="relative w-full" @mouseenter="stopAutoplay" @mouseleave="startAutoplay">
     <div class="relative overflow-hidden rounded-3xl aspect-video shadow-[0_0_50px_rgba(0,0,0,0.5)] group">
-      <transition-group name="fade" mode="out-in">
+      <Transition name="fade" mode="out-in">
         <img
             :key="current"
             :src="baseSrc ? `${baseSrc}/${images[current].src}` : images[current].src"
             :alt="images[current].alt"
             class="absolute inset-0 w-full h-full object-cover"
         />
-      </transition-group>
+      </Transition>
       <div class="absolute inset-0 z-10 items-end p-6 pointer-events-none flex flex-col">
         <span class="text-white opacity-40 text-2xl text-shadow-[0_0_20px_rgba(0,0,0,1)] font-unbounded group-hover:opacity-100 transition-opacity">
           {{ images[current]?.title }}

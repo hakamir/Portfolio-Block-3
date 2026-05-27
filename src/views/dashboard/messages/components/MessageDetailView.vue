@@ -5,7 +5,7 @@ import {useRoute} from "vue-router"
 import {SearchX, Undo2, Trash2, Reply, Check, Undo} from "@lucide/vue"
 import {buildMailtoLink} from "@utils/formatters.ts";
 import Tooltip from "@components/layout/Tooltip.vue";
-import router from "@/router";
+import router from "@router";
 
 
 const route = useRoute()

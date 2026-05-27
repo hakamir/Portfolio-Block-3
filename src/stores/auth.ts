@@ -1,6 +1,6 @@
 import {defineStore} from "pinia";
 import {ref} from "vue";
-import router from "../router";
+import router from "@router";
 import {instance} from "@api/axios.ts";
 import authApi from "@api/auth.ts";
 import type {Status} from "@/types";

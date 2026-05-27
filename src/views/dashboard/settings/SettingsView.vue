@@ -60,8 +60,8 @@ const onGalleryConfirmDelete = async () => {
         v-if="showAudioDeleteModal"
         :icon="Trash2"
         :buttons="[
-          { label: 'Cancel', type: 'cancel', action: () => showAudioDeleteModal = false },
-          { label: 'Delete', type: 'delete', action: onAudioConfirmDelete }
+          { label: 'Cancel', color: 'white', action: () => showAudioDeleteModal = false },
+          { label: 'Delete', color: 'red', action: onAudioConfirmDelete }
         ]"
         @close="showAudioDeleteModal = false"
     >
@@ -78,8 +78,8 @@ const onGalleryConfirmDelete = async () => {
         v-if="showGalleryDeleteModal"
         :icon="Trash2"
         :buttons="[
-          { label: 'Cancel', type: 'cancel', action: () => showGalleryDeleteModal = false },
-          { label: 'Delete', type: 'delete', action: onGalleryConfirmDelete }
+          { label: 'Cancel', color: 'white', action: () => showGalleryDeleteModal = false },
+          { label: 'Delete', color: 'red', action: onGalleryConfirmDelete }
         ]"
         @close="showGalleryDeleteModal = false"
     >
