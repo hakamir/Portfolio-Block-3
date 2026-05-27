@@ -36,8 +36,8 @@ const onCancelLeave = () => {
     <BiographyForm/>
   </section>
   <Modal v-if="showUnsavedChangesModal"
-         :buttons="[{ label: 'Stay', type: 'cancel', action: onCancelLeave },
-                  { label: 'Leave anyway', type: 'delete', action: onConfirmLeave }]"
+         :buttons="[{ label: 'Stay', color: 'blue', action: onCancelLeave },
+                  { label: 'Leave anyway', color: 'white', action: onConfirmLeave }]"
          @close="onCancelLeave" :closeOnBackdrop="true">
     <template #header>Unsaved changes</template>
     <p class="text-sm text-gray-800">You have unsaved changes. Are you sure you want to leave?</p>

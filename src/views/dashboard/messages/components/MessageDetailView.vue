@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import {useMessagesStore} from "@stores"
+import {type Message, useMessagesStore} from "@stores"
 import {computed, onMounted, watch} from "vue"
 import {useRoute} from "vue-router"
-import {SearchX, Undo2, Trash2, Reply} from "@lucide/vue"
+import {SearchX, Undo2, Trash2, Reply, Check, Undo} from "@lucide/vue"
+import {buildMailtoLink} from "@utils/formatters.ts";
+import Tooltip from "@components/layout/Tooltip.vue";
+import router from "@router";
+
 
 const route = useRoute()
 const messageStore = useMessagesStore()
@@ -13,6 +17,22 @@ const message = computed(() =>
 )
 
 let hasMarked = false
+
+const moveToTrash = async (msg: Message) => {
+  if (!msg) return
+  await messageStore.markAsTrashed(msg._id, true)
+  await router.push('/dashboard/messages')
+}
+
+const markAsReplied = async (msg: Message) => {
+  if (!msg) return
+  await messageStore.markAsReplied(msg._id, true)
+}
+
+const undoRepliedState = async (msg: Message) => {
+  if (!msg) return
+  await messageStore.markAsReplied(msg._id, false)
+}
 
 // In case the message is access directly without going through the inbox -> fetch messages
 onMounted(async () => {
@@ -34,17 +54,25 @@ watch(() => message.value, async (msg) => {
 
 <template>
   <div class="flex justify-between p-3">
-    <RouterLink to="/dashboard"
-                class="p-1.5 border border-gray-300 bg-white rounded-full hover:scale-105 transition hover:text-blue-600">
-      <Undo2/>
-    </RouterLink>
+    <Tooltip message="Back to inbox">
+      <RouterLink to="/dashboard"
+                  class="p-1.5 border border-gray-300 bg-white rounded-full hover:scale-105 transition hover:text-blue-600 flex">
+        <Undo2/>
+      </RouterLink>
+    </Tooltip>
     <div class="flex gap-4">
-      <button class="p-1.5 border border-gray-300 bg-white rounded-full hover:scale-105 transition hover:text-blue-600">
-        <Reply/>
-      </button>
-      <button class="p-1.5 border border-gray-300 bg-white rounded-full hover:scale-105 transition hover:text-red-600">
-        <Trash2/>
-      </button>
+      <Tooltip message="Reply">
+        <a v-if="message" :href="buildMailtoLink(message)" @click="markAsReplied(message)"
+           class="p-1.5 border border-gray-300 bg-white rounded-full hover:scale-105 transition hover:text-blue-600 flex">
+          <Reply/>
+        </a>
+      </Tooltip>
+      <Tooltip message="Move to trash">
+        <button v-if="message" @click="moveToTrash(message)"
+                class="p-1.5 border border-gray-300 bg-white rounded-full hover:scale-105 transition hover:text-red-600 flex">
+          <Trash2/>
+        </button>
+      </Tooltip>
     </div>
   </div>
 
@@ -70,12 +98,25 @@ watch(() => message.value, async (msg) => {
     <div>
       {{ message.message }}
     </div>
-    <div class="mt-8 py-3">
-      <button
-          class="flex gap-2 px-3 py-1 border border-gray-300 bg-white rounded-full hover:scale-105 transition hover:text-blue-600">
+    <div v-if="message.replied" class="mt-8 flex">
+      <span
+          class="flex items-center gap-2 px-3 py-1 border border-gray-300 bg-white rounded-full">
+        <Check class="text-primary-700"/>
+        <span class="select-none text-gray-700">You have replied to this message</span>
+        <Tooltip message="Unmark as replied">
+          <button @click="undoRepliedState(message)"
+                  class="hover:scale-105 transition hover:text-primary-700 flex items-center">
+            <Undo/>
+          </button>
+        </Tooltip>
+      </span>
+    </div>
+    <div class="flex py-2" :class="{ 'mt-8': !message.replied }">
+      <a :href="buildMailtoLink(message)" @click="markAsReplied(message)"
+         class="flex gap-2 px-3 py-1 border border-gray-300 bg-white rounded-full hover:scale-105 transition hover:text-blue-600">
         <Reply/>
-        Answer
-      </button>
+        <span class="select-none">Answer</span>
+      </a>
     </div>
   </div>
 </template>

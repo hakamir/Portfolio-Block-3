@@ -13,7 +13,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, '/src'),
+      '@': path.resolve(__dirname, './src'),
       '@components': path.resolve(__dirname, './src/components'),
       '@composables': path.resolve(__dirname, './src/composables'),
       '@directives': path.resolve(__dirname, './src/directives'),
@@ -22,6 +22,7 @@ export default defineConfig({
       '@views': path.resolve(__dirname, './src/views'),
       '@api': path.resolve(__dirname, './src/api'),
       '@utils': path.resolve(__dirname, './src/utils'),
+      '@router': path.resolve(__dirname, './src/router'),
     }
   }
 })

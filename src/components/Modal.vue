@@ -3,7 +3,7 @@ import {X} from '@lucide/vue'
 
 interface ModalButton {
   label: string
-  type: 'cancel' | 'confirm' | 'delete' | 'ok'
+  color: 'white' | 'green' | 'red' | 'blue'
   action: () => void
 }
 
@@ -16,10 +16,10 @@ defineProps<{
 const emit = defineEmits<{ close: [] }>()
 
 const buttonClass: Record<string, string> = {
-  cancel: 'border border-gray-200 text-black hover:bg-black hover:text-white',
-  confirm: 'bg-lime-600 text-white hover:bg-lime-500',
-  delete: 'bg-red-500 text-white hover:bg-red-600',
-  ok: 'bg-blue-600 text-white hover:bg-blue-500',
+  white: 'border border-gray-200 text-black hover:bg-black hover:text-white',
+  green: 'bg-lime-600 text-white hover:bg-lime-500',
+  red: 'bg-red-500 text-white hover:bg-red-600',
+  blue: 'bg-blue-600 text-white hover:bg-blue-500',
 }
 </script>
 
@@ -50,7 +50,7 @@ const buttonClass: Record<string, string> = {
             v-for="btn in buttons"
             :key="btn.label"
             @click="btn.action"
-            :class="buttonClass[btn.type]"
+            :class="buttonClass[btn.color]"
             class="px-4 py-2 rounded-xl text-sm font-medium transition">
           {{ btn.label }}
         </button>

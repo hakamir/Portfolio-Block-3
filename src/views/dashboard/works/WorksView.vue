@@ -78,8 +78,8 @@ const onConfirmTagEdition = () => {
     <!-- Tag edition modal -->
     <Modal v-if="showTagEditionModal && tempTrack"
            :icon="Tag"
-           :buttons="[{ label: 'Cancel', type: 'cancel', action: () => showTagEditionModal = false },
-                      { label: 'Confirm', type: 'confirm', action: onConfirmTagEdition }]"
+           :buttons="[{ label: 'Cancel', color: 'white', action: () => showTagEditionModal = false },
+                      { label: 'Confirm', color: 'green', action: onConfirmTagEdition }]"
            @close="showTagEditionModal = false">
       <template #header>{{ tempTrack.title }}</template>
       <div class="flex flex-col gap-4">
@@ -111,8 +111,8 @@ const onConfirmTagEdition = () => {
 
     <!-- Confirm leave modal -->
     <Modal v-if="showUnsavedChangesModal"
-           :buttons="[{ label: 'Stay', type: 'cancel', action: onCancelLeave },
-                  { label: 'Leave anyway', type: 'delete', action: onConfirmLeave }]"
+           :buttons="[{ label: 'Stay', color: 'blue', action: onCancelLeave },
+                  { label: 'Leave anyway', color: 'white', action: onConfirmLeave }]"
            @close="onCancelLeave" :closeOnBackdrop="true">
       <template #header>Unsaved changes</template>
       <p class="text-sm text-gray-800">You have unsaved changes. Are you sure you want to leave?</p>

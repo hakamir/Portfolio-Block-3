@@ -125,12 +125,17 @@ const toggleMute = () => {
 <template>
   <Transition name="sticky-player">
     <div v-if="playerStore.isPlaying"
-         class="fixed bottom-0 left-0 right-0 z-50
-              bg-linear-0 from-black/90 via-black/80 to-black/60 lg:from-black/60 lg:via-black/40 lg:to-black/20
-              lg:hover:hover:from-black/90 lg:hover:hover:via-black/80 lg:hover:hover:to-black/60
-              lg:translate-y-10 lg:hover:hover:translate-y-0 group/container transition duration-500
-              backdrop-blur-xl border-t border-white/10 px-6 py-3">
-      <div class="flex items-center gap-1 lg:gap-4 container mx-auto">
+         class="fixed z-50 bottom-0 left-0 right-0 overflow-hidden
+              lg:translate-y-10 lg:hover:hover:translate-y-0 group/container transition duration-500 border-t border-white/10">
+      <!-- Progressive white mask -->
+      <div class="absolute inset-0 -z-10 h-full w-full bg-amber-200/30 blur-3xl" :style="{ width: `${progress}%` }"/>
+      <!-- Gradient background mask -->
+      <div class="absolute inset-0 z-0 bg-linear-0 from-black/90 via-black/80 to-black/60
+              lg:from-black/60 lg:via-black/40 lg:to-black/20
+              lg:group-hover/container:from-black/90 lg:group-hover/container:via-black/80 lg:group-hover/container:to-black/60 backdrop-blur-xl transition duration-500"/>
+
+      <!-- Content -->
+      <div class="relative flex items-center gap-1 lg:gap-4 container mx-auto px-6 py-3 z-20">
         <button @click="togglePlay"
                 class="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-white text-black flex items-center justify-center hover:bg-neutral-200 shrink-0 lg:opacity-0 lg:group-hover/container:opacity-100 transition duration-300 group/button">
           <Play v-if="!playerStore.isPlaying" class="w-5 h-5 ml-0.5 group-hover/button:scale-105"/>

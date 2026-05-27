@@ -188,6 +188,11 @@ button {
 .social-link:hover span, .social-link:focus span {
     @apply text-primary;
 }
+/* -------- DASHBOARD / MESSAGES --------- */
+
+.action-button {
+    @apply flex justify-center items-center w-10 h-10 p-2 border border-transparent hover:border-gray-400 hover:bg-white rounded-full;
+}
 
 /* -------- DASHBOARD / WORKS --------- */
 .work-label-artist {

@@ -4,7 +4,7 @@ import {instance} from "../api/axios.ts";
 import messageApi from "../api/messages.ts"
 import type {Tab} from "@/types"
 
-interface Message {
+export interface Message {
     _id: string;
     name: string;
     email: string;
@@ -12,6 +12,7 @@ interface Message {
     date: Date;
     read: boolean;
     trashed: boolean;
+    replied: boolean;
 }
 
 export const useMessagesStore = defineStore('messages', () => {
@@ -53,14 +54,25 @@ export const useMessagesStore = defineStore('messages', () => {
         }
     }
 
-    // trash a message
-    const trashMessage = async (messageId: string, bool: boolean) => {
+    // mark a message as trashed
+    const markAsTrashed = async (messageId: string, bool: boolean) => {
         try {
             await instance.patch(messageApi.updateMessage(messageId), {trashed: bool})
             const message = allMessages.value.find(m => m._id === messageId)
             if (message) message.trashed = bool
         } catch (error) {
             console.error('Failed to trash message:', error)
+        }
+    }
+
+    // mark a message as replied
+    const markAsReplied = async (messageId: string, bool: boolean) => {
+        try {
+            await instance.patch(messageApi.updateMessage(messageId), {replied: bool})
+            const message = allMessages.value.find(m => m._id === messageId)
+            if (message) message.replied = bool
+        } catch (error) {
+            console.error('Failed to mark message as replied:', error)
         }
     }
 
@@ -82,6 +94,6 @@ export const useMessagesStore = defineStore('messages', () => {
 
     return {
         allMessages, currentTab, fetchStatus, filteredMessages,
-        fetchMessages, markAsRead, trashMessage, deleteMessage, applyToSelected, getMessageById
+        fetchMessages, markAsRead, markAsTrashed, markAsReplied, deleteMessage, applyToSelected, getMessageById
     }
 })

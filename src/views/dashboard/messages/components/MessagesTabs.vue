@@ -8,7 +8,7 @@ const {currentTab} = storeToRefs(store)
 </script>
 
 <template>
-  <div class="flex gap-4 mt-8 ml-8">
+  <div class="flex gap-4 mt-8 md:ml-8">
     <button
         @click="currentTab = 'inbox'"
         :class="currentTab === 'inbox'

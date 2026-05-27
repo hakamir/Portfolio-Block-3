@@ -11,11 +11,13 @@ class MessageIn(BaseModel):
     date: Optional[datetime] = None
     read: bool = False
     trashed: bool = False
+    replied: bool = False
 
     model_config = {'extra': 'forbid'}
 
 class MessageUpdate(BaseModel):
     read: Optional[bool] = None
     trashed: Optional[bool] = None
+    replied: Optional[bool] = None
 
     model_config = {'extra': 'forbid'}

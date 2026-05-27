@@ -1,6 +1,6 @@
 import {defineStore} from "pinia";
 import {ref} from "vue";
-import router from "../router";
+import router from "@router";
 import {instance} from "@api/axios.ts";
 import authApi from "@api/auth.ts";
 import type {Status} from "@/types";
@@ -57,23 +57,8 @@ export const useAuthStore = defineStore("auth", () => {
         }
     }
 
-    const isTokenExpired = (token: string) => {
-        try {
-            const payload = JSON.parse(atob(token.split('.')[1]))
-            return payload.exp * 1000 < Date.now()
-        } catch {
-            return true
-        }
-    }
-
-    const isAuthenticated = () => {
-        if (!token.value) return false;
-        if (isTokenExpired(token.value)) {
-            logout()
-            return false;
-        }
-        return true;
-    }
+    // Check if a token exists and is in format "header.payload.signature"
+    const isAuthenticated = () => !!token.value && token.value.split('.').length === 3
 
     return {token, isInitialized, status, login, logout, refresh, changePassword, isAuthenticated}
 })

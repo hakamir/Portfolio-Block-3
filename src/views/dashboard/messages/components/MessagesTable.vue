@@ -2,7 +2,7 @@
 import {ref, watch} from 'vue'
 import {useMessagesStore} from '@stores/messages'
 import {storeToRefs} from 'pinia'
-import {Inbox, Mail, Reply, Trash2, Shredder} from "@lucide/vue";
+import {Inbox, Mail, Trash2, Shredder} from "@lucide/vue";
 import {format_date} from "@utils/formatters.ts";
 
 const props = defineProps<{ selectedIds: string[] }>()
@@ -73,11 +73,11 @@ const onTouchEnd = async (id: string) => {
     if (delta > 200) {
       await store.markAsRead(id, false)
     } else if (delta < -200) {
-      await store.trashMessage(id, true)
+      await store.markAsTrashed(id, true)
     }
   } else if (store.currentTab == "trash") {
     if (delta > 200) {
-      await store.trashMessage(id, false)
+      await store.markAsTrashed(id, false)
     } else if (delta < -200) {
       await store.deleteMessage(id)
     }
@@ -115,10 +115,8 @@ const getSwipeDelta = (id: string) => swipeState.value[id]?.deltaX ?? 0
         <div class="relative flex border-b border-neutral-200 overflow-hidden">
 
           <!-- Mark as read (Mobile) -->
-          <div
-              class="flex items-center justify-end bg-blue-600 text-white overflow-hidden transition-all duration-75"
-              :style="{ width: `${Math.max(0, getSwipeDelta(message._id))}px` }"
-          >
+          <div class="flex items-center justify-end bg-blue-600 text-white overflow-hidden transition-all duration-75"
+               :style="{ width: `${Math.max(0, getSwipeDelta(message._id))}px` }">
             <Mail v-if="store.currentTab === 'inbox'" class="mr-4"/>
             <Inbox v-else class="mr-4"/>
           </div>
@@ -141,20 +139,17 @@ const getSwipeDelta = (id: string) => swipeState.value[id]?.deltaX ?? 0
                     aria-label="Select message"
                 />
               </div>
-              <div class="flex items-center justify-center">
-                <button
-                    class="hidden md:flex w-10 h-10 hover:text-blue-600 hover:border hover:bg-white group border-gray-200 rounded-full items-center justify-center"
-                    aria-label="Reply to message"
-                >
-                  <Reply class="group-hover:scale-110 transition-transform"/>
-                </button>
-              </div>
               <RouterLink :to="`/dashboard/messages/${message._id}`" class="md:flex min-w-0" aria-label="View message">
                 <div class="px-4 py-2 select-none truncate min-w-50 font-medium">{{ message.name }}</div>
                 <div class="px-4 py-2 select-none truncate text-sm md:text-base">{{ message.message }}</div>
               </RouterLink>
             </div>
-            <div class="px-4 py-2 select-none shrink-0">{{ format_date(message.date) }}</div>
+            <div class="flex items-center justify-end gap-2">
+              <div v-if="message.replied" class=" px-2 py-1 bg-primary/10 border border-primary-700/50  rounded-full">
+                <span class="text-sm text-primary-800/70">Replied</span>
+              </div>
+              <div class="px-4 py-2 select-none shrink-0">{{ format_date(message.date) }}</div>
+            </div>
           </div>
 
           <!-- Trash (Mobile) -->
