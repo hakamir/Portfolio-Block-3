@@ -67,7 +67,7 @@ const onLoaded = () => {
 }
 
 const updateSeek = (clientX: number) => {
-  const audio = playerStore.currentTrack
+  const audio = audioRef.value
   if (!audio || !barRef.value) return
   const rect = barRef.value.getBoundingClientRect()
   const x = Math.max(0, Math.min(clientX - rect.left, rect.width))
@@ -91,7 +91,7 @@ const stopDrag = () => {
 }
 
 const seek = (event: MouseEvent | TouchEvent) => {
-  const audio = playerStore.currentTrack
+  const audio = audioRef.value
   if (!audio || !barRef.value) return
   const clientX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX
   updateSeek(clientX)
@@ -102,7 +102,8 @@ const seek = (event: MouseEvent | TouchEvent) => {
 <template>
   <div class="flex items-center gap-4">
     <button @click="togglePlay"
-            class="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:bg-neutral-200 transition" aria-label="Play/Pause">
+            class="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:bg-neutral-200 transition"
+            aria-label="Play/Pause">
       <Play v-if="!isPlaying" class="w-5 h-5 ml-0.5"/>
       <Pause v-else class="w-5 h-5"/>
     </button>
@@ -111,15 +112,15 @@ const seek = (event: MouseEvent | TouchEvent) => {
       <span class="text-sm font-unbounded">{{ title }}</span>
       <span class="text-sm text-white/70">{{ subtitle }}</span>
 
-      <div class="hidden sm:flex text-sm relative h-8 cursor-pointer group items-center" >
-        <div ref="barRef" class="relative w-full h-1 bg-white/30 rounded-full"
-             @mousedown="startDrag"
-             @touchstart.prevent="startDrag"
-             @mousemove="onMouseMove"
-             @touchmove.prevent="onMouseMove"
-             @mouseup="stopDrag"
-             @touchend="stopDrag"
-             @click="seek">
+      <div class="hidden sm:flex text-sm relative h-8 cursor-pointer group items-center"
+           @mousedown="startDrag"
+           @touchstart.prevent="startDrag"
+           @mousemove="onMouseMove"
+           @touchmove.prevent="onMouseMove"
+           @mouseup="stopDrag"
+           @touchend="stopDrag"
+           @click="seek">
+        <div ref="barRef" class="relative w-full h-1 bg-white/30 rounded-full">
           <div class="h-full bg-white rounded-full"
                :style="{ width: `${progress}%` }"/>
           <div
@@ -132,7 +133,9 @@ const seek = (event: MouseEvent | TouchEvent) => {
       </div>
     </div>
 
-    <span class="hidden sm:inline text-sm text-white/70 tabular-nums select-none">{{ currentTime }} / {{ duration }}</span>
+    <span class="hidden sm:inline text-sm text-white/70 tabular-nums select-none">{{ currentTime }} / {{
+        duration
+      }}</span>
 
     <audio ref="audioRef" :src="props.src"
            preload="metadata"
