@@ -146,3 +146,31 @@ def delete_orphan_gallery():
     # Clean up empty directories
     cleanup_empty_dirs(os.path.join(settings.upload_folder, 'gallery'))
     return jsonify({'deleted': deleted}), 200
+
+@uploads_bp.route('/upload/background', methods=['POST'])
+@jwt_required()
+def upload_background():
+    destination = request.form.get('destination')
+    file_2048 = request.files.get('image-2048')
+    file_1024 = request.files.get('image-1024')
+    file_512 = request.files.get('image-512')
+
+    if not destination or not file_2048 or not file_1024 or not file_512:
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    settings = current_app.config['settings']
+
+    if destination == 'hero' or destination == 'portfolio':
+        dest = os.path.join(settings.upload_folder, 'background/', destination)
+        file_2048.save(f'{dest}/{destination}-2048.webp')
+        file_1024.save(f'{dest}/{destination}-1024.webp')
+        file_512.save(f'{dest}/{destination}-512.webp')
+        return jsonify({'uploaded': True}), 201
+    elif destination == 'biography':
+        dest = os.path.join(settings.upload_folder, f'/{destination}')
+        file_2048.save(f'{dest}/{destination}-1-2048.webp')
+        file_1024.save(f'{dest}/{destination}-1-1024.webp')
+        file_512.save(f'{dest}/{destination}-1-512.webp')
+        return jsonify({'uploaded': True}), 201
+    else:
+        return jsonify({'error': 'Invalid destination'}), 400

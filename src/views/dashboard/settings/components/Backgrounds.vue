@@ -4,6 +4,12 @@ import {Pencil} from '@lucide/vue'
 import BackgroundEditModal from "@views/dashboard/settings/components/BackgroundEditModal.vue";
 
 
+const imageTimestamps = ref<Record<string, number>>({
+  hero: Date.now(),
+  biography: Date.now(),
+  portfolio: Date.now(),
+})
+
 export interface Background {
   key: string
   label: string
@@ -40,9 +46,14 @@ const backgrounds: Background[] = [
 
 const selectedBackground = ref<Background | null>(null)
 
-function openModal(bg: Background): void {
+const openModal = (bg: Background): void => {
   selectedBackground.value = bg
 }
+
+const onSave = (destination: string): void => {
+  imageTimestamps.value[destination] = Date.now()
+}
+
 </script>
 
 
@@ -66,7 +77,7 @@ function openModal(bg: Background): void {
       >
         <!-- Image -->
         <img
-            :src="bg.src"
+            :src="`${bg.src}?t=${imageTimestamps[bg.key]}`"
             :alt="bg.label"
             class="w-full h-full object-cover transition duration-300 group-hover:scale-105"
         />
@@ -92,6 +103,7 @@ function openModal(bg: Background): void {
         v-if="selectedBackground"
         :background="selectedBackground"
         @close="selectedBackground = null"
+        @save="onSave"
     />
   </div>
 </template>
