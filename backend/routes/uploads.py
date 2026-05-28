@@ -7,6 +7,7 @@ from models.artist import Artist
 from models.gallery import Gallery
 from utils.AudioConverter import AudioConverter
 from utils.filesystem import cleanup_empty_dirs, get_files
+from utils.image_validation import is_valid_webp
 
 uploads_bp = Blueprint('uploads', __name__)
 
@@ -157,6 +158,10 @@ def upload_background():
 
     if not destination or not file_2048 or not file_1024 or not file_512:
         return jsonify({'error': 'Missing required fields'}), 400
+
+    files = [file_2048, file_1024, file_512]
+    if not all(is_valid_webp(f) for f in files):
+        return jsonify({'error': 'Invalid file'}), 400
 
     settings = current_app.config['settings']
 
