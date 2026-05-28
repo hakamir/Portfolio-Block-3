@@ -6,6 +6,7 @@ import {Trash2} from "@lucide/vue";
 import Modal from "@components/Modal.vue";
 import ChangePassword from "@views/dashboard/settings/components/ChangePassword.vue";
 import OrphansGallery from "@views/dashboard/settings/components/OrphansGallery.vue";
+import Backgrounds from "@views/dashboard/settings/components/Backgrounds.vue";
 import {useGalleriesStore} from "@stores/gallery.ts";
 
 const audioStore = useAudioStore()
@@ -54,6 +55,7 @@ const onGalleryConfirmDelete = async () => {
       <ChangePassword/>
       <OrphansAudio @request-delete="onAudioRequestDelete" :key="orphansAudioRefreshKey"/>
       <OrphansGallery @request-delete="onGalleryRequestDelete" :key="orphansGalleryRefreshKey"/>
+      <Backgrounds/>
     </div>
     <!-- Modal for audio deletion confirmation -->
     <Modal
