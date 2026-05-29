@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import {nextTick, onBeforeUnmount, ref} from 'vue'
-import {X, Upload, CropIcon} from '@lucide/vue'
+import {X, Upload, CropIcon, CircleX} from '@lucide/vue'
 import type {Background} from "@views/dashboard/settings/components/Backgrounds.vue";
 import Cropper from 'cropperjs'
 import Modal from "@/components/Modal.vue";
 import {instance} from "@api/axios.ts";
 import uploadApi from "@api/upload.ts";
+import axios from "axios";
 
 const props = defineProps<{
   background: Background
@@ -38,6 +39,7 @@ const cropperInstance = ref<Cropper | null>(null)
 const imageObjectUrl = ref<string | null>(null)
 const showConfirmModal = ref(false)
 const isSaving = ref(false)
+const saveError = ref<string | null>(null)
 type Step = 'idle' | 'crop' | 'preview'
 const step = ref<Step>('idle')
 const croppedCanvases = ref<{ size: number, canvas: HTMLCanvasElement } []>([])
@@ -253,6 +255,7 @@ const blobFromCanvas = (canvas: HTMLCanvasElement, {type = 'image/webp', quality
 
 // Generate the resized preview images and upload them to the server
 const save = async (): Promise<void> => {
+  saveError.value = null
   // Lock the UI during the upload process
   isSaving.value = true
   showConfirmModal.value = false
@@ -288,7 +291,10 @@ const save = async (): Promise<void> => {
     emit('close')
 
   } catch (e) {
-    console.error('Save failed:', e)
+    saveError.value = 'Failed to save background. '
+    if (axios.isAxiosError(e)) {
+      saveError.value += e.response ? `Status: ${e.response.status}` : ''
+    }
   } finally {
     isSaving.value = false
   }
@@ -332,6 +338,10 @@ onBeforeUnmount(() => {
                 <h4 class="font-semibold text-lg">Preview image</h4>
               </div>
             </div>
+          </div>
+          <div v-if="saveError" class="flex items-center gap-2 text-red-400 bg-red-600/20 px-2 py-1 rounded-full text-sm">
+            <CircleX/>
+            <span class="font-semibold">{{ saveError }}</span>
           </div>
           <button @click="emit('close')"
                   class="p-2 rounded-full bg-black/30 hover:bg-white/50 transition text-white group">
@@ -461,7 +471,8 @@ onBeforeUnmount(() => {
             <!-- Save (512 only) -->
             <button v-if="step === 'preview' && previewIndex === 2" @click="showConfirmModal = true"
                     :disabled="isSaving"
-                    class="px-4 py-2 rounded-xl bg-white text-gray-900 font-semibold hover:bg-gray-100 transition">
+                    class="px-4 py-2 rounded-xl bg-white text-gray-900 font-semibold hover:bg-gray-100 transition
+                          disabled:opacity-50 disabled:cursor-not-allowed!">
               Save
             </button>
           </div>
