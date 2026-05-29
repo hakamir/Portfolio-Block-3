@@ -90,11 +90,12 @@ All routes are prefixed with `/api`.
 | DELETE | `/api/messages/<id>` | JWT  | Delete message              |
 
 ### Uploads
-| Method | Path                  | Auth | Description         |
-|-------:|-----------------------|------|---------------------|
-|   POST | `/api/upload/audio`   | JWT  | Upload audio file   |
-|   POST | `/api/upload/gallery` | JWT  | Upload image        |
-|    GET | `/api/upload/<path>` | —    | Serve uploaded file |
+| Method | Path                     | Auth | Description              |
+|-------:|--------------------------|------|--------------------------|
+|   POST | `/api/upload/audio`      | JWT  | Upload audio files       |
+|   POST | `/api/upload/gallery`    | JWT  | Upload gallery images    |
+|    GET | `/api/upload/<path>`     | —    | Serve uploaded files     |
+|    GET | `/api/upload/background` | JWT  | Upload background images |
 
 ### Orphaned files management
 | Method | Path                   | Auth | Description                 |
