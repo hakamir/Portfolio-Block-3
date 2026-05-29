@@ -25,7 +25,7 @@ A full-stack portfolio web application for a music artist. Built with **Vue 3** 
 - **Gallery** — Full CRUD for galleries and images; image upload (WebP)
 - **Biography** — Content editor
 - **Messages** — Inbox with read/unread status, trash and bulk actions
-- **Settings** — Change password; orphaned file cleanup
+- **Settings** — Change password; orphaned gallery and audio cleanup; change background images
 
 ---
 
@@ -95,7 +95,7 @@ All routes are prefixed with `/api`.
 |   POST | `/api/upload/audio`      | JWT  | Upload audio files       |
 |   POST | `/api/upload/gallery`    | JWT  | Upload gallery images    |
 |    GET | `/api/upload/<path>`     | —    | Serve uploaded files     |
-|    GET | `/api/upload/background` | JWT  | Upload background images |
+|   POST | `/api/upload/background` | JWT  | Upload background images |
 
 ### Orphaned files management
 | Method | Path                   | Auth | Description                 |
@@ -184,6 +184,10 @@ Node.js ≥ 18, Python ≥ 3.14, MongoDB running on `localhost:27017`
 
 #### FFmpeg (required for audio conversion)
 
+> [!NOTE]
+> FFmpeg is not required for the backend to run, but is required for the audio conversion feature. It is still
+> possible to upload and play audio files in `.mp3` format. 
+
 Audio files uploaded in formats other than `.mp3` are automatically converted server-side via FFmpeg.
 
 **Supported audio formats:** `mp3` `wma` `aac` `flac` `ogg` `wav` `aiff` `alac` `amr` `m4a`
@@ -240,3 +244,388 @@ MongoDB collections, created automatically on first Docker startup:
 | `messages`  | Contact form submissions                       |
 
 Flask Limiter creates two additional collections automatically: `counter` and `windows`, used to store rate-limits by IP address.
+
+---
+
+## API Endpoints (detailed)
+
+### Authentication
+
+#### `POST /api/auth/login`
+
+Rate-limited to **5 req/min** by default. No authentication required.
+
+**Request body:**
+
+```json
+{
+  "email": "admin@example.com",
+  "pwd": "<Your Password>"
+}
+```
+
+**Response `200`:**
+
+```json
+{
+  "token": "<JWT access token>"
+}
+```
+
+**Errors:** `400` missing credentials - `401` invalid credentials
+
+#### `POST /api/auth/logout`
+
+
+Unset JWT cookies from the client's browser, logging the user out. 
+
+**Request body:**
+- None
+
+**Response `200`:**
+
+```json
+{"logged_out": true}
+```
+
+#### `PUT /api/auth/password`
+
+Rate-limited to **1 req/min** by default. Authentication required.
+
+Rate limit is present to avoid brute-force attacks if JWT is compromised.
+
+**Request body:**
+```json
+{
+  "currentPwd": "Curr3n!_P@ssw0rd",
+  "newPwd": "N3w!_P@ssw0rd12+3="
+}
+```
+
+**Response `200`:**
+
+```json
+{
+  "updated": true
+}
+```
+
+**Errors:** `400` validation errors - `401` invalid credentials
+
+#### `POST /api/auth/refresh`
+
+Creates a new access token using a valid refresh token.
+
+**Request body:**
+ - None
+
+**Response `200`:**
+
+```json
+{
+  "token": "<new JWT access token>"
+}
+```
+
+**Errors:** `401` No refresh token found / expired - `422` Malformed/Wrong refresh token / invalid signature
+
+
+
+---
+
+### Biography
+
+#### `GET /api/biography`
+
+No authentication required.
+
+**Response `200`:**
+
+```json
+{
+  "biography": {
+    "_id": "3e5f65c9500d4440b1ad7c4c3103bf19",
+    "title": "Biography",
+    "image": {
+      "sm": "/biography/biography-1-512.webp",
+      "md": "/biography/biography-1-1024.webp",
+      "lg": "/biography/biography-1-2048.webp"
+    },
+    "updated_at": "2026-05-19 14:35:17",
+    "sections": [
+      {
+        "title": "Section Title",
+        "paragraphs": [
+          "Example paragraph"
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Error `404`:** No biography entry found, caused when the seeder was not run.
+
+#### `PUT /api/biography`
+
+Requires JWT. Updates the biography.
+
+**Request body:**
+
+```json
+{
+  "biography": {
+    "_id": "b3f435dc399b11f1a3ca244bfe4c7954",
+    "title": "Who am I?",
+    "image": {
+      "sm": "/biography/biography-1-512.webp",
+      "md": "/biography/biography-1-1024.webp",
+      "lg": "/biography/biography-1-2048.webp"
+    },
+    "updated_at": "2026-05-19 14:49:19",
+    "sections": [
+      {
+        "title": "Background & Musical Foundation",
+        "paragraphs": [
+          "I am a professional guitarist and composer...",
+          "Formally trained in contemporary music and jazz..."
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Response `200`:** Updated biography object (same shape as GET).
+
+**Errors:** `400` malformed body - `401` missing/invalid token
+
+---
+
+### Messages
+
+#### `GET /api/messages`
+
+Requires JWT. Returns all messages.
+
+**Response `200`:**
+
+```json
+[
+  {
+    "name": "Jake Thompson",
+    "email": "jake.thompson@gmail.com",
+    "message": "Hi, I discovered your portfolio...",
+    "date": "2026-04-07 22:45:34",
+    "read": true,
+    "trashed": true,
+    "_id": "1"
+  },
+  {
+    "name": "Emily Carter",
+    "email": "emily.carter@musiclive.com",
+    "message": "Hello, I'm organizing a live...",
+    "date": "2026-01-16 18:32:45",
+    "read": false,
+    "trashed": false,
+    "_id": "2"
+  }
+]
+```
+
+Respond with an empty array if no messages are found.
+
+#### `POST /api/messages`
+
+Rate-limited to **1 req/min** by default. No authentication required.
+
+**Request body:**
+
+```json
+{
+  "name": "Test",
+  "email": "test@test.com",
+  "message": "test",
+  "date": "2026-05-19T17:32:54.913Z",
+  "read": false,
+  "trashed": false
+}
+```
+
+**Response `201`:**
+
+```json
+{
+  "message": "Message created successfully"
+}
+```
+
+**Errors:** `400` missing fields - `429` rate limit exceeded
+
+Missing fields response example:
+
+```json
+{
+  "error": "Missing required fields: email, message"
+}
+```
+
+#### `PATCH /api/messages/<id>`
+
+Requires JWT. Marks a message as read or trashed.
+
+**Request body** (one or both fields):
+
+```json
+{
+  "is_read": true,
+  "is_trashed": false
+}
+```
+
+**Response `200`:** Updated message object.
+
+**Errors:** `400` malformed body · `401` unauthorized · `404` not found
+
+#### `DELETE /api/messages/<id>`
+
+Requires JWT. Permanently deletes a message.
+
+**Response `200`:**
+
+```json
+{"message": "Message deleted successfully"}
+```
+
+**Errors:** `400` Invalid fields / type error / invalid request body - `401` unauthorized - `404` not found
+
+---
+
+
+### Uploads
+
+#### `GET /api/upload/*`
+
+No authentication required. Serves files from the `uploads/` directory.
+
+Example: `GET /api/upload/background/hero/hero-512.wepb`
+
+
+#### `POST /api/upload/audio`
+
+Uploads audio files.
+
+```formdata
+file: <file> [Content-Disposition: form-data; name="file"; filename="<filename>.ext" Content-Type: audio/*]
+artistSlug: artist_slug
+albumSlug: album_slug
+trackSrc: track_slug.ext
+```
+
+**Response `201`:**
+```json
+{
+  "uploaded": true
+}
+```
+
+**Errors:** `400` No file part/missing required field - `415` Invalid mime type/Invalid file type - `500` Conversion failed
+
+
+#### `POST /api/upload/gallery`
+
+Uploads gallery images.
+
+```formdata
+file: <file> Content-Disposition: form-data; name="file"; filename="<filename>.ext" Content-Type: image/*
+gallerySlug: gallery_slug
+trackSrc: gallery_0001.ext
+```
+
+**Response `201`:**
+```json
+{
+  "uploaded": true
+}
+```
+
+**Errors:** `400` No file part/missing required field - `415` Invalid mime type/Invalid file type
+
+#### `POST /api/upload/background`
+
+Uploads background images.
+
+```formdata
+file: <file_2048> Content-Disposition: form-data; name="file"; filename="<filename>.ext" Content-Type: image/*
+file: <file_1024> Content-Disposition: form-data; name="file"; filename="<filename>.ext" Content-Type: image/*
+file: <file_512> Content-Disposition: form-data; name="file"; filename="<filename>.ext" Content-Type: image/*
+destination: <destination> (hero | portfolio | biography)
+```
+
+**Response `201`:**
+```json
+{
+  "uploaded": true
+}
+```
+
+**Errors:** `400` Invalid destination/missing required field/Invalid file
+
+---
+
+### Orphaned files
+
+`GET /api/orphans/audio`
+
+Returns a list of audio files that are not associated with any artist.
+
+`DELETE /api/orphans/audio`
+
+Deletes selected orphaned audio files.
+
+**Request body**:
+
+```json
+{
+  "files":
+  [
+    "artist/album/track1.mp3",
+    "artist/album/track2.mp3",
+    "artist/album/track3.mp3"
+  ]
+}
+```
+**Response `200`:**
+
+```json
+{"deleted": true}
+```
+
+**Errors:** `401` unauthorized
+
+`GET /api/orphans/gallery`
+
+Returns a list of image files that are not associated with any gallery.
+
+`DELETE /api/orphans/gallery`
+
+Deletes all orphaned image files.
+
+```json
+{
+  "files":
+  [
+    "gallery/gallery_0001.webp",
+    "gallery/gallery_0002.webp",
+    "gallery/gallery_0003.webp"
+  ]
+}
+```
+
+**Response `200`:**
+
+```json
+{"deleted": true}
+```
+
+**Errors:** `401` unauthorized
