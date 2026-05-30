@@ -53,13 +53,13 @@ A full-stack portfolio web application for a music artist. Built with **Vue 3** 
 
 All routes are prefixed with `/api`.
 
-### [Authentication](https://github.com/hakamir/Portfolio-Block-3/tree/framework#authentication-1)
-| Method | Path                                                                                                    | Auth | Description       |
-|-------:|---------------------------------------------------------------------------------------------------------|------|-------------------|
-|   POST | [`/api/auth/login`](https://github.com/hakamir/Portfolio-Block-3/tree/framework#post-apiauthlogin)      | —    | Login (5 req/min) |
-|   POST | [`/api/auth/logout`](https://github.com/hakamir/Portfolio-Block-3/tree/framework#post-apiauthlogout)    | JWT  | Logout            |
-|   POST | [`/api/auth/refresh`](https://github.com/hakamir/Portfolio-Block-3/tree/framework#put-apiauthpassword)  | JWT  | Refresh token     |
-|    PUT | [`/api/auth/password`](https://github.com/hakamir/Portfolio-Block-3/tree/framework#post-apiauthrefresh) | JWT  | Change password   |
+### [Authentication](#authentication-1)
+| Method | Path                                         | Auth | Description       |
+|-------:|----------------------------------------------|------|-------------------|
+|   POST | [`/api/auth/login`](#post-apiauthlogin)      | —    | Login (5 req/min) |
+|   POST | [`/api/auth/logout`](#post-apiauthlogout)    | JWT  | Logout            |
+|   POST | [`/api/auth/refresh`](#put-apiauthpassword)  | JWT  | Refresh token     |
+|    PUT | [`/api/auth/password`](#post-apiauthrefresh) | JWT  | Change password   |
 
 ### Artists
 | Method | Path                    | Auth | Description                      |
@@ -68,11 +68,11 @@ All routes are prefixed with `/api`.
 |    PUT | [`/api/artists`]()      | JWT  | Create/update artists (bulk)     |
 | DELETE | [`/api/artists/<id>`]() | JWT  | Delete artist                    |
 
-### [Biography](https://github.com/hakamir/Portfolio-Block-3/tree/framework#biography-1)
-| Method | Path                                                                                                       | Auth | Description       |
-|-------:|------------------------------------------------------------------------------------------------------------|------|-------------------|
-|    GET | [`/api/biography`](https://github.com/hakamir/Portfolio-Block-3/tree/framework#get-apibiography) | —    | Biography content |
-|    PUT | [`/api/biography`](https://github.com/hakamir/Portfolio-Block-3/tree/framework#put-apibiography) | JWT  | Update biography  |
+### [Biography](#biography-1)
+| Method | Path                                  | Auth | Description       |
+|-------:|---------------------------------------|------|-------------------|
+|    GET | [`/api/biography`](#get-apibiography) | —    | Biography content |
+|    PUT | [`/api/biography`](#put-apibiography) | JWT  | Update biography  |
 
 ### Gallery
 | Method | Path                      | Auth | Description                    |
@@ -81,29 +81,29 @@ All routes are prefixed with `/api`.
 |    PUT | [`/api/gallery`]()        | JWT  | Create/update galleries (bulk) |
 | DELETE | [`/api/gallery/<id>`]()   | JWT  | Delete gallery                 |
 
-### [Messages](https://github.com/hakamir/Portfolio-Block-3/tree/framework#messages-1)
-| Method | Path                                                                                                     | Auth | Description                 |
-|-------:|----------------------------------------------------------------------------------------------------------|------|-----------------------------|
-|    GET | [`/api/messages`](https://github.com/hakamir/Portfolio-Block-3/tree/framework#get-apimessages)           | JWT  | List messages               |
-|   POST | [`/api/messages`](https://github.com/hakamir/Portfolio-Block-3/tree/framework#post-apimessages)          | —    | Submit message (1 req/min)  |
-|  PATCH | [`/api/messages/<id>`](https://github.com/hakamir/Portfolio-Block-3/tree/framework#patch-apimessagesid)  | JWT  | Update message (read/trash) |
-| DELETE | [`/api/messages/<id>`](https://github.com/hakamir/Portfolio-Block-3/tree/framework#delete-apimessagesid) | JWT  | Delete message              |
+### [Messages](#messages-1)
+| Method | Path                                          | Auth | Description                 |
+|-------:|-----------------------------------------------|------|-----------------------------|
+|    GET | [`/api/messages`](#get-apimessages)           | JWT  | List messages               |
+|   POST | [`/api/messages`](#post-apimessages)          | —    | Submit message (1 req/min)  |
+|  PATCH | [`/api/messages/<id>`](#patch-apimessagesid)  | JWT  | Update message (read/trash) |
+| DELETE | [`/api/messages/<id>`](#delete-apimessagesid) | JWT  | Delete message              |
 
-### [Uploads](https://github.com/hakamir/Portfolio-Block-3/tree/framework#uploads-1)
-| Method | Path                                                                                                             | Auth | Description              |
-|-------:|------------------------------------------------------------------------------------------------------------------|------|--------------------------|
-|    GET | [`/api/upload/<path>`](https://github.com/hakamir/Portfolio-Block-3/tree/framework#get-apiupload)                | —    | Serve uploaded files     |
-|   POST | [`/api/upload/audio`](https://github.com/hakamir/Portfolio-Block-3/tree/framework#post-apiuploadaudio)           | JWT  | Upload audio files       |
-|   POST | [`/api/upload/gallery`](https://github.com/hakamir/Portfolio-Block-3/tree/framework#post-apiuploadgallery)       | JWT  | Upload gallery images    |
-|   POST | [`/api/upload/background`](https://github.com/hakamir/Portfolio-Block-3/tree/framework#post-apiuploadbackground) | JWT  | Upload background images |
+### [Uploads](#uploads-1)
+| Method | Path                                                  | Auth | Description              |
+|-------:|-------------------------------------------------------|------|--------------------------|
+|    GET | [`/api/upload/<path>`](#get-apiupload)                | —    | Serve uploaded files     |
+|   POST | [`/api/upload/audio`](#post-apiuploadaudio)           | JWT  | Upload audio files       |
+|   POST | [`/api/upload/gallery`](#post-apiuploadgallery)       | JWT  | Upload gallery images    |
+|   POST | [`/api/upload/background`](#post-apiuploadbackground) | JWT  | Upload background images |
 
-### [Orphaned files management](https://github.com/hakamir/Portfolio-Block-3/tree/framework#orphaned-files)
-| Method | Path                                                                                                           | Auth | Description                 |
-|-------:|----------------------------------------------------------------------------------------------------------------|------|-----------------------------|
-|    GET | [`/api/orphans/audio`](https://github.com/hakamir/Portfolio-Block-3/tree/framework#get-apiorphansaudio)        | JWT  | List orphaned audio files   |
-| DELETE | [`/api/orphans/audio`](https://github.com/hakamir/Portfolio-Block-3/tree/framework#delete-apiorphansaudio)     | JWT  | Delete orphaned audio files |
-|    GET | [`/api/orphans/gallery`](https://github.com/hakamir/Portfolio-Block-3/tree/framework#get-apiorphansgallery)    | JWT  | List orphaned image files   |
-| DELETE | [`/api/orphans/gallery`](https://github.com/hakamir/Portfolio-Block-3/tree/framework#delete-apiorphansgallery) | JWT  | Delete orphaned image files |
+### [Orphaned files management](#orphaned-files)
+| Method | Path                                                | Auth | Description                 |
+|-------:|-----------------------------------------------------|------|-----------------------------|
+|    GET | [`/api/orphans/audio`](#get-apiorphansaudio)        | JWT  | List orphaned audio files   |
+| DELETE | [`/api/orphans/audio`](#delete-apiorphansaudio)     | JWT  | Delete orphaned audio files |
+|    GET | [`/api/orphans/gallery`](#get-apiorphansgallery)    | JWT  | List orphaned image files   |
+| DELETE | [`/api/orphans/gallery`](#delete-apiorphansgallery) | JWT  | Delete orphaned image files |
 
 ---
 
@@ -467,7 +467,7 @@ Missing fields response example:
 }
 ```
 
-Look to [`GET /api/messages`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#get-apimessages) response to see the final data structure after the controller job.
+Look to [`GET /api/messages`](#get-apimessages) response to see the final data structure after the controller job.
 
 ## `PATCH /api/messages/<id>`
 
