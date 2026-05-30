@@ -250,7 +250,7 @@ Flask Limiter creates two additional collections automatically: `counter` and `w
 ## API Endpoints (detailed)
 
 ### Authentication
-
+<sub>[← Back to summary](#api-endpoints)</sub>
 ## `POST /api/auth/login`
 
 Rate-limited to **5 req/min** by default. No authentication required.
@@ -334,7 +334,7 @@ Creates a new access token using a valid refresh token.
 ---
 
 ### Biography
-
+<sub>[← Back to summary](#api-endpoints)</sub>
 ## `GET /api/biography`
 
 Returns the biography structure. Contains the main title, associated image link, and sections with paragraphs. No authentication required.
@@ -403,7 +403,7 @@ Updates the biography. The whole structure is required. JWT required.
 ---
 
 ### Messages
-
+<sub>[← Back to summary](#api-endpoints)</sub>
 ## `GET /api/messages`
 
 Returns a list of all messages. JWT Required.
@@ -503,7 +503,7 @@ Permanently deletes a message. JWT required.
 
 
 ### Uploads
-
+<sub>[← Back to summary](#api-endpoints)</sub>
 ## `GET /api/upload/*`
 
 Serves files from the `uploads/` directory (backgrounds, audio and gallery). No authentication required. 
@@ -574,7 +574,7 @@ destination: <destination> (hero | portfolio | biography)
 ---
 
 ### Orphaned files
-
+<sub>[← Back to summary](#api-endpoints)</sub>
 ## `GET /api/orphans/audio`
 
 Returns a list of audio files that are not associated with any artist. JWT required. 
