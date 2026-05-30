@@ -52,6 +52,8 @@ def update_artists():
         return jsonify({'error': 'Invalid payload'}), 400
     except ValidationError:
         return jsonify({'error': 'invalid data'}), 400
+    except DoesNotExist:
+        return jsonify({'error': 'Artist not found'}), 404
     except Exception as e:
         print(e)
         return jsonify({'error': 'Server error'}), 500
