@@ -6,7 +6,8 @@
 > - [Block 2 — Backend](https://github.com/hakamir/Portfolio-Block-2) (raw Python)
 > - **[Block 3 — Full-stack with frameworks](https://github.com/hakamir/Portfolio-Block-3) (this repo)**
 
-A full-stack portfolio web application for a music artist. Built with **Vue 3** on the frontend and **Flask** on the backend, with MongoDB as the database.
+A full-stack portfolio web application for a music artist. Built with **Vue 3** on the frontend and **Flask** on the
+backend, with MongoDB as the database.
 
 ---
 
@@ -15,7 +16,7 @@ A full-stack portfolio web application for a music artist. Built with **Vue 3** 
 ### Public
 
 - **Home** — Hero section and biography
-- **Portfolio** — Browse artists, albums and tracks with an integrated audio player; full-text search
+- **Portfolio** — Browse artists, albums, and tracks with an integrated audio player; full-text search
 - **Gallery** — Multi-gallery image viewer with progressive loading
 - **Contact** — Rate-limited contact form
 
@@ -54,6 +55,7 @@ A full-stack portfolio web application for a music artist. Built with **Vue 3** 
 All routes are prefixed with `/api`.
 
 ### [Authentication](#authentication-1)
+
 | Method | Path                                         | Auth | Description       |
 |-------:|----------------------------------------------|------|-------------------|
 |   POST | [`/api/auth/login`](#post-apiauthlogin)      | —    | Login (5 req/min) |
@@ -61,27 +63,32 @@ All routes are prefixed with `/api`.
 |   POST | [`/api/auth/refresh`](#put-apiauthpassword)  | JWT  | Refresh token     |
 |    PUT | [`/api/auth/password`](#post-apiauthrefresh) | JWT  | Change password   |
 
-### Artists
-| Method | Path                    | Auth | Description                      |
-|-------:|-------------------------|------|----------------------------------|
-|    GET | [`/api/artists`]()      | —    | All artists with albums & tracks |
-|    PUT | [`/api/artists`]()      | JWT  | Create/update artists (bulk)     |
-| DELETE | [`/api/artists/<id>`]() | JWT  | Delete artist                    |
+### [Artists](#artists-1)
+
+| Method | Path                                        | Auth | Description                      |
+|-------:|---------------------------------------------|------|----------------------------------|
+|    GET | [`/api/artists`](#get-apiartists)           | —    | All artists with albums & tracks |
+|    PUT | [`/api/artists`](#put-apiartists)           | JWT  | Create/update artists (bulk)     |
+| DELETE | [`/api/artists/<id>`](#delete-apiartistsid) | JWT  | Delete artist                    |
 
 ### [Biography](#biography-1)
+
 | Method | Path                                  | Auth | Description       |
 |-------:|---------------------------------------|------|-------------------|
 |    GET | [`/api/biography`](#get-apibiography) | —    | Biography content |
 |    PUT | [`/api/biography`](#put-apibiography) | JWT  | Update biography  |
 
-### Gallery
-| Method | Path                      | Auth | Description                    |
-|-------:|---------------------------|------|--------------------------------|
-|    GET | [`/api/gallery`]()        | —    | All galleries with images      |
-|    PUT | [`/api/gallery`]()        | JWT  | Create/update galleries (bulk) |
-| DELETE | [`/api/gallery/<id>`]()   | JWT  | Delete gallery                 |
+### [Gallery](#gallery-1)
+
+| Method | Path                                                                 | Auth | Description                      |
+|-------:|----------------------------------------------------------------------|------|----------------------------------|
+|    GET | [`/api/gallery`](#get-apigallery)                                    | —    | All galleries with images        |
+|    PUT | [`/api/gallery`](#put-apigallery)                                    | JWT  | Create/update galleries (bulk)   |
+| DELETE | [`/api/gallery/<id>`](#delete-apigalleryid)                          | JWT  | Delete gallery                   |
+|    GET | [`/api/gallery/nextSrc?gallerySlug=<slug>`](#get-apigallerynext-src) | JWT  | Provide next available file name |
 
 ### [Messages](#messages-1)
+
 | Method | Path                                          | Auth | Description                 |
 |-------:|-----------------------------------------------|------|-----------------------------|
 |    GET | [`/api/messages`](#get-apimessages)           | JWT  | List messages               |
@@ -90,6 +97,7 @@ All routes are prefixed with `/api`.
 | DELETE | [`/api/messages/<id>`](#delete-apimessagesid) | JWT  | Delete message              |
 
 ### [Uploads](#uploads-1)
+
 | Method | Path                                                  | Auth | Description              |
 |-------:|-------------------------------------------------------|------|--------------------------|
 |    GET | [`/api/upload/<path>`](#get-apiupload)                | —    | Serve uploaded files     |
@@ -98,6 +106,7 @@ All routes are prefixed with `/api`.
 |   POST | [`/api/upload/background`](#post-apiuploadbackground) | JWT  | Upload background images |
 
 ### [Orphaned files management](#orphaned-files)
+
 | Method | Path                                                | Auth | Description                 |
 |-------:|-----------------------------------------------------|------|-----------------------------|
 |    GET | [`/api/orphans/audio`](#get-apiorphansaudio)        | JWT  | List orphaned audio files   |
@@ -145,6 +154,7 @@ This runs four services:
 |  `seeder`  | —                     | Creates test user + biography data |
 
 On the first run, the seeder automatically creates:
+
 - An admin user with the email/password from `.env`
 - A default biography document
 
@@ -158,10 +168,13 @@ docker compose cp backend/uploads/. backend:/app/uploads/  # restore local uploa
 ```
 
 **Connect to MongoDB via Compass (dev only):**
+
 ```
 mongodb://root:<MONGO_ROOT_PASSWORD>@localhost:27018/?authSource=admin
 ```
+
 Or :
+
 ```
 mongodb://<MONGODB_USER>:<MONGO_PASSWORD>@localhost:27018/?authSource=admin
 ```
@@ -186,23 +199,26 @@ Node.js ≥ 18, Python ≥ 3.14, MongoDB running on `localhost:27017`
 
 > [!NOTE]
 > FFmpeg is not required for the backend to run, but is required for the audio conversion feature. It is still
-> possible to upload and play audio files in `.mp3` format. 
+> possible to upload and play audio files in `.mp3` format.
 
 Audio files uploaded in formats other than `.mp3` are automatically converted server-side via FFmpeg.
 
 **Supported audio formats:** `mp3` `wma` `aac` `flac` `ogg` `wav` `aiff` `alac` `amr` `m4a`
 
 **macOS**
+
 ```bash
 brew install ffmpeg
 ```
 
 **Ubuntu / Debian**
+
 ```bash
 sudo apt update && sudo apt install ffmpeg
 ```
 
 **Windows**
+
 1. Download the latest build from [ffmpeg.org/download.html](https://ffmpeg.org/download.html)
 2. Extract the archive and add the `bin/` folder to your `PATH`
 3. Verify: `ffmpeg -version`
@@ -243,14 +259,17 @@ MongoDB collections, created automatically on first Docker startup:
 | `biography` | Single document                                |
 | `messages`  | Contact form submissions                       |
 
-Flask Limiter creates two additional collections automatically: `counter` and `windows`, used to store rate-limits by IP address.
+Flask Limiter creates two additional collections automatically: `counter` and `windows`, used to store rate-limits by IP
+address.
 
 ---
 
 ## API Endpoints (detailed)
 
 ### Authentication
+
 <sub>[← Back to summary](#api-endpoints)</sub>
+
 ## `POST /api/auth/login`
 
 Rate-limited to **5 req/min** by default. No authentication required.
@@ -276,16 +295,18 @@ Rate-limited to **5 req/min** by default. No authentication required.
 
 ## `POST /api/auth/logout`
 
-
-Unset JWT cookies from the client's browser, logging the user out. 
+Unset JWT cookies from the client's browser, logging the user out.
 
 **Request body:**
+
 - None
 
 **Response `200`:**
 
 ```json
-{"logged_out": true}
+{
+  "logged_out": true
+}
 ```
 
 ## `PUT /api/auth/password`
@@ -295,6 +316,7 @@ Rate-limited to **1 req/min** by default. Authentication required.
 Rate limit is present to avoid brute-force attacks if JWT is compromised.
 
 **Request body:**
+
 ```json
 {
   "currentPwd": "Curr3n!_P@ssw0rd",
@@ -317,7 +339,8 @@ Rate limit is present to avoid brute-force attacks if JWT is compromised.
 Creates a new access token using a valid refresh token.
 
 **Request body:**
- - None
+
+- None
 
 **Response `200`:**
 
@@ -329,15 +352,140 @@ Creates a new access token using a valid refresh token.
 
 **Errors:** `401` No refresh token found / expired - `422` Malformed/Wrong refresh token / invalid signature
 
+---
 
+### Artists
+
+<sub>[← Back to summary](#api-endpoints)</sub>
+
+## `GET /api/artists`
+
+Returns all artists with albums and tracks. No authentication required.
+
+**Response `200`:**
+
+```json
+[
+  {
+    "_id": {
+      "$oid": "69d7994ec52a15fb197c2908"
+    },
+    "slug": "artist_1",
+    "title": "Artist 1",
+    "order": 1,
+    "albums": [
+      {
+        "slug": "album_1",
+        "title": "Album 1",
+        "order": 1,
+        "tracks": [
+          {
+            "trackNumber": 1,
+            "title": "Track 1",
+            "src": "track_1.mp3",
+            "tags": [
+              "tag1",
+              "tag2",
+              "tag4"
+            ]
+          },
+          {
+            "trackNumber": 2,
+            "title": "Track 2",
+            "src": "track_2.mp3",
+            "tags": [
+              "tag1",
+              "tag3"
+            ]
+          }
+        ]
+      },
+      {
+        "slug": "album_2",
+        "title": "Album 2",
+        "order": 2,
+        "tracks": [
+          {
+            "trackNumber": 1,
+            "title": "Track 1",
+            "src": "track_1.mp3",
+            "tags": [
+              "tag1",
+              "tag4"
+            ]
+          },
+          {
+            "trackNumber": 2,
+            "title": "Track 2",
+            "src": "track_2.mp3",
+            "tags": [
+              "tag1",
+              "tag3"
+            ]
+          },
+          {
+            "trackNumber": 3,
+            "title": "Track 3",
+            "src": "track_3.mp3",
+            "tags": [
+              "tag4"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
+```
+
+## `PUT /api/artists`
+
+Applicative bulk upsert: Processes a list of artists. Each entry is validated, then either updated (if an ID is
+provided) or
+created, including nested albums and tracks. JWT required.
+New artists have an empty `_id` field. Existing artists update their corresponding documents by ID. Raise `404` if given
+`id` does not exist.
+
+**Request body:** Follow the structure of the `GET /api/artists` response.
+
+**Response `200`:**
+
+```json
+{
+  "updated": true
+}
+```
+
+**Error** `400`: List expected/Validation error- `401` Unauthorized - `404` Artist not found - `415`: Invalid
+content-type (JSON expected)
+
+## `DELETE /api/artists/<id>`
+
+Removes an artist and all associated albums and tracks by `id`. JWT required.
+
+**Response `200`:**
+
+```json
+{
+  "deleted": true
+}
+```
+
+**Error** `400`: Invalid ID - `401` Unauthorized - `404` Artist not found
+
+This method does not delete the actual audios from the `uploads/audio/` folder. After artist removal, all associated
+albums and tracks become [orphans](#get-apiorphansaudio).
 
 ---
 
 ### Biography
+
 <sub>[← Back to summary](#api-endpoints)</sub>
+
 ## `GET /api/biography`
 
-Returns the biography structure. Contains the main title, associated image link, and sections with paragraphs. No authentication required.
+Returns the biography structure, including the main title, associated image URL, and sections with paragraphs.
+The biography is stored as a singleton document. No authentication required.
 
 **Response `200`:**
 
@@ -364,7 +512,7 @@ Returns the biography structure. Contains the main title, associated image link,
 }
 ```
 
-**Error `404`:** No biography entry found, caused when the seeder was not run.
+**Error** `404`: No biography entry found, caused when the seeder was not run.
 
 ## `PUT /api/biography`
 
@@ -402,8 +550,132 @@ Updates the biography. The whole structure is required. JWT required.
 
 ---
 
-### Messages
+### Gallery
+
 <sub>[← Back to summary](#api-endpoints)</sub>
+
+## `GET /api/gallery`
+
+Returns all galleries with associated image metadata and URL. No authentication required.
+
+**Response `200`:**
+
+```json
+[
+  {
+    "_id": {
+      "$oid": "69db8e78a650f456163ba186"
+    },
+    "images": [
+      {
+        "src": "gallery_1_0001.webp",
+        "title": "Image 1 title",
+        "location": "Somewhere",
+        "date": {
+          "$date": "2025-11-14T00:00:00.000Z"
+        },
+        "order": 1,
+        "alt": "Image 1 title, Somewhere, 2025"
+      },
+      {
+        "src": "gallery_1_0002.webp",
+        "title": "Image 2 title",
+        "location": "Somewhere else",
+        "date": {
+          "$date": "2024-04-29T00:00:00.000Z"
+        },
+        "order": 2,
+        "alt": "Image 2 title, Somewhere else, 2024"
+      }
+    ],
+    "order": 1,
+    "slug": "gallery_1",
+    "title": "Gallery 1"
+  }
+]
+```
+
+## `PUT /api/gallery`
+
+Applicative bulk upsert: Processes a list of galleries. Each entry is validated, then either updated (if an ID is
+provided) or
+created, including nested images. JWT required.
+New galleries have an empty `_id` field. Existing galleries update their corresponding documents by ID. Raise `404` if
+given
+`id` does not exist.
+
+**Request body:** Follow the structure of the `GET /api/gallery` response.
+
+**Response `200`:**
+
+```json
+{
+  "updated": true
+}
+```
+
+**Error** `400`: List expected/Validation error- `401` Unauthorized - `404` Gallery not found - `415`: Invalid
+content-type (JSON expected)
+
+## `DELETE /api/gallery/<id>`
+
+Removes a gallery and images meta by `id`. JWT required.
+
+This method does not delete the actual images from the `uploads/gallery/` folder. After gallery removal, all associated
+images become [orphans](#get-apiorphansgallery).
+
+**Response `200`:**
+
+```json
+{
+  "deleted": true
+}
+```
+
+**Error** `400`: Invalid ID - `401` Unauthorized - `404` Gallery not found
+
+## `GET /api/gallery/next-src`
+
+Generate the next available image file name for a specific gallery. Create a directory in case of a new gallery is
+created, then, calculated the number of existing files in the directory and returns a new file slug in format
+`<gallerySlug>_000x.webp`. JWT required.
+
+Query parameters:
+
+- `gallerySlug` (string, required)
+
+Example: `GET /api/gallery/nextSrc?gallerySlug=gallery_1`
+
+Current gallery folder:
+
+```
+uploads/gallery/gallery_1/
+  gallery_1_0001.webp
+  gallery_1_0002.webp
+```
+
+Next available file name:
+
+```
+gallery_1_0003.webp
+```
+
+**Response `200`:**
+
+```json
+{
+  "src": "gallery_1_0003.webp"
+}
+```
+
+**Errors:** `400` Missing `gallerySlug` args - `401` Unauthorized
+
+---
+
+### Messages
+
+<sub>[← Back to summary](#api-endpoints)</sub>
+
 ## `GET /api/messages`
 
 Returns a list of all messages. JWT Required.
@@ -445,7 +717,7 @@ Create a new message. Rate-limited to **1 req/min** by default. No authenticatio
 {
   "name": "Test",
   "email": "test@test.com",
-  "message": "test",
+  "message": "test"
 }
 ```
 
@@ -471,7 +743,7 @@ Look to [`GET /api/messages`](#get-apimessages) response to see the final data s
 
 ## `PATCH /api/messages/<id>`
 
-Marks a message as read, trashed or replied. JWT required.
+Marks a message as read, trashed, or replied. JWT required.
 
 **Request body** (one or multiple fields):
 
@@ -494,22 +766,24 @@ Permanently deletes a message. JWT required.
 **Response `200`:**
 
 ```json
-{"message": "Message deleted successfully"}
+{
+  "message": "Message deleted successfully"
+}
 ```
 
 **Errors:** `400` Invalid fields / type error / invalid request body - `401` unauthorized - `404` not found
 
 ---
 
-
 ### Uploads
+
 <sub>[← Back to summary](#api-endpoints)</sub>
+
 ## `GET /api/upload/*`
 
-Serves files from the `uploads/` directory (backgrounds, audio and gallery). No authentication required. 
+Serves files from the `uploads/` directory (backgrounds, audio, and gallery). No authentication required.
 
 Example: `GET /api/upload/background/hero/hero-512.wepb`
-
 
 ## `POST /api/upload/audio`
 
@@ -523,14 +797,15 @@ trackSrc: track_slug.ext
 ```
 
 **Response `201`:**
+
 ```json
 {
   "uploaded": true
 }
 ```
 
-**Errors:** `400` No file part/missing required field - `415` Invalid mime type/Invalid file type - `500` Conversion failed
-
+**Errors:** `400` No file part/missing required field - `415` Invalid mime type/Invalid file type - `500` Conversion
+failed
 
 ## `POST /api/upload/gallery`
 
@@ -543,6 +818,7 @@ trackSrc: gallery_0001.ext
 ```
 
 **Response `201`:**
+
 ```json
 {
   "uploaded": true
@@ -563,6 +839,7 @@ destination: <destination> (hero | portfolio | biography)
 ```
 
 **Response `201`:**
+
 ```json
 {
   "uploaded": true
@@ -574,10 +851,12 @@ destination: <destination> (hero | portfolio | biography)
 ---
 
 ### Orphaned files
+
 <sub>[← Back to summary](#api-endpoints)</sub>
+
 ## `GET /api/orphans/audio`
 
-Returns a list of audio files that are not associated with any artist. JWT required. 
+Returns a list of audio files that are not associated with any artist. JWT required.
 
 ## `DELETE /api/orphans/audio`
 
@@ -587,18 +866,20 @@ Deletes selected orphaned audio files. JWT required.
 
 ```json
 {
-  "files":
-  [
+  "files": [
     "artist/album/track1.mp3",
     "artist/album/track2.mp3",
     "artist/album/track3.mp3"
   ]
 }
 ```
+
 **Response `200`:**
 
 ```json
-{"deleted": true}
+{
+  "deleted": true
+}
 ```
 
 **Errors:** `401` unauthorized
@@ -613,8 +894,7 @@ Deletes all orphaned image files. JWT required.
 
 ```json
 {
-  "files":
-  [
+  "files": [
     "gallery/gallery_0001.webp",
     "gallery/gallery_0002.webp",
     "gallery/gallery_0003.webp"
@@ -625,7 +905,9 @@ Deletes all orphaned image files. JWT required.
 **Response `200`:**
 
 ```json
-{"deleted": true}
+{
+  "deleted": true
+}
 ```
 
 **Errors:** `401` unauthorized
