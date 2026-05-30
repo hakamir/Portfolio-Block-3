@@ -54,56 +54,56 @@ A full-stack portfolio web application for a music artist. Built with **Vue 3** 
 All routes are prefixed with `/api`.
 
 ### Authentication
-| Method | Path                 | Auth | Description       |
-|-------:|----------------------|------|-------------------|
-|   POST | `/api/auth/login`    | —    | Login (5 req/min) |
-|   POST | `/api/auth/logout`   | JWT  | Logout            |
-|   POST | `/api/auth/refresh`  | JWT  | Refresh token     |
-|    PUT | `/api/auth/password` | JWT  | Change password   |
+| Method | Path                                                                                                              | Auth | Description       |
+|-------:|-------------------------------------------------------------------------------------------------------------------|------|-------------------|
+|   POST | [`/api/auth/login`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#post-apiauthlogin)      | —    | Login (5 req/min) |
+|   POST | [`/api/auth/logout`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#post-apiauthlogout)    | JWT  | Logout            |
+|   POST | [`/api/auth/refresh`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#put-apiauthpassword)  | JWT  | Refresh token     |
+|    PUT | [`/api/auth/password`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#post-apiauthrefresh) | JWT  | Change password   |
 
 ### Artists
-| Method | Path                | Auth | Description                      |
-|-------:|---------------------|------|----------------------------------|
-|    GET | `/api/artists`      | —    | All artists with albums & tracks |
-|    PUT | `/api/artists`      | JWT  | Create/update artists (bulk)     |
-| DELETE | `/api/artists/<id>` | JWT  | Delete artist                    |
+| Method | Path                    | Auth | Description                      |
+|-------:|-------------------------|------|----------------------------------|
+|    GET | [`/api/artists`]()      | —    | All artists with albums & tracks |
+|    PUT | [`/api/artists`]()      | JWT  | Create/update artists (bulk)     |
+| DELETE | [`/api/artists/<id>`]() | JWT  | Delete artist                    |
 
 ### Biography
-| Method | Path             | Auth | Description       |
-|-------:|------------------|------|-------------------|
-|    GET | `/api/biography` | —    | Biography content |
-|    PUT | `/api/biography` | JWT  | Update biography  |
+| Method | Path                                                                                                       | Auth | Description       |
+|-------:|------------------------------------------------------------------------------------------------------------|------|-------------------|
+|    GET | [`/api/biography`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#get-apibiography) | —    | Biography content |
+|    PUT | [`/api/biography`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#put-apibiography) | JWT  | Update biography  |
 
 ### Gallery
-| Method | Path                  | Auth | Description                    |
-|-------:|-----------------------|------|--------------------------------|
-|    GET | `/api/gallery`        | —    | All galleries with images      |
-|    PUT | `/api/gallery`        | JWT  | Create/update galleries (bulk) |
-| DELETE | `/api/gallery/<id>`   | JWT  | Delete gallery                 |
+| Method | Path                      | Auth | Description                    |
+|-------:|---------------------------|------|--------------------------------|
+|    GET | [`/api/gallery`]()        | —    | All galleries with images      |
+|    PUT | [`/api/gallery`]()        | JWT  | Create/update galleries (bulk) |
+| DELETE | [`/api/gallery/<id>`]()   | JWT  | Delete gallery                 |
 
 ### Messages
-| Method | Path                 | Auth | Description                 |
-|-------:|----------------------|------|-----------------------------|
-|    GET | `/api/messages`      | JWT  | List messages               |
-|   POST | `/api/messages`      | —    | Submit message (1 req/min)  |
-|  PATCH | `/api/messages/<id>` | JWT  | Update message (read/trash) |
-| DELETE | `/api/messages/<id>` | JWT  | Delete message              |
+| Method | Path                                                                                                               | Auth | Description                 |
+|-------:|--------------------------------------------------------------------------------------------------------------------|------|-----------------------------|
+|    GET | [`/api/messages`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#get-apimessages)           | JWT  | List messages               |
+|   POST | [`/api/messages`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#post-apimessages)          | —    | Submit message (1 req/min)  |
+|  PATCH | [`/api/messages/<id>`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#patch-apimessagesid)  | JWT  | Update message (read/trash) |
+| DELETE | [`/api/messages/<id>`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#delete-apimessagesid) | JWT  | Delete message              |
 
 ### Uploads
-| Method | Path                     | Auth | Description              |
-|-------:|--------------------------|------|--------------------------|
-|   POST | `/api/upload/audio`      | JWT  | Upload audio files       |
-|   POST | `/api/upload/gallery`    | JWT  | Upload gallery images    |
-|    GET | `/api/upload/<path>`     | —    | Serve uploaded files     |
-|   POST | `/api/upload/background` | JWT  | Upload background images |
+| Method | Path                                                                                                                       | Auth | Description              |
+|-------:|----------------------------------------------------------------------------------------------------------------------------|------|--------------------------|
+|    GET | [`/api/upload/<path>`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#get-apiupload)                | —    | Serve uploaded files     |
+|   POST | [`/api/upload/audio`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#post-apiuploadaudio)           | JWT  | Upload audio files       |
+|   POST | [`/api/upload/gallery`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#post-apiuploadgallery)       | JWT  | Upload gallery images    |
+|   POST | [`/api/upload/background`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#post-apiuploadbackground) | JWT  | Upload background images |
 
 ### Orphaned files management
-| Method | Path                   | Auth | Description                 |
-|-------:|------------------------|------|-----------------------------|
-|    GET | `/api/orphans/audio`   | JWT  | List orphaned audio files   |
-| DELETE | `/api/orphans/audio`   | JWT  | Delete orphaned audio files |
-|    GET | `/api/orphans/gallery` | JWT  | List orphaned image files   |
-| DELETE | `/api/orphans/gallery` | JWT  | Delete orphaned image files |
+| Method | Path                                                                                                                     | Auth | Description                 |
+|-------:|--------------------------------------------------------------------------------------------------------------------------|------|-----------------------------|
+|    GET | [`/api/orphans/audio`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#get-apiorphansaudio)        | JWT  | List orphaned audio files   |
+| DELETE | [`/api/orphans/audio`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#delete-apiorphansaudio)     | JWT  | Delete orphaned audio files |
+|    GET | [`/api/orphans/gallery`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#get-apiorphansgallery)    | JWT  | List orphaned image files   |
+| DELETE | [`/api/orphans/gallery`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#delete-apiorphansgallery) | JWT  | Delete orphaned image files |
 
 ---
 
@@ -251,7 +251,7 @@ Flask Limiter creates two additional collections automatically: `counter` and `w
 
 ### Authentication
 
-#### `POST /api/auth/login`
+## `POST /api/auth/login`
 
 Rate-limited to **5 req/min** by default. No authentication required.
 
@@ -274,7 +274,7 @@ Rate-limited to **5 req/min** by default. No authentication required.
 
 **Errors:** `400` missing credentials - `401` invalid credentials
 
-#### `POST /api/auth/logout`
+## `POST /api/auth/logout`
 
 
 Unset JWT cookies from the client's browser, logging the user out. 
@@ -288,7 +288,7 @@ Unset JWT cookies from the client's browser, logging the user out.
 {"logged_out": true}
 ```
 
-#### `PUT /api/auth/password`
+## `PUT /api/auth/password`
 
 Rate-limited to **1 req/min** by default. Authentication required.
 
@@ -312,7 +312,7 @@ Rate limit is present to avoid brute-force attacks if JWT is compromised.
 
 **Errors:** `400` validation errors - `401` invalid credentials
 
-#### `POST /api/auth/refresh`
+## `POST /api/auth/refresh`
 
 Creates a new access token using a valid refresh token.
 
@@ -335,9 +335,9 @@ Creates a new access token using a valid refresh token.
 
 ### Biography
 
-#### `GET /api/biography`
+## `GET /api/biography`
 
-No authentication required.
+Returns the biography structure. Contains the main title, associated image link, and sections with paragraphs. No authentication required.
 
 **Response `200`:**
 
@@ -366,9 +366,9 @@ No authentication required.
 
 **Error `404`:** No biography entry found, caused when the seeder was not run.
 
-#### `PUT /api/biography`
+## `PUT /api/biography`
 
-Requires JWT. Updates the biography.
+Updates the biography. The whole structure is required. JWT required.
 
 **Request body:**
 
@@ -404,9 +404,9 @@ Requires JWT. Updates the biography.
 
 ### Messages
 
-#### `GET /api/messages`
+## `GET /api/messages`
 
-Requires JWT. Returns all messages.
+Returns a list of all messages. JWT Required.
 
 **Response `200`:**
 
@@ -435,9 +435,9 @@ Requires JWT. Returns all messages.
 
 Respond with an empty array if no messages are found.
 
-#### `POST /api/messages`
+## `POST /api/messages`
 
-Rate-limited to **1 req/min** by default. No authentication required.
+Create a new message. Rate-limited to **1 req/min** by default. No authentication required.
 
 **Request body:**
 
@@ -446,9 +446,6 @@ Rate-limited to **1 req/min** by default. No authentication required.
   "name": "Test",
   "email": "test@test.com",
   "message": "test",
-  "date": "2026-05-19T17:32:54.913Z",
-  "read": false,
-  "trashed": false
 }
 ```
 
@@ -470,16 +467,19 @@ Missing fields response example:
 }
 ```
 
-#### `PATCH /api/messages/<id>`
+Look to [`GET /api/messages`](https://github.com/hakamir/Portfolio-Block-3/edit/framework/README.md#get-apimessages) response to see the final data structure after the controller job.
 
-Requires JWT. Marks a message as read or trashed.
+## `PATCH /api/messages/<id>`
 
-**Request body** (one or both fields):
+Marks a message as read, trashed or replied. JWT required.
+
+**Request body** (one or multiple fields):
 
 ```json
 {
   "is_read": true,
-  "is_trashed": false
+  "is_trashed": false,
+  "is_replied": false
 }
 ```
 
@@ -487,9 +487,9 @@ Requires JWT. Marks a message as read or trashed.
 
 **Errors:** `400` malformed body · `401` unauthorized · `404` not found
 
-#### `DELETE /api/messages/<id>`
+## `DELETE /api/messages/<id>`
 
-Requires JWT. Permanently deletes a message.
+Permanently deletes a message. JWT required.
 
 **Response `200`:**
 
@@ -504,16 +504,16 @@ Requires JWT. Permanently deletes a message.
 
 ### Uploads
 
-#### `GET /api/upload/*`
+## `GET /api/upload/*`
 
-No authentication required. Serves files from the `uploads/` directory.
+Serves files from the `uploads/` directory (backgrounds, audio and gallery). No authentication required. 
 
 Example: `GET /api/upload/background/hero/hero-512.wepb`
 
 
-#### `POST /api/upload/audio`
+## `POST /api/upload/audio`
 
-Uploads audio files.
+Uploads audio files. JWT required.
 
 ```formdata
 file: <file> [Content-Disposition: form-data; name="file"; filename="<filename>.ext" Content-Type: audio/*]
@@ -532,9 +532,9 @@ trackSrc: track_slug.ext
 **Errors:** `400` No file part/missing required field - `415` Invalid mime type/Invalid file type - `500` Conversion failed
 
 
-#### `POST /api/upload/gallery`
+## `POST /api/upload/gallery`
 
-Uploads gallery images.
+Uploads gallery images. JWT required.
 
 ```formdata
 file: <file> Content-Disposition: form-data; name="file"; filename="<filename>.ext" Content-Type: image/*
@@ -551,9 +551,9 @@ trackSrc: gallery_0001.ext
 
 **Errors:** `400` No file part/missing required field - `415` Invalid mime type/Invalid file type
 
-#### `POST /api/upload/background`
+## `POST /api/upload/background`
 
-Uploads background images.
+Uploads background images. JWT required.
 
 ```formdata
 file: <file_2048> Content-Disposition: form-data; name="file"; filename="<filename>.ext" Content-Type: image/*
@@ -575,13 +575,13 @@ destination: <destination> (hero | portfolio | biography)
 
 ### Orphaned files
 
-`GET /api/orphans/audio`
+## `GET /api/orphans/audio`
 
-Returns a list of audio files that are not associated with any artist.
+Returns a list of audio files that are not associated with any artist. JWT required. 
 
-`DELETE /api/orphans/audio`
+## `DELETE /api/orphans/audio`
 
-Deletes selected orphaned audio files.
+Deletes selected orphaned audio files. JWT required.
 
 **Request body**:
 
@@ -603,13 +603,13 @@ Deletes selected orphaned audio files.
 
 **Errors:** `401` unauthorized
 
-`GET /api/orphans/gallery`
+## `GET /api/orphans/gallery`
 
-Returns a list of image files that are not associated with any gallery.
+Returns a list of image files that are not associated with any gallery. JWT required.
 
-`DELETE /api/orphans/gallery`
+## `DELETE /api/orphans/gallery`
 
-Deletes all orphaned image files.
+Deletes all orphaned image files. JWT required.
 
 ```json
 {
