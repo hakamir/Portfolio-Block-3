@@ -2,8 +2,8 @@ import os
 from bson import ObjectId
 from flask import Blueprint, jsonify, request, current_app
 from flask_jwt_extended import jwt_required
-from mongoengine import DoesNotExist
-from pydantic import ValidationError
+from mongoengine import DoesNotExist, ValidationError as MongoEngineValidationError
+from pydantic import ValidationError as PydanticValidationError
 from Schemas.gallery import GalleryIn
 from models.gallery import Gallery, GalleryImage
 
@@ -21,27 +21,34 @@ def update_galleries():
     if not request.is_json:
         return jsonify({"error": "invalid content-type"}), 415
     payload = request.get_json()
+    if not isinstance(payload, list):
+        return jsonify({'error': 'Expected a list of galleries'}), 400
     try:
         galleries = [GalleryIn.model_validate(g) for g in payload]
-    except ValidationError:
-        return jsonify({"error": "invalid payload"}), 400
-    for g in galleries:
-        images = [GalleryImage(**img.model_dump()) for img in g.images]
-        if g.id:
-            Gallery.objects(id=g.id).update_one(
-                set__slug=g.slug,
-                set__title=g.title,
-                set__order=g.order,
-                set__images=images
-            )
-        else:
-            Gallery(
-                slug=g.slug,
-                title=g.title,
-                order=g.order,
-                images=images
-            ).save()
-    return jsonify({'updated': True}), 200
+
+        for g in galleries:
+            images = [GalleryImage(**img.model_dump()) for img in g.images]
+            if g.id:
+                gallery = Gallery.objects.get(id=g.id)
+                gallery.slug = g.slug
+                gallery.title = g.title
+                gallery.order = g.order
+                gallery.images = images
+                gallery.save()
+            else:
+                Gallery(
+                    slug=g.slug,
+                    title=g.title,
+                    order=g.order,
+                    images=images
+                ).save()
+        return jsonify({'updated': True}), 200
+    except PydanticValidationError:
+        return jsonify({'error': 'Invalid payload'}), 400
+    except MongoEngineValidationError:
+        return jsonify({'error': 'invalid data'}), 400
+    except DoesNotExist:
+        return jsonify({'error': 'Gallery not found'}), 404
 
 
 @gallery_bp.route('/gallery/<id>', methods=['DELETE'])
