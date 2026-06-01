@@ -1,14 +1,29 @@
 <script setup lang="ts">
 import {GripVertical} from "@lucide/vue"
+import {computed} from "vue";
+import {useGalleriesStore} from "@stores/gallery.ts";
+import type {Gallery} from "@stores/gallery.ts";
 
-defineProps<{
+const props = defineProps<{
   label: string
   labelColor?: string
   inputColor?: string
   placeholder?: string
+  type?: string
+  gallery?: Gallery
 }>()
 
+const store = useGalleriesStore()
+
 const model = defineModel<string>({required: true})
+
+const isInvalid = computed(() => {
+  const empty = store.isSubmitted && !model.value?.trim()
+  if (props.type === "gallery" && props.gallery) {
+    return empty || store.isGalleryDuplicate(props.gallery)
+  }
+  return empty
+})
 
 </script>
 
@@ -26,6 +41,7 @@ const model = defineModel<string>({required: true})
       :class="['bg-white border border-gray-300 px-4 py-2 w-full font-semibold hover:bg-gray-50',
        'focus:outline-none transition-colors duration-300 placeholder:text-gray-400,',
         'placeholder:text-sm placeholder:font-light placeholder:italic placeholder:opacity-75',
+        isInvalid ? 'ring-2 ring-inset ring-red-500/70 transition' : '',
         inputColor]"
       :placeholder="placeholder"
       v-model="model"

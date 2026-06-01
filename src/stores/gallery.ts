@@ -29,6 +29,7 @@ export const useGalleriesStore = defineStore('galleries', () => {
     const orphans = ref<string[]>([])
     const isDirty = ref(false)
     let isInitialized = false
+    const isSubmitted = ref(false);
 
     const fetchGalleries = async () => {
         const res = await instance.get(galleryApi.getGalleries)
@@ -45,6 +46,7 @@ export const useGalleriesStore = defineStore('galleries', () => {
     const toSlug = (str: string) => str.toLowerCase().trim().replace(/\s+/g, '_')
 
     watch(() => galleries.value, (galleries) => {
+        isSubmitted.value = false;
         if (isInitialized) isDirty.value = true
         galleries.forEach(gallery => {
             gallery.slug = toSlug(gallery.title)
@@ -66,18 +68,16 @@ export const useGalleriesStore = defineStore('galleries', () => {
     }
 
     const saveGalleries = async () => {
-        fetchStatus.value = 'loading'
-        // Upload pending images
-        const hasEmpty = galleries.value.some(gallery => {
-            !gallery.title?.trim() ||
-            gallery.images.some(image => {
-                !image.title?.trim() ||
-                !image.location?.trim()
-            })
-        })
-        if (hasEmpty) {
+        // Mark form as submitted and set loading state
+        isSubmitted.value = true;
+
+        // Abort if validation fails
+        if (hasEmptyFields() || hasDuplicates()) {
             return false
         }
+        fetchStatus.value = 'loading'
+
+        // Upload pending galleries
         for (const [image, file] of pendingUploads.value.entries()) {
             const gallery = galleries.value.find(g => g.images.includes(image))
             if (!gallery) continue
@@ -128,8 +128,27 @@ export const useGalleriesStore = defineStore('galleries', () => {
         }
     }
 
+    const isGalleryDuplicate = (gallery: Gallery): boolean => {
+        if (!gallery.title?.trim()) return false // Avoid UI to trigger duplication check if empty
+        return galleries.value.filter(a => a.slug === gallery.slug).length > 1
+    }
+
+    const hasDuplicates = (): boolean => {
+        return galleries.value.some(gallery => isGalleryDuplicate(gallery))
+    }
+
+    const hasEmptyFields = (): boolean => {
+        return galleries.value.some(gallery =>
+            !gallery.title?.trim() ||
+            gallery.images.some(image =>
+                !image.title?.trim() ||
+                !image.location?.trim()
+            )
+        )
+    }
+
     return {
-        galleries, orphans, pendingUploads, fetchStatus, uploadedFileName, isDirty,
-        fetchGalleries, saveGalleries, checkImageExists, fetchOrphans, deleteOrphans,
+        galleries, orphans, pendingUploads, fetchStatus, uploadedFileName, isDirty, isSubmitted,
+        fetchGalleries, saveGalleries, checkImageExists, fetchOrphans, deleteOrphans, isGalleryDuplicate
     }
 });

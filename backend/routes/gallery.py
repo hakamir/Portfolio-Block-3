@@ -44,7 +44,14 @@ def update_galleries():
                 ).save()
         return jsonify({'updated': True}), 200
     except PydanticValidationError as e:
-        return jsonify({'error': e.errors()[0]['msg']}), 400
+        errors = []
+        for err in e.errors():
+            loc = err.get('loc', ())
+            field = loc[0] if len(loc) > 0 else 'model_error'
+            errors.append({"field": field, "message": err.get('msg').replace('Value error, ', '')})
+
+        return jsonify({'error': {'Invalid payload': errors}}), 400
+
     except MongoEngineValidationError:
         return jsonify({'error': 'invalid data'}), 400
     except DoesNotExist:

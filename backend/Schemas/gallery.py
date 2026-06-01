@@ -6,10 +6,10 @@ import re
 
 class GalleryImageIn(BaseModel):
     src: str
-    title: str
-    location: Optional[str] = None
-    date: Optional[datetime] = None
-    order: Optional[int] = None
+    title: str = Field(min_length=1)
+    location: str = Field(min_length=1)
+    date: datetime
+    order: int = Field(gt=0)
     alt: Optional[str] = None
 
     model_config = {
@@ -36,9 +36,9 @@ class GalleryImageIn(BaseModel):
 
 class GalleryIn(BaseModel):
     id: Optional[str] = Field(None, alias="_id")
-    slug: str
-    title: str
-    order: int
+    slug: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    order: int = Field(gt=0)
     images: List[GalleryImageIn]
 
     model_config = {
