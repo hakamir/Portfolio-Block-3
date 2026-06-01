@@ -1,7 +1,7 @@
 from bson import ObjectId
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
-from mongoengine import ValidationError, DoesNotExist
+from mongoengine import ValidationError as MongoEngineValidationError, DoesNotExist
 from pydantic import ValidationError as PydanticValidationError
 from Schemas.artist import ArtistIn
 from models.artist import Artist, Track, Album
@@ -50,11 +50,10 @@ def update_artists():
         return jsonify({'updated': True}), 200
     except PydanticValidationError:
         return jsonify({'error': 'Invalid payload'}), 400
-    except ValidationError:
+    except MongoEngineValidationError:
         return jsonify({'error': 'invalid data'}), 400
-    except Exception as e:
-        print(e)
-        return jsonify({'error': 'Server error'}), 500
+    except DoesNotExist:
+        return jsonify({'error': 'Artist not found'}), 404
 
 
 @artists_bp.route('/artists/<id>', methods=['DELETE'])

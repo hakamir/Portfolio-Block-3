@@ -141,8 +141,12 @@ const reorderImages = (gallery: Gallery) => {
                               @toggle="toggleGalleryCollapse(gallery.slug)"
                               color="bg-primary-300/30" aria-label="collapse gallery"/>
               <!-- Gallery input -->
-              <WorkInput label="Gallery" v-model="gallery.title" labelColor="bg-primary-300/30"
-                         inputColor="focus:bg-primary-200/20"/>
+              <WorkInput label="Gallery"
+                         v-model="gallery.title"
+                         labelColor="bg-primary-300/30"
+                         inputColor="focus:bg-primary-200/20"
+                         type="gallery"
+                         :gallery="gallery"/>
             </div>
             <button
                 @click="addImage(gallery)"
@@ -173,7 +177,7 @@ const reorderImages = (gallery: Gallery) => {
                                     aria-label="collapse image"/>
                     <!-- Image input -->
                     <WorkInput label="Image" v-model="image.title" labelColor="bg-yellow-300/30"
-                               inputColor="focus:bg-yellow-200/20"/>
+                               inputColor="focus:bg-yellow-200/20" type="image"/>
                     <!-- Delete image button -->
                     <DeleteButton @delete="deleteImage(gallery, image)" customClass="rounded-r-full"
                                   assignedFor="album" aria-label="delete image"/>
