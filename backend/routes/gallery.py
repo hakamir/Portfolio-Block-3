@@ -43,8 +43,8 @@ def update_galleries():
                     images=images
                 ).save()
         return jsonify({'updated': True}), 200
-    except PydanticValidationError:
-        return jsonify({'error': 'Invalid payload'}), 400
+    except PydanticValidationError as e:
+        return jsonify({'error': e.errors()[0]['msg']}), 400
     except MongoEngineValidationError:
         return jsonify({'error': 'invalid data'}), 400
     except DoesNotExist:
