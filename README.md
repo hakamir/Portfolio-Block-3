@@ -85,7 +85,6 @@ All routes are prefixed with `/api`.
 |    GET | [`/api/gallery`](#get-apigallery)                                    | —    | All galleries with images        |
 |    PUT | [`/api/gallery`](#put-apigallery)                                    | JWT  | Create/update galleries (bulk)   |
 | DELETE | [`/api/gallery/<id>`](#delete-apigalleryid)                          | JWT  | Delete gallery                   |
-|    GET | [`/api/gallery/nextSrc?gallerySlug=<slug>`](#get-apigallerynext-src) | JWT  | Provide next available file name |
 
 ### [Messages](#messages-1)
 
@@ -568,7 +567,7 @@ Returns all galleries with associated image metadata and URL. No authentication 
     },
     "images": [
       {
-        "src": "gallery_1_0001.webp",
+        "src": "gallery_1_a296a2f6-5ff9-4e49-bd5a-23d16b34b863.webp",
         "title": "Image 1 title",
         "location": "Somewhere",
         "date": {
@@ -578,7 +577,7 @@ Returns all galleries with associated image metadata and URL. No authentication 
         "alt": "Image 1 title, Somewhere, 2025"
       },
       {
-        "src": "gallery_1_0002.webp",
+        "src": "gallery_1_a296a2f6-5ff9-4e49-bd5a-23d16b34b863.webp",
         "title": "Image 2 title",
         "location": "Somewhere else",
         "date": {
@@ -633,42 +632,6 @@ images become [orphans](#get-apiorphansgallery).
 ```
 
 **Error** `400`: Invalid ID - `401` Unauthorized - `404` Gallery not found
-
-## `GET /api/gallery/next-src`
-
-Generate the next available image file name for a specific gallery. Create a directory in case of a new gallery is
-created, then, calculated the number of existing files in the directory and returns a new file slug in format
-`<gallerySlug>_000x.webp`. JWT required.
-
-Query parameters:
-
-- `gallerySlug` (string, required)
-
-Example: `GET /api/gallery/nextSrc?gallerySlug=gallery_1`
-
-Current gallery folder:
-
-```
-uploads/gallery/gallery_1/
-  gallery_1_0001.webp
-  gallery_1_0002.webp
-```
-
-Next available file name:
-
-```
-gallery_1_0003.webp
-```
-
-**Response `200`:**
-
-```json
-{
-  "src": "gallery_1_0003.webp"
-}
-```
-
-**Errors:** `400` Missing `gallerySlug` args - `401` Unauthorized
 
 ---
 
@@ -814,7 +777,7 @@ Uploads gallery images. JWT required.
 ```formdata
 file: <file> Content-Disposition: form-data; name="file"; filename="<filename>.ext" Content-Type: image/*
 gallerySlug: gallery_slug
-trackSrc: gallery_0001.ext
+imageSrc: gallery_gallery_1_a296a2f6-5ff9-4e49-bd5a-23d16b34b863.webp
 ```
 
 **Response `201`:**

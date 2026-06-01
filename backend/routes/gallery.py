@@ -62,20 +62,3 @@ def delete_gallery(id):
         return jsonify({'deleted': True}), 200
     except DoesNotExist:
         return jsonify({'error': 'Gallery not found'}), 404
-
-
-@gallery_bp.route('/gallery/next-src', methods=['GET'])
-@jwt_required()
-def get_next_src():
-    gallery_slug = request.args.get('gallerySlug')
-    if not gallery_slug:
-        return jsonify({'error': 'Missing gallerySlug'}), 400
-    settings = current_app.config['settings']
-    dest = os.path.join(settings.upload_folder, 'gallery', gallery_slug)
-    os.makedirs(dest, exist_ok=True)
-
-    existing = [f for f in os.listdir(dest) if f.endswith('.webp')]
-    next_index = len(existing) + 1
-    src = f"{gallery_slug}_{str(next_index).zfill(4)}.webp"
-
-    return jsonify({'src': src}), 200
