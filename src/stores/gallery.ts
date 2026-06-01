@@ -42,11 +42,6 @@ export const useGalleriesStore = defineStore('galleries', () => {
         isDirty.value = false
     }
 
-    const getNextSrc = async (gallerySlug: string): Promise<string> => {
-        const res = await instance.get(`/api/gallery/next-src?gallerySlug=${gallerySlug}`)
-        return res.data.src
-    }
-
     const toSlug = (str: string) => str.toLowerCase().trim().replace(/\s+/g, '_')
 
     watch(() => galleries.value, (galleries) => {
@@ -87,14 +82,13 @@ export const useGalleriesStore = defineStore('galleries', () => {
             const gallery = galleries.value.find(g => g.images.includes(image))
             if (!gallery) continue
             uploadedFileName.value = pendingUploads.value.get(image)?.name;
-            // Get next available src
-            const src = await getNextSrc(gallery.slug)
-            image.src = src
+            // Get random name prefix by gallery slug
+            image.src = `${gallery.slug}_${crypto.randomUUID()}.webp`
 
             const formData = new FormData()
             formData.append('file', file)
             formData.append('gallerySlug', gallery.slug)
-            formData.append('imageSrc', src)
+            formData.append('imageSrc', image.src)
 
             await instance.post(galleryApi.uploadImage, formData)
         }
