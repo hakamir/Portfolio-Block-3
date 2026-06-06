@@ -8,27 +8,29 @@ import type {SearchResult} from '@composables/useSearchIndex'
 
 const audioStore = useAudioStore()
 const searchStore = useSearchStore()
-
 const query = ref('')
 const showResults = ref(false)
-
 const {search} = useSearchIndex(() => audioStore.artists)
 const results = computed(() => search(query.value))
+const focusedIndex = ref(-1)
 
 const onInput = () => {
   showResults.value = query.value.trim().length > 0
+  focusedIndex.value = -1
 }
 
 const selectResult = (result: SearchResult) => {
   searchStore.addFilter(result)
   query.value = ''
   showResults.value = false
+  focusedIndex.value = -1
 }
 
 // Slight delay when focus is lost
 const onBlur = () => {
   setTimeout(() => {
     showResults.value = false
+    focusedIndex.value = -1
   }, 150)
 }
 
@@ -52,6 +54,24 @@ const typeLabels: Record<string, string> = {
   album: 'album',
   tag: 'tag',
 }
+
+const onKeydown = (e: KeyboardEvent) => {
+  if (!showResults.value || results.value.length === 0) return
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    focusedIndex.value = Math.min(focusedIndex.value + 1, results.value.length - 1)
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    focusedIndex.value = Math.max(focusedIndex.value - 1, -1)
+  } else if (e.key === 'Enter' && focusedIndex.value >= 0) {
+    e.preventDefault()
+    selectResult(results.value[focusedIndex.value])
+  } else if (e.key === 'Escape') {
+    showResults.value = false
+    focusedIndex.value = -1
+  }
+}
 </script>
 
 <template>
@@ -72,6 +92,7 @@ const typeLabels: Record<string, string> = {
             @input="onInput"
             @blur="onBlur"
             @focus="onInput"
+            @keydown="onKeydown"
             aria-label="Search"
             role="searchbox"
         />
@@ -81,10 +102,11 @@ const typeLabels: Record<string, string> = {
         <div v-if="showResults && results.length > 0"
              class="absolute top-full mt-2 left-0 w-80 z-50 bg-gray-900/80 backdrop-blur-lg
                  border border-gray-600/50 rounded-2xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
-          <div v-for="result in results"
+          <div v-for="(result, index) in results"
                :key="result.id"
                class="w-full flex items-center justify-between gap-3 px-4 py-3
                    hover:bg-white/5 transition text-left border-b border-gray-700/40 last:border-0"
+               :class="{ 'bg-white/5': focusedIndex === index }"
                @mousedown.prevent="selectResult(result)">
             <span class="min-w-0 flex flex-col">
               <span class="text-white font-medium truncate">{{ result.name }}</span>
