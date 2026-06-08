@@ -74,8 +74,8 @@ class TestDeleteOrphanAudio:
     def test_deletes_existing_files(self, client, auth_headers):
         files = ["artist-1/album-1/track.mp3"]
         with patch('os.path.exists', return_value=True), \
-             patch('os.remove') as mock_remove, \
-             patch('routes.orphans.cleanup_empty_dirs'):
+                patch('os.remove') as mock_remove, \
+                patch('routes.orphans.cleanup_empty_dirs'):
             response = client.delete("/api/orphans/audio", json={"files": files},
                                      headers=auth_headers)
         assert response.status_code == 200
@@ -85,8 +85,8 @@ class TestDeleteOrphanAudio:
     def test_skips_nonexistent_files(self, client, auth_headers):
         files = ["artist-1/album-1/missing.mp3"]
         with patch('os.path.exists', return_value=False), \
-             patch('os.remove') as mock_remove, \
-             patch('routes.orphans.cleanup_empty_dirs'):
+                patch('os.remove') as mock_remove, \
+                patch('routes.orphans.cleanup_empty_dirs'):
             response = client.delete("/api/orphans/audio", json={"files": files},
                                      headers=auth_headers)
         assert response.status_code == 200
@@ -126,8 +126,8 @@ class TestDeleteOrphanGallery:
     def test_deletes_existing_files(self, client, auth_headers):
         files = ["gallery-1/image.webp"]
         with patch('os.path.exists', return_value=True), \
-             patch('os.remove') as mock_remove, \
-             patch('routes.orphans.cleanup_empty_dirs'):
+                patch('os.remove') as mock_remove, \
+                patch('routes.orphans.cleanup_empty_dirs'):
             response = client.delete("/api/orphans/gallery", json={"files": files},
                                      headers=auth_headers)
         assert response.status_code == 200
@@ -137,8 +137,8 @@ class TestDeleteOrphanGallery:
     def test_skips_nonexistent_files(self, client, auth_headers):
         files = ["gallery-1/missing.webp"]
         with patch('os.path.exists', return_value=False), \
-             patch('os.remove') as mock_remove, \
-             patch('routes.orphans.cleanup_empty_dirs'):
+                patch('os.remove') as mock_remove, \
+                patch('routes.orphans.cleanup_empty_dirs'):
             response = client.delete("/api/orphans/gallery", json={"files": files},
                                      headers=auth_headers)
         assert response.status_code == 200

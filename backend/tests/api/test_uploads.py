@@ -71,7 +71,7 @@ class TestUploadAudio:
     def test_uploads_audio_file(self, client, auth_headers):
         mock_converted = MagicMock()
         with patch('routes.uploads.AudioConverter.to_mp3', return_value=mock_converted), \
-             patch('routes.uploads.os.makedirs'):
+                patch('routes.uploads.os.makedirs'):
             response = client.post("/api/upload/audio", data={
                 'file': _audio_data(),
                 'artistSlug': 'artist-1',
@@ -122,7 +122,7 @@ class TestUploadGallery:
 
     def test_uploads_image_file(self, client, auth_headers):
         with patch('routes.uploads.os.makedirs'), \
-             patch('werkzeug.datastructures.FileStorage.save'):
+                patch('werkzeug.datastructures.FileStorage.save'):
             response = client.post("/api/upload/gallery", data={
                 'file': _image_data(),
                 'gallerySlug': 'gallery-1',
@@ -175,7 +175,7 @@ class TestUploadBackground:
 
     def test_uploads_to_hero(self, client, auth_headers):
         with patch('routes.uploads.is_valid_webp', return_value=True), \
-             patch('werkzeug.datastructures.FileStorage.save'):
+                patch('werkzeug.datastructures.FileStorage.save'):
             response = client.post("/api/upload/background",
                                    data=self._make_payload('hero'),
                                    content_type='multipart/form-data',
@@ -185,7 +185,7 @@ class TestUploadBackground:
 
     def test_uploads_to_portfolio(self, client, auth_headers):
         with patch('routes.uploads.is_valid_webp', return_value=True), \
-             patch('werkzeug.datastructures.FileStorage.save'):
+                patch('werkzeug.datastructures.FileStorage.save'):
             response = client.post("/api/upload/background",
                                    data=self._make_payload('portfolio'),
                                    content_type='multipart/form-data',
@@ -195,7 +195,7 @@ class TestUploadBackground:
 
     def test_uploads_to_biography(self, client, auth_headers):
         with patch('routes.uploads.is_valid_webp', return_value=True), \
-             patch('werkzeug.datastructures.FileStorage.save'):
+                patch('werkzeug.datastructures.FileStorage.save'):
             response = client.post("/api/upload/background",
                                    data=self._make_payload('biography'),
                                    content_type='multipart/form-data',
