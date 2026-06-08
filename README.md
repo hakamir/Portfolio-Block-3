@@ -122,7 +122,7 @@ All routes are prefixed with `/api`.
 **1. Configure environment**
 
 ```bash
-cp .env.docker.example .env
+cp .env.example .env
 ```
 
 Fill in `.env`:
@@ -235,9 +235,11 @@ The API will be available at `http://localhost:5000`.
 
 **Frontend**
 
+> [!NOTE]
+> `.env.development` is gitignored and only required for Option B (local dev without Docker). In Docker, `VITE_API_URL` is passed as a build argument.
+
 ```bash
-cp .env.example .env.development
-# set VITE_API_URL=http://localhost:5000
+echo "VITE_API_URL=http://localhost:5000" > .env.development
 npm install
 npm run dev
 ```
