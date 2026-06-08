@@ -25,9 +25,9 @@ def upload_audio():
     if not file.mimetype.startswith('audio/'):
         return jsonify({'error': 'Invalid mime type'}), 415
 
-    artist_slug = secure_filename(request.form.get('artistSlug'))
-    album_slug = secure_filename(request.form.get('albumSlug'))
-    track_src = secure_filename(request.form.get('trackSrc'))
+    artist_slug = secure_filename(request.form.get('artistSlug', ''))
+    album_slug = secure_filename(request.form.get('albumSlug', ''))
+    track_src = secure_filename(request.form.get('trackSrc', ''))
 
     extension = file.filename.rsplit('.', 1)[-1].lower()
     if extension not in settings.allowed_audio_file_types:
@@ -61,8 +61,8 @@ def upload_image():
     if not file.mimetype.startswith('image/'):
         return jsonify({'error': 'Invalid mime type'}), 415
 
-    gallery_slug = secure_filename(request.form.get('gallerySlug'))
-    image_src = secure_filename(request.form.get('imageSrc'))
+    gallery_slug = secure_filename(request.form.get('gallerySlug', ''))
+    image_src = secure_filename(request.form.get('imageSrc', ''))
 
     extension = file.filename.split('.', 1)[-1].lower()
     if extension not in settings.allowed_image_file_types:
