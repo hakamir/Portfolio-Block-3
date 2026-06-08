@@ -42,7 +42,7 @@ def app():
     disconnect()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def client(app):
     return app.test_client()
 
