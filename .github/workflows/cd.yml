@@ -60,7 +60,7 @@ jobs:
           key: ${{ secrets.V_KEY }}
           port: ${{ secrets.V_PORT }}
           source: "docker-compose.yml,docker-compose.prod.yml"
-          target: "/var/www/app"
+          target: "/home/${{ secrets.V_USER }}/srv/portfolio"
 
       - name: Deployment
         uses: appleboy/ssh-action@v1.0.3
@@ -70,7 +70,7 @@ jobs:
           key: ${{ secrets.V_KEY }}
           port: ${{ secrets.V_PORT }}
           script: |
-            cd /var/www/app
+            cd /home/${{ secrets.V_USER }}/srv/portfolio
             docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
             docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
