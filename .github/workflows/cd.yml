@@ -59,7 +59,7 @@ jobs:
           username: ${{ secrets.V_USER }}
           key: ${{ secrets.V_KEY }}
           port: ${{ secrets.V_PORT }}
-          source: "docker-compose.yml,docker-compose.prod.yml"
+          source: "docker-compose.yml,docker-compose.prod.yml,nginx.prod.conf"
           target: "/home/${{ secrets.V_USER }}/srv/portfolio"
 
       - name: Deployment
