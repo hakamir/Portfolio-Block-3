@@ -3,10 +3,7 @@
 services:
 
   frontend:
-    build:
-      target: production
-      args:
-        VITE_API_URL: https://deviance.studio
+    image: ghcr.io/${GHCR_OWNER}/frontend:latest
     ports:
       - "80:80"
       - "443:443"
@@ -16,9 +13,13 @@ services:
       - /etc/letsencrypt/archive/deviance.studio:/etc/letsencrypt/archive/deviance.studio:ro
 
   backend:
+    image: ghcr.io/${GHCR_OWNER}/backend:latest
     environment:
       FLASK_ENV: production
       FRONTEND_URL: https://deviance.studio
       FRONTEND_PORT: 443
       JWT_COOKIE_SECURE: "true"
       JWT_COOKIE_CSRF_PROTECT: "true"
+
+  seeder:
+    image: ghcr.io/${GHCR_OWNER}/backend:latest
