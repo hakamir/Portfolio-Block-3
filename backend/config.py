@@ -6,7 +6,7 @@ from colorama import Fore, Style
 from pydantic import Field, field_validator, ValidationError
 from pydantic_settings import BaseSettings
 
-ENV = 'development'
+ENV = os.getenv('FLASK_ENV', 'development')
 
 def load_settings():
     try:

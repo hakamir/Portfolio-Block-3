@@ -11,13 +11,20 @@ from models.user import User
 
 auth_bp = Blueprint('auth', __name__)
 
+_DUMMY_HASH = bcrypt.hashpw(b"dummy", bcrypt.gensalt()).decode()
+
 
 @auth_bp.route('/auth/login', methods=['POST'])
 @limiter.limit("5/minute")
 def login():
     try:
         data = Login.model_validate(request.get_json())
-        user = User.objects.get(email=data.email)
+        try:
+            user = User.objects.get(email=data.email)
+        except DoesNotExist:
+            bcrypt.checkpw(data.pwd.encode('utf-8'), _DUMMY_HASH.encode('utf-8'))
+            return jsonify({'error': 'Invalid credentials'}), 401
+
         if not user.verify_password(data.pwd):
             raise DoesNotExist
 

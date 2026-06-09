@@ -11,7 +11,21 @@ backend, with MongoDB as the database.
 
 ---
 
+## Summary
+
+1. [Features](#features)
+2. [Tech Stack](#tech-stack)
+3. [API Endpoints](#api-endpoints)
+4. [Getting Started](#getting-started)
+5. [Database](#database)
+6. [Testing](#testing)
+7. [API Endpoints (detailed)](#api-endpoints-detailed)
+
+---
+
 ## Features
+
+<sub>[← Back to summary](#summary)</sub>
 
 ### Public
 
@@ -52,6 +66,8 @@ backend, with MongoDB as the database.
 
 ## API Endpoints
 
+<sub>[← Back to summary](#summary)</sub>
+
 All routes are prefixed with `/api`.
 
 ### [Authentication](#authentication-1)
@@ -80,11 +96,11 @@ All routes are prefixed with `/api`.
 
 ### [Gallery](#gallery-1)
 
-| Method | Path                                                                 | Auth | Description                      |
-|-------:|----------------------------------------------------------------------|------|----------------------------------|
-|    GET | [`/api/gallery`](#get-apigallery)                                    | —    | All galleries with images        |
-|    PUT | [`/api/gallery`](#put-apigallery)                                    | JWT  | Create/update galleries (bulk)   |
-| DELETE | [`/api/gallery/<id>`](#delete-apigalleryid)                          | JWT  | Delete gallery                   |
+| Method | Path                                        | Auth | Description                    |
+|-------:|---------------------------------------------|------|--------------------------------|
+|    GET | [`/api/gallery`](#get-apigallery)           | —    | All galleries with images      |
+|    PUT | [`/api/gallery`](#put-apigallery)           | JWT  | Create/update galleries (bulk) |
+| DELETE | [`/api/gallery/<id>`](#delete-apigalleryid) | JWT  | Delete gallery                 |
 
 ### [Messages](#messages-1)
 
@@ -117,12 +133,14 @@ All routes are prefixed with `/api`.
 
 ## Getting Started
 
+<sub>[← Back to summary](#summary)</sub>
+
 ### Option A — Docker (recommended)
 
 **1. Configure environment**
 
 ```bash
-cp .env.docker.example .env
+cp .env.example .env
 ```
 
 Fill in `.env`:
@@ -235,9 +253,12 @@ The API will be available at `http://localhost:5000`.
 
 **Frontend**
 
+> [!NOTE]
+> `.env.development` is gitignored and only required for Option B (local dev without Docker). In Docker, `VITE_API_URL`
+> is passed as a build argument.
+
 ```bash
-cp .env.example .env.development
-# set VITE_API_URL=http://localhost:5000
+echo "VITE_API_URL=http://localhost:5000" > .env.development
 npm install
 npm run dev
 ```
@@ -247,6 +268,8 @@ The app will be available at `http://localhost:5173`.
 ---
 
 ## Database
+
+<sub>[← Back to summary](#summary)</sub>
 
 MongoDB collections, created automatically on first Docker startup:
 
@@ -263,11 +286,151 @@ address.
 
 ---
 
+## Testing
+
+<sub>[← Back to summary](#summary)</sub>
+
+### Philosophy
+
+The backend is covered by an **integration test suite** (sometimes called API tests or functional tests). Each test
+sends an HTTP request through the full Flask stack (router → controller → model → database) and asserts on the HTTP
+response and the resulting database state.
+
+This is distinct from *unit tests*, which would test a single function in complete isolation (mocking all
+dependencies). For this project, integration tests offer better value: they catch bugs across the entire request
+lifecycle, including validation logic, authentication guards, and database interactions, without requiring artificial
+mocks of the application's own code.
+
+### Infrastructure
+
+| Tool                    | Role                                                   |
+|-------------------------|--------------------------------------------------------|
+| **pytest**              | Test runner and fixture system                         |
+| **mongomock**           | In-memory MongoDB — no real database needed            |
+| **Flask test client**   | Simulates HTTP requests without starting a real server |
+| **unittest.mock.patch** | Mocks filesystem operations and external utilities     |
+
+#### How the test database works
+
+MongoEngine normally connects to a real MongoDB instance. In tests, this is intercepted using `unittest.mock.patch`
+targeting the `init_db` function at the moment it is called by the app factory:
+
+```python
+def _init_db_mock(_settings):
+    me_connect('testdb', mongo_client_class=mongomock.MongoClient)
+
+
+with patch('app.init_db', _init_db_mock):
+    flask_app = create_app(settings=TestSettings(), testing=True)
+```
+
+This replaces the real MongoDB connection with an in-memory mock, invisible to the rest of the application. No
+changes were needed in production code to make this work.
+
+#### Fixture design
+
+Three fixtures are defined in `conftest.py` and shared across all test files:
+
+- `app (session-scoped)` - one Flask app instance for the whole test session
+- `client (function-scoped)` - a fresh test client per test (prevents cookie jar pollution between tests)
+- `auth_headers` - a valid JWT Bearer token for authenticated routes
+- `clean_db` (autouse) – drops all collections after each test, ensuring isolation
+
+The `client` fixture is **function-scoped** deliberately. A session-scoped client would carry cookies (including the
+`refresh_token` HttpOnly cookie set at login) across tests, causing false passes or false failures in tests that
+expect an unauthenticated state.
+
+### Running the tests
+
+From the project root:
+
+```bash
+pytest -v
+```
+
+From the `backend/` directory:
+
+```bash
+pytest -v --rootdir=. tests/
+```
+
+Additional packages required for testing:
+
+```bash
+pip install -r .\backend\requirements-test.txt
+```
+
+### Coverage
+
+All seven API controllers are covered. Tests are located in `backend/tests/integration/`.
+
+| File                | Controller            | Tests                                                           |
+|---------------------|-----------------------|-----------------------------------------------------------------|
+| `test_auth.py`      | `routes/auth.py`      | Login, refresh (cookie jar), logout, change password            |
+| `test_biography.py` | `routes/biography.py` | GET singleton, PUT with full structure                          |
+| `test_artists.py`   | `routes/artists.py`   | GET, bulk upsert, delete, MongoEngine validation                |
+| `test_gallery.py`   | `routes/gallery.py`   | GET, bulk upsert, slug/image consistency validation, delete     |
+| `test_messages.py`  | `routes/messages.py`  | GET (JWT), create, update (read/replied/replied_at), delete     |
+| `test_orphans.py`   | `routes/orphans.py`   | List and delete orphaned audio and gallery files                |
+| `test_uploads.py`   | `routes/uploads.py`   | Audio upload with conversion, gallery upload, background upload |
+
+### Notable test patterns
+
+**Testing the refresh token flow**
+
+The `/api/auth/refresh` endpoint reads the refresh token from an HttpOnly cookie, not from a header. Testing this
+requires the cookie to be set naturally by the test client's cookie jar, the same way a browser would handle it:
+
+```python
+with app.test_client() as c:
+    # Login first — the test client stores the refresh cookie automatically
+    c.post("/api/auth/login", json={...})
+    # The refresh request sends the cookie back, just like a browser would
+    response = c.post("/api/auth/refresh")
+    assert response.status_code == 200
+```
+
+Passing the cookie manually via a `Cookie` header does not work reliably with Werkzeug's test client.
+
+**Mocking filesystem operations**
+
+The upload and orphan routes interact with the real filesystem (`os.makedirs`, `os.remove`, `os.path.exists`).
+In tests, these are patched to avoid any disk access:
+
+```python
+with patch('routes.uploads.os.makedirs'), patch('werkzeug.datastructures.FileStorage.save'):
+    response = client.post("/api/upload/gallery", data={...})
+```
+
+External utilities that depend on system binaries (`AudioConverter.to_mp3` → ffmpeg,
+`is_valid_webp` → Pillow) are similarly patched at the module level:
+
+```python
+with patch('routes.uploads.AudioConverter.to_mp3', return_value=MagicMock()):
+    ...
+```
+
+**Testing MongoEngine-level validation**
+
+Some validation happens not at the Pydantic schema level but inside MongoEngine's `clean()` method. For example,
+`Artist.clean()` rejects an artist with zero albums — a constraint that Pydantic does not enforce. A dedicated test
+verifies that this lower-level validation still surfaces as a `400` response:
+
+```python
+# Empty albums list passes Pydantic but fails Artist.clean()
+response = client.put("/api/artists", json=[{**_VALID_ARTIST_PAYLOAD, "albums": []}], ...)
+assert response.status_code == 400
+```
+
+---
+
 ## API Endpoints (detailed)
+
+<sub>[← Back to summary](#summary)</sub>
 
 ### Authentication
 
-<sub>[← Back to summary](#api-endpoints)</sub>
+<sub>[← Back to API endpoints](#api-endpoints)</sub>
 
 ## `POST /api/auth/login`
 
@@ -355,7 +518,7 @@ Creates a new access token using a valid refresh token.
 
 ### Artists
 
-<sub>[← Back to summary](#api-endpoints)</sub>
+<sub>[← Back to API endpoints](#api-endpoints)</sub>
 
 ## `GET /api/artists`
 
@@ -479,7 +642,7 @@ albums and tracks become [orphans](#get-apiorphansaudio).
 
 ### Biography
 
-<sub>[← Back to summary](#api-endpoints)</sub>
+<sub>[← Back to API endpoints](#api-endpoints)</sub>
 
 ## `GET /api/biography`
 
@@ -551,7 +714,7 @@ Updates the biography. The whole structure is required. JWT required.
 
 ### Gallery
 
-<sub>[← Back to summary](#api-endpoints)</sub>
+<sub>[← Back to API endpoints](#api-endpoints)</sub>
 
 ## `GET /api/gallery`
 
@@ -637,7 +800,7 @@ images become [orphans](#get-apiorphansgallery).
 
 ### Messages
 
-<sub>[← Back to summary](#api-endpoints)</sub>
+<sub>[← Back to API endpoints](#api-endpoints)</sub>
 
 ## `GET /api/messages`
 
@@ -740,7 +903,7 @@ Permanently deletes a message. JWT required.
 
 ### Uploads
 
-<sub>[← Back to summary](#api-endpoints)</sub>
+<sub>[← Back to API endpoints](#api-endpoints)</sub>
 
 ## `GET /api/upload/*`
 
@@ -815,7 +978,7 @@ destination: <destination> (hero | portfolio | biography)
 
 ### Orphaned files
 
-<sub>[← Back to summary](#api-endpoints)</sub>
+<sub>[← Back to API endpoints](#api-endpoints)</sub>
 
 ## `GET /api/orphans/audio`
 

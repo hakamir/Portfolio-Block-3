@@ -54,13 +54,13 @@ def update_message(id):
 
     updates = data.model_dump(exclude_none=True)
 
+    if not updates:
+        return jsonify({'error': 'No fields to update'}), 400
+
     if updates.get('replied') is True:
         updates['replied_at'] = datetime.now(timezone.utc)
     else:
         updates['replied_at'] = None
-
-    if not updates:
-        return jsonify({'error': 'No fields to update'}), 400
 
     try:
         message = Message.objects.get(id=id)

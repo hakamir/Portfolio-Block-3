@@ -6,11 +6,13 @@ from extensions import jwt, limiter, init_db
 from routes import register_routes
 from errors import register_errors
 
-settings = load_settings()
 
+def create_app(settings=None, testing=False):
+    if settings is None:
+        settings = load_settings()
 
-def create_app():
     app = Flask(__name__)
+    app.config["TESTING"] = testing
     app.config["settings"] = settings
     app.config["JWT_SECRET_KEY"] = settings.jwt_secret_key
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = settings.jwt_access_token_expires_delta
@@ -20,7 +22,8 @@ def create_app():
     app.config['JWT_COOKIE_SECURE'] = settings.jwt_cookie_secure
     app.config['JWT_COOKIE_SAMESITE'] = settings.jwt_cookie_samesite
     app.config['JWT_COOKIE_CSRF_PROTECT'] = settings.jwt_cookie_csrf_protect
-    app.config["RATELIMIT_STORAGE_URI"] = settings.mongo_uri
+    app.config["RATELIMIT_STORAGE_URI"] = "memory://" if testing else settings.mongo_uri
+    app.config["RATELIMIT_ENABLED"] = not testing
     app.config["RATELIMIT_STORAGE_OPTIONS"] = {"database_name": "Portfolio"}
 
     standard_ports = {80, 443}
@@ -48,7 +51,6 @@ def create_app():
     return app
 
 
-app = create_app()
-
 if __name__ == '__main__':
+    app = create_app()
     app.run(host='0.0.0.0', port=5000, debug=True)

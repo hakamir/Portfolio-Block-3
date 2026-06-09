@@ -33,7 +33,7 @@ const handleSubmit = async () => {
         <div class="flex justify-center">
           <span class="text-gray-500 font-light text-md">Please enter your email and password to login.</span>
         </div>
-        <form id="form-contact" class="flex flex-col gap-4" @submit.prevent="handleSubmit">
+        <form id="form-login" class="flex flex-col gap-4" @submit.prevent="handleSubmit">
           <div>
             <label for="email" class="block text-lg font-bold mb-2">Email</label>
             <input id="email" type="email" placeholder="Email" v-model="formData.email"

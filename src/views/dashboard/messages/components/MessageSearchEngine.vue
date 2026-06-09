@@ -11,21 +11,43 @@ const query = ref('')
 const showResults = ref(false)
 const results = computed(() => search(query.value))
 const router = useRouter()
+const focusedIndex = ref(-1)
 
 const navigateToMessage = (result: MessageSearchResult) => {
   router.push(`/dashboard/messages/${result.id}`)
   query.value = ''
   showResults.value = false
+  focusedIndex.value = -1
 }
 
 const onInput = () => {
   showResults.value = query.value.trim().length > 0
+  focusedIndex.value = -1
 }
 
 const onBlur = () => {
   setTimeout(() => {
     showResults.value = false
+    focusedIndex.value = -1
   }, 150)
+}
+
+const onKeydown = (e: KeyboardEvent) => {
+  if (!showResults.value || results.value.length === 0) return
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    focusedIndex.value = Math.min(focusedIndex.value + 1, results.value.length - 1)
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    focusedIndex.value = Math.max(focusedIndex.value - 1, -1)
+  } else if (e.key === 'Enter' && focusedIndex.value >= 0) {
+    e.preventDefault()
+    navigateToMessage(results.value[focusedIndex.value])
+  } else if (e.key === 'Escape') {
+    showResults.value = false
+    focusedIndex.value = -1
+  }
 }
 </script>
 
@@ -46,7 +68,8 @@ const onBlur = () => {
              v-model="query"
              @input="onInput"
              @blur="onBlur"
-             @focus="onInput"/>
+             @focus="onInput"
+             @keydown="onKeydown"/>
     </div>
 
     <!-- Dropdown -->
@@ -54,21 +77,17 @@ const onBlur = () => {
       <div v-if="showResults && results.length > 0"
            class="absolute top-full mt-2 left-0 w-96 z-50 bg-white
               border border-gray-200 rounded-2xl overflow-hidden shadow-lg">
-        <div v-for="result in results"
+        <div v-for="(result, index) in results"
              :key="result.id"
              class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50
                 transition border-b border-gray-100 last:border-0 cursor-pointer"
+             :class="{ 'bg-gray-100': focusedIndex === index }"
              @mousedown.prevent="navigateToMessage(result)">
           <div class="min-w-0 flex flex-col flex-1">
             <span class="font-medium text-gray-900 truncate">{{ result.name }}</span>
             <span class="text-gray-400 text-xs truncate">{{ result.email }}</span>
             <span class="text-gray-500 text-xs truncate mt-0.5">{{ result.preview }}</span>
           </div>
-        </div>
-
-        <div v-if="results.length === 0"
-             class="px-4 py-3 text-gray-400 text-sm text-center">
-          No results for "{{ query }}"
         </div>
       </div>
     </Transition>
