@@ -1,5 +1,5 @@
-name: Api tests
-run-name: Backend API tests
+name: CI
+run-name: Backend API tests / Frontend build check
 on:
   push:
     branches:
