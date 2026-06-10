@@ -40,8 +40,8 @@ services:
     volumes:
       - backend_uploads:/app/uploads
     depends_on:
-      mongodb:
-        condition: service_healthy
+      seeder:
+        condition: service_completed_successfully
 
   # -------------- Seeder ------------------------------- #
   seeder:
@@ -50,11 +50,13 @@ services:
       dockerfile: Dockerfile
     command: python seed.py
     environment:
+      MONGO_ROOT_USER: ${MONGO_ROOT_USER}
+      MONGO_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
       MONGODB_USER: ${MONGODB_USER}
       MONGODB_PASSWORD: ${MONGODB_PASSWORD}
       MONGODB_HOST: mongodb
       MONGODB_PORT: 27017
-      MONGODB_DATABASE: Portfolio
+      MONGODB_DATABASE: test
       MONGODB_TIMEOUT: 5000
       TEST_USER_EMAIL: ${TEST_USER_EMAIL}
       TEST_USER_PASSWORD: ${TEST_USER_PASSWORD}

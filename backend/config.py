@@ -6,7 +6,7 @@ from colorama import Fore, Style
 from pydantic import Field, field_validator, ValidationError
 from pydantic_settings import BaseSettings
 
-ENV = os.getenv('FLASK_ENV', 'development')
+ENV = os.getenv('FLASK_ENV', '')
 
 def load_settings():
     try:
@@ -79,3 +79,4 @@ class Settings(BaseSettings):
     class Config:
         env_file = f'./.env.{ENV}'
         case_sensitive = False
+        extra = 'ignore'
