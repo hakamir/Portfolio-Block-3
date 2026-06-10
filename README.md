@@ -242,11 +242,61 @@ sudo apt update && sudo apt install ffmpeg
 
 **Backend**
 
+To set up the backend, follow the instructions below:
+
+1. configure the backend environment:
+
+```bash
+cd backend
+cp .env.example .env
+```
+
+Example:
+
+```env
+FRONTEND_URL=http://localhost
+FRONTEND_PORT=5173
+
+JWT_SECRET_KEY=secret_key
+JWT_ACCESS_TOKEN_EXPIRES=15
+JWT_REFRESH_TOKEN_EXPIRES=30
+JWT_COOKIE_SECURE=False
+JWT_COOKIE_SAMESITE=Strict
+JWT_COOKIE_CSRF_PROTECT=False
+
+MONGODB_ADMIN_USER=root
+MONGODB_ADMIN_PASSWORD=root_password
+MONGODB_USER=portfolio
+MONGODB_PASSWORD=portfolio_password
+MONGODB_HOST=localhost
+MONGODB_PORT=27018
+MONGODB_DATABASE=Portfolio
+MONGODB_TIMEOUT=500
+
+TEST_USER_EMAIL=test@email.com
+TEST_USER_PASSWORD=Abcd123456789=
+```
+
+2. Set up a virtual environment and install the required dependencies:
+
 ```bash
 python -m venv .venv
-.venv/Scripts/activate        # Windows
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r backend/requirements.txt
-cd backend && flask run --debug
+```
+
+3. Run the following command to create the database and seed the test user and a basic biography:
+   document:
+
+```bash
+cd backend
+python seed.py
+```
+
+4. To run the backend:
+
+```bash
+py app.py
 ```
 
 The API will be available at `http://localhost:5000`.
@@ -282,7 +332,7 @@ MongoDB collections, created automatically on first Docker startup:
 | `messages`  | Contact form submissions                       |
 
 Flask Limiter creates two additional collections automatically: `counter` and `windows`, used to store rate-limits by IP
-address.
+address and request.
 
 ---
 
