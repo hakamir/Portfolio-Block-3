@@ -6,8 +6,6 @@ from colorama import Fore, Style
 from pydantic import Field, field_validator, ValidationError
 from pydantic_settings import BaseSettings
 
-ENV = os.getenv('FLASK_ENV', '')
-
 def load_settings():
     try:
         return Settings()
@@ -77,6 +75,6 @@ class Settings(BaseSettings):
         return timedelta(days=self.jwt_refresh_token_expires)
 
     class Config:
-        env_file = f'./.env.{ENV}'
+        env_file = './.env'
         case_sensitive = False
         extra = 'ignore'

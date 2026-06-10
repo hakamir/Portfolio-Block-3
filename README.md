@@ -135,7 +135,7 @@ All routes are prefixed with `/api`.
 
 <sub>[← Back to summary](#summary)</sub>
 
-### Option A — Docker (recommended)
+### Docker
 
 **1. Configure environment**
 
@@ -150,9 +150,14 @@ MONGO_ROOT_USER=root
 MONGO_ROOT_PASSWORD=your_root_password
 MONGODB_USER=portfolio
 MONGODB_PASSWORD=your_db_password
+MONGODB_DATABASE=Portfolio
+
 JWT_SECRET_KEY=your_long_random_secret
+JWT_ACCESS_TOKEN_EXPIRES=15
+JWT_REFRESH_TOKEN_EXPIRES=30
+
 TEST_USER_EMAIL=admin@example.com
-TEST_USER_PASSWORD=your_admin_password
+TEST_USER_PASSWORD=P@ssw0rdT3$st
 ```
 
 **2. Start all services**
@@ -204,118 +209,8 @@ docker compose -f docker-compose.yml -f docker-compose-prod.yml up --build
 
 Both `docker-compose.yml` and `docker-compose.prod.yml` should be specified for the production build.
 
----
-
-### Option B — Local development
-
-#### Prerequisites
-
-Node.js ≥ 18, Python ≥ 3.14, MongoDB running on `localhost:27017`
-
-#### FFmpeg (required for audio conversion)
-
 > [!NOTE]
-> FFmpeg is not required for the backend to run, but is required for the audio conversion feature. It is still
-> possible to upload and play audio files in `.mp3` format.
-
-Audio files uploaded in formats other than `.mp3` are automatically converted server-side via FFmpeg.
-
-**Supported audio formats:** `mp3` `wma` `aac` `flac` `ogg` `wav` `aiff` `alac` `amr` `m4a`
-
-**macOS**
-
-```bash
-brew install ffmpeg
-```
-
-**Ubuntu / Debian**
-
-```bash
-sudo apt update && sudo apt install ffmpeg
-```
-
-**Windows**
-
-1. Download the latest build from [ffmpeg.org/download.html](https://ffmpeg.org/download.html)
-2. Extract the archive and add the `bin/` folder to your `PATH`
-3. Verify: `ffmpeg -version`
-
-**Backend**
-
-To set up the backend, follow the instructions below:
-
-1. configure the backend environment:
-
-```bash
-cd backend
-cp .env.example .env
-```
-
-Example:
-
-```env
-FRONTEND_URL=http://localhost
-FRONTEND_PORT=5173
-
-JWT_SECRET_KEY=secret_key
-JWT_ACCESS_TOKEN_EXPIRES=15
-JWT_REFRESH_TOKEN_EXPIRES=30
-JWT_COOKIE_SECURE=False
-JWT_COOKIE_SAMESITE=Strict
-JWT_COOKIE_CSRF_PROTECT=False
-
-MONGODB_ADMIN_USER=root
-MONGODB_ADMIN_PASSWORD=root_password
-MONGODB_USER=portfolio
-MONGODB_PASSWORD=portfolio_password
-MONGODB_HOST=localhost
-MONGODB_PORT=27018
-MONGODB_DATABASE=Portfolio
-MONGODB_TIMEOUT=500
-
-TEST_USER_EMAIL=test@email.com
-TEST_USER_PASSWORD=Abcd123456789=
-```
-
-2. Set up a virtual environment and install the required dependencies:
-
-```bash
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r backend/requirements.txt
-```
-
-3. Run the following command to create the database and seed the test user and a basic biography:
-   document:
-
-```bash
-cd backend
-python seed.py
-```
-
-4. To run the backend:
-
-```bash
-py app.py
-```
-
-The API will be available at `http://localhost:5000`.
-
-**Frontend**
-
-> [!NOTE]
-> `.env.development` is gitignored and only required for Option B (local dev without Docker). In Docker, `VITE_API_URL`
-> is passed as a build argument.
-
-```bash
-echo "VITE_API_URL=http://localhost:5000" > .env.development
-npm install
-npm run dev
-```
-
-The app will be available at `http://localhost:5173`.
-
----
+> The production build awaits an SSL certificate to work properly. It cannot be tested locally.
 
 ## Database
 
