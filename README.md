@@ -7,7 +7,7 @@
 > - **[Block 3 — Full-stack with frameworks](https://github.com/hakamir/Portfolio-Block-3) (this repo)**
 
 A full-stack portfolio web application for a music artist. Built with **Vue 3** on the frontend and **Flask** on the
-backend, with MongoDB as the database.
+backend, with **MongoDB** as the database.
 
 ---
 
@@ -15,11 +15,12 @@ backend, with MongoDB as the database.
 
 1. [Features](#features)
 2. [Tech Stack](#tech-stack)
-3. [API Endpoints](#api-endpoints)
+3. [Architecture](#architecture)
 4. [Getting Started](#getting-started)
 5. [Database](#database)
 6. [Testing](#testing)
-7. [API Endpoints (detailed)](#api-endpoints-detailed)
+7. [API Endpoints](#api-endpoints)
+8. [API Endpoints (detailed)](#api-endpoints-detailed)
 
 ---
 
@@ -64,70 +65,375 @@ backend, with MongoDB as the database.
 
 ---
 
-## API Endpoints
+## Architecture
 
 <sub>[← Back to summary](#summary)</sub>
 
-All routes are prefixed with `/api`.
+### Overview
 
-### [Authentication](#authentication-1)
+The application follows a classic three-tier architecture. The browser loads the Vue 3 Single Page Application (SPA),
+which communicates exclusively with the Flask API via Axios. Flask handles all business logic and dispatches to either
+MongoDB (structured data) or the uploads folder (image/audio files).
 
-| Method | Path                                         | Auth | Description       |
-|-------:|----------------------------------------------|------|-------------------|
-|   POST | [`/api/auth/login`](#post-apiauthlogin)      | —    | Login (5 req/min) |
-|   POST | [`/api/auth/logout`](#post-apiauthlogout)    | JWT  | Logout            |
-|   POST | [`/api/auth/refresh`](#put-apiauthpassword)  | JWT  | Refresh token     |
-|    PUT | [`/api/auth/password`](#post-apiauthrefresh) | JWT  | Change password   |
+```mermaid
+flowchart TB
+    classDef blue fill: #024, stroke: #06a
+    classDef yellow fill: #330, stroke: #aa0
+    classDef green fill: #030, stroke: #0a0
 
-### [Artists](#artists-1)
+    subgraph Frontend["Frontend — Vue 3 SPA (Vite, TypeScript)"]
+        Router[Vue Router]:::yellow
+        Pinia[Pinia Store]:::yellow
+        Axios[Axios + JWT Interceptors]:::yellow
+    end
 
-| Method | Path                                        | Auth | Description                      |
-|-------:|---------------------------------------------|------|----------------------------------|
-|    GET | [`/api/artists`](#get-apiartists)           | —    | All artists with albums & tracks |
-|    PUT | [`/api/artists`](#put-apiartists)           | JWT  | Create/update artists (bulk)     |
-| DELETE | [`/api/artists/<id>`](#delete-apiartistsid) | JWT  | Delete artist                    |
+    subgraph Backend["Backend — Flask API"]
+        Auth[Auth Controller]:::green
+        Artists[Artists Controller]:::green
+        Gallery[Gallery Controller]:::green
+        Bio[Biography Controller]:::green
+        Messages[Messages Controller]:::green
+        Uploads[Uploads Controller]:::green
+        Orphans[Orphans Controller]:::green
+    end
 
-### [Biography](#biography-1)
+    subgraph Data["Data Layer"]
+        Mongo[(MongoDB)]:::blue
+        FS[(Uploads Folder)]:::blue
+    end
 
-| Method | Path                                  | Auth | Description       |
-|-------:|---------------------------------------|------|-------------------|
-|    GET | [`/api/biography`](#get-apibiography) | —    | Biography content |
-|    PUT | [`/api/biography`](#put-apibiography) | JWT  | Update biography  |
+    Router --> Pinia
+    Pinia --> Axios
+    Axios -->|HTTP/JSON| Auth & Artists & Gallery & Bio & Messages & Uploads & Orphans
+    Auth & Artists & Gallery & Bio & Messages --> Mongo
+    Uploads & Orphans --> FS
+```
 
-### [Gallery](#gallery-1)
+---
 
-| Method | Path                                        | Auth | Description                    |
-|-------:|---------------------------------------------|------|--------------------------------|
-|    GET | [`/api/gallery`](#get-apigallery)           | —    | All galleries with images      |
-|    PUT | [`/api/gallery`](#put-apigallery)           | JWT  | Create/update galleries (bulk) |
-| DELETE | [`/api/gallery/<id>`](#delete-apigalleryid) | JWT  | Delete gallery                 |
+### Authentication flow
 
-### [Messages](#messages-1)
+Three tokens are involved in the authentication system, each stored differently based on its security requirements. The
+access token lives in-memory (Pinia) to avoid XSS exposure. The refresh token is stored in an HttpOnly cookie, making it
+inaccessible to JavaScript. The CSRF token is stored in a readable cookie so that Vue can extract it and send it as a
+request header, following the double-submit cookie pattern.
 
-| Method | Path                                          | Auth | Description                 |
-|-------:|-----------------------------------------------|------|-----------------------------|
-|    GET | [`/api/messages`](#get-apimessages)           | JWT  | List messages               |
-|   POST | [`/api/messages`](#post-apimessages)          | —    | Submit message (1 req/min)  |
-|  PATCH | [`/api/messages/<id>`](#patch-apimessagesid)  | JWT  | Update message (read/trash) |
-| DELETE | [`/api/messages/<id>`](#delete-apimessagesid) | JWT  | Delete message              |
+```mermaid
+flowchart TB
+    subgraph Browser
+        subgraph JS["JavaScript (Vue / Pinia)"]
+            Access["JWT access token\n(in-memory, Pinia store)"]
+            CSRF_read["CSRF token\n(read from cookie)"]
+        end
+        subgraph Cookies["Browser Cookies"]
+            Refresh["Refresh token\n(HttpOnly — inaccessible to JS)"]
+            CSRF["CSRF token\n(readable by JS)"]
+        end
+    end
 
-### [Uploads](#uploads-1)
+    Access -->|" Authorization: Bearer ... "| Flask
+    CSRF_read -->|" X-CSRF-Token: ... "| Flask
+    Refresh -->|" sent automatically by browser "| Flask
+```
 
-| Method | Path                                                  | Auth | Description              |
-|-------:|-------------------------------------------------------|------|--------------------------|
-|    GET | [`/api/upload/<path>`](#get-apiupload)                | —    | Serve uploaded files     |
-|   POST | [`/api/upload/audio`](#post-apiuploadaudio)           | JWT  | Upload audio files       |
-|   POST | [`/api/upload/gallery`](#post-apiuploadgallery)       | JWT  | Upload gallery images    |
-|   POST | [`/api/upload/background`](#post-apiuploadbackground) | JWT  | Upload background images |
+The sequence below shows the full lifecycle: initial login, a protected request, the automatic token refresh when the
+access token expires (15 min), and the logout flow which clears all three tokens.
 
-### [Orphaned files management](#orphaned-files)
+```mermaid
+sequenceDiagram
+    participant User
+    participant Vue
+    participant Flask
+    User ->> Vue: Login form
+    Vue ->> Flask: POST /auth/login
+    Flask -->> Vue: JWT access token + Refresh token (HttpOnly cookie) + CSRF token
+    Vue ->> Flask: Protected request + Bearer token + CSRF token (header)
+    Flask -->> Vue: Data
+    Note over Vue, Flask: Access token expires (15 min)
+    Vue ->> Flask: POST /auth/refresh + CSRF token (cookie sent automatically)
+    Flask -->> Vue: New JWT access token + new CSRF token
+    Vue ->> Flask: Retry protected request + Bearer token + CSRF token (header)
+    Flask -->> Vue: Data
+    Note over Vue, Flask: Refresh token valid for 30 days
 
-| Method | Path                                                | Auth | Description                 |
-|-------:|-----------------------------------------------------|------|-----------------------------|
-|    GET | [`/api/orphans/audio`](#get-apiorphansaudio)        | JWT  | List orphaned audio files   |
-| DELETE | [`/api/orphans/audio`](#delete-apiorphansaudio)     | JWT  | Delete orphaned audio files |
-|    GET | [`/api/orphans/gallery`](#get-apiorphansgallery)    | JWT  | List orphaned image files   |
-| DELETE | [`/api/orphans/gallery`](#delete-apiorphansgallery) | JWT  | Delete orphaned image files |
+    alt User logs out
+        User ->> Vue: Logout action
+        Vue ->> Flask: POST /auth/logout + Bearer token + CSRF token (header)
+        Flask -->> Vue: Unset refresh token cookie + Unset CSRF cookie
+        Vue ->> Vue: Clear Pinia store (access token)
+    end
+```
+
+---
+
+### Data model
+
+MongoDB stores five collections. Three of them use nested documents: `artists` embeds albums and tracks, `galleries`
+embeds images, and `biography` embeds sections. `messages` and `users` are flat collections.
+
+```mermaid
+erDiagram
+    ARTIST {
+        ObjectId _id
+        string slug
+        string title
+        int order
+    }
+    ALBUM {
+        string slug
+        string title
+        int order
+    }
+    TRACK {
+        int trackNumber
+        string title
+        string src
+        string[] tags
+    }
+    GALLERY {
+        ObjectId _id
+        string slug
+        string title
+        int order
+    }
+    IMAGE {
+        string src
+        string title
+        string location
+        date date
+        int order
+        string alt
+    }
+    BIOGRAPHY {
+        ObjectId _id
+        string title
+        object image
+        datetime updated_at
+    }
+    SECTION {
+        string title
+        string[] paragraphs
+    }
+    MESSAGE {
+        ObjectId _id
+        string name
+        string email
+        string message
+        datetime date
+        bool read
+        bool trashed
+        bool replied
+        datetime replied_at
+    }
+    USER {
+        ObjectId _id
+        string email
+        string password
+    }
+
+    ARTIST ||--o{ ALBUM: contains
+    ALBUM ||--o{ TRACK: contains
+    GALLERY ||--o{ IMAGE: contains
+    BIOGRAPHY ||--o{ SECTION: contains
+```
+
+---
+
+### File upload & orphan lifecycle
+
+Binary files (audio, images) and their metadata are stored independently — the file in the uploads folder, the metadata
+in MongoDB. This means deleting an artist or gallery via the API removes the metadata but leaves the file on disk. These
+files are called orphans. A dedicated endpoint pair (`GET` + `DELETE /orphans/*`) allows the admin to inspect and clean
+them up from the dashboard.
+
+```mermaid
+flowchart LR
+    classDef cyan fill: #033, stroke: #0aa 
+    classDef blue fill: #024, stroke: #06a
+    Upload["POST /upload/audio\nor /upload/gallery"]:::cyan
+    Meta["PUT /artists\nor PUT /gallery"]:::cyan
+    DeleteDoc["DELETE /artists/:id\nor /gallery/:id"]:::cyan
+    FS[(Uploads Folder)]:::blue
+    DB[(MongoDB)]:::blue
+    Upload -->|saves file| FS
+    Meta -->|saves metadata| DB
+    FS & DB -->|both present| Published[Visible in Portfolio]
+    DeleteDoc -->|removes metadata| DB
+    DB -.->|file remains| Orphan[Orphaned file in /uploads]
+    Orphan -->|GET /orphans/audio\nor /orphans/gallery| List[List orphans]
+    List -->|DELETE /orphans/audio\nor /orphans/gallery| Cleaned[File deleted from /uploads]
+```
+
+---
+
+### Rate limiting
+
+Three endpoints are rate-limited to mitigate brute-force and spam risks: the login route (5 req/min), the password
+change route (1 req/min), and the public contact form (1 req/min). Limits are tracked per IP by Flask-Limiter, which
+persists its counters in MongoDB (`counter` and `windows` collections).
+
+```mermaid
+flowchart LR
+    classDef cyan fill: #033, stroke: #0aa 
+    classDef yellow fill: #330, stroke: #aa0
+    classDef red fill: #300, stroke: #a00
+    classDef green fill: #030, stroke: #0a0
+    Login["POST /auth/login"]:::cyan
+    Password["PUT /auth/password"]:::cyan
+    Contact["POST /messages"]:::cyan
+    L1["5 req/min"]:::yellow
+    L2["1 req/min"]:::yellow
+    L3["1 req/min"]:::yellow
+    Limiter["Flask-Limiter\nMongoDB (counter + windows)"]:::green
+    Block["429 Too Many Requests"]:::red
+    Login --- L1 --> Limiter
+    Password --- L2 --> Limiter
+    Contact --- L3 --> Limiter
+    Limiter --> Block
+```
+
+---
+
+### Docker services
+
+**Development** runs four services. The frontend is exposed on `:80`, the Flask API on `:5000`, and MongoDB is
+accessible from the host on `:27018` (e.g. via Compass). A `seeder` service runs once on first startup to create the
+admin user and default biography document.
+
+**Production** exposes only two ports through Nginx: `:80` returns a 301 redirect to HTTPS, and `:443` handles SSL
+termination (TLSv1.2/1.3, Let's Encrypt) and applies security headers (HSTS, CSP, X-Frame-Options). Traffic is then
+routed internally — `/api/*` is proxied to Flask via `http://backend:5000`, `/` serves the built Vue SPA, and static
+assets are cached for 1 year. The backend (`http://backend:5000`) and MongoDB (`mongodb:27017`) are reachable only
+within the Docker network.
+
+```mermaid
+flowchart TB
+    classDef cyan fill: #033, stroke: #0aa
+    classDef yellow fill: #330, stroke: #aa0
+    classDef orange fill: #530, stroke: #a70
+    classDef green fill: #030, stroke: #0a0
+    classDef blue fill: #024, stroke: #06a
+
+    subgraph dev["Development"]
+        Browser_dev[Browser]
+        subgraph compose_dev["docker-compose.yml + docker-compose.override.yml"]
+            Frontend_dev["frontend:80\nVue app (Vite dev server)"]:::yellow
+            Backend_dev["backend:5000\nFlask API"]:::green
+            MongoDB_dev[("mongodb:27018\nMongoDB")]:::blue
+            Seeder_dev["seeder\nCreates admin user\n+ default biography"]:::orange
+        end
+        FS_dev[(Uploads Folder)]:::blue
+        Browser_dev --> Frontend_dev
+        Frontend_dev <-->|Axios| Backend_dev
+        Backend_dev <--> MongoDB_dev
+        Seeder_dev -->|on first run| MongoDB_dev
+        Backend_dev <-->|serves files| FS_dev
+    end
+
+    subgraph prod["Production"]
+        Browser_prod[Browser]
+
+        subgraph compose_prod["docker-compose.yml + docker-compose.prod.yml"]
+            subgraph nginx_box["Nginx"]
+                N1[":80 → 301 redirect to HTTPS"]
+                N2[":443 SSL — TLSv1.2/1.3\nHSTS · X-Frame-Options\nCSP · X-Content-Type-Options"]
+                N3["location /api/ → proxy_pass backend:5000\nlocation / → try_files (SPA)\nlocation *.js|css|webp… → cache 1y"]
+            end
+            Frontend_prod["frontend\nVue app (built)\n/usr/share/nginx/html"]:::yellow
+            Backend_prod["backend\nFlask API\n(internal — http://backend:5000)"]:::green
+            MongoDB_prod[("MongoDB\n(internal — mongodb:27017)")]:::blue
+            Seeder_prod["seeder\nCreates admin user\n+ default biography"]:::orange
+        end
+        FS_prod[(Uploads Folder)]:::blue
+        Browser_prod -->|HTTP :80| N1
+        N1 -->|301 https://deviance . studio| Browser_prod
+        Browser_prod -->|HTTPS :443| N2
+        N2 --> N3
+        N3 -->|" static files (SPA) "| Frontend_prod
+        N3 -->|" /api/* "| Backend_prod
+        Backend_prod <--> MongoDB_prod
+        Seeder_prod -->|on first run| MongoDB_prod
+        Backend_prod <-->|serves files| FS_prod
+    end
+    dev ~~~ prod
+```
+
+---
+
+### CI/CD
+
+Two pipelines run on GitHub Actions. **CI** triggers on every push to `framework` and runs in parallel: the backend test
+suite (pytest) and a frontend build check. **CD** triggers on every push to `main`, builds and publishes Docker images
+to GHCR, then deploys to the VPS over SSH.
+
+A ruleset protects `main` from direct pushes. Changes must go through `framework` first, then reach `main` via a pull
+request, which triggers the CD pipeline.
+
+```mermaid
+flowchart TB
+    classDef yellow fill: #330, stroke: #aa0
+    classDef green fill: #030, stroke: #0a0
+    classDef cyan fill: #033, stroke: #0aa
+    classDef blue fill: #024, stroke: #06a
+    classDef orange fill: #530, stroke: #a70
+    classDef gray fill: #222, stroke: #666
+    Dev["Developer"]:::gray
+    Framework["branch: framework"]:::gray
+    PR["Pull Request"]:::gray
+    Main["branch: main\n(protected — no direct push)"]:::gray
+    Dev -->|push| Framework
+    Framework -->|triggers| ci
+    Framework -->|CI passes| PR
+    PR -->|merge| Main
+    Main -->|triggers| cd
+
+    subgraph ci["CI — push to 'framework'"]
+        direction TB
+        subgraph test["Backend API tests"]
+            direction LR
+            T1["Checkout"]:::cyan
+            T2["Python 3.14"]:::cyan
+            T3["pip install requirements\n+ requirements-test"]:::cyan
+            T4["pytest"]:::cyan
+            T1 --> T2 --> T3 --> T4
+        end
+        subgraph build["Frontend build check"]
+            direction LR
+            F1["Checkout"]:::yellow
+            F2["Node.js 22"]:::yellow
+            F3["npm ci"]:::yellow
+            F4["npm run build"]:::yellow
+            F1 --> F2 --> F3 --> F4
+        end
+        test --> build
+        test ~~~ build
+    end
+
+    subgraph cd["CD — push to 'main'"]
+        direction TB
+        subgraph publish["Publish Docker images"]
+            P1["Checkout"]:::green
+            P2["Login to GHCR"]:::green
+            P3["Build & push\nbackend:latest"]:::green
+            P4["Build & push\nfrontend:latest\n(VITE_API_URL secret)"]:::green
+            
+            P1 --> P2 --> P3 & P4
+        end
+        subgraph deploy["Deploy on VPS"]
+            D1["Checkout"]:::orange
+            D2["SCP → copy\ndocker-compose.yml\ndocker-compose.prod.yml\nnginx.prod.conf"]:::orange
+            D3["SSH → docker compose pull\n+ up -d\n+ image prune"]:::orange
+            D1 --> D2 --> D3
+        end
+        GHCR[("GHCR\nghcr.io/owner/\nbackend:latest\nfrontend:latest")]:::blue
+        publish --> deploy
+    end
+    
+    VPS["VPS"]:::blue
+    P3 & P4 --> GHCR
+    GHCR -->|pull| D3
+    D3 --> VPS
+```
 
 ---
 
@@ -209,8 +515,8 @@ docker compose -f docker-compose.yml -f docker-compose-prod.yml up --build
 
 Both `docker-compose.yml` and `docker-compose.prod.yml` should be specified for the production build.
 
-> [!NOTE]
-> The production build awaits an SSL certificate to work properly. It cannot be tested locally.
+> [!WARNING]
+> The production build awaits an SSL certificate to work properly. It is not intended to be tested locally.
 
 ## Database
 
@@ -366,6 +672,73 @@ verifies that this lower-level validation still surfaces as a `400` response:
 response = client.put("/api/artists", json=[{**_VALID_ARTIST_PAYLOAD, "albums": []}], ...)
 assert response.status_code == 400
 ```
+
+---
+
+## API Endpoints
+
+<sub>[← Back to summary](#summary)</sub>
+
+All routes are prefixed with `/api`.
+
+### [Authentication](#authentication-1)
+
+| Method | Path                                         | Auth | Description       |
+|-------:|----------------------------------------------|------|-------------------|
+|   POST | [`/api/auth/login`](#post-apiauthlogin)      | —    | Login (5 req/min) |
+|   POST | [`/api/auth/logout`](#post-apiauthlogout)    | JWT  | Logout            |
+|   POST | [`/api/auth/refresh`](#put-apiauthpassword)  | JWT  | Refresh token     |
+|    PUT | [`/api/auth/password`](#post-apiauthrefresh) | JWT  | Change password   |
+
+### [Artists](#artists-1)
+
+| Method | Path                                        | Auth | Description                      |
+|-------:|---------------------------------------------|------|----------------------------------|
+|    GET | [`/api/artists`](#get-apiartists)           | —    | All artists with albums & tracks |
+|    PUT | [`/api/artists`](#put-apiartists)           | JWT  | Create/update artists (bulk)     |
+| DELETE | [`/api/artists/<id>`](#delete-apiartistsid) | JWT  | Delete artist                    |
+
+### [Biography](#biography-1)
+
+| Method | Path                                  | Auth | Description       |
+|-------:|---------------------------------------|------|-------------------|
+|    GET | [`/api/biography`](#get-apibiography) | —    | Biography content |
+|    PUT | [`/api/biography`](#put-apibiography) | JWT  | Update biography  |
+
+### [Gallery](#gallery-1)
+
+| Method | Path                                        | Auth | Description                    |
+|-------:|---------------------------------------------|------|--------------------------------|
+|    GET | [`/api/gallery`](#get-apigallery)           | —    | All galleries with images      |
+|    PUT | [`/api/gallery`](#put-apigallery)           | JWT  | Create/update galleries (bulk) |
+| DELETE | [`/api/gallery/<id>`](#delete-apigalleryid) | JWT  | Delete gallery                 |
+
+### [Messages](#messages-1)
+
+| Method | Path                                          | Auth | Description                 |
+|-------:|-----------------------------------------------|------|-----------------------------|
+|    GET | [`/api/messages`](#get-apimessages)           | JWT  | List messages               |
+|   POST | [`/api/messages`](#post-apimessages)          | —    | Submit message (1 req/min)  |
+|  PATCH | [`/api/messages/<id>`](#patch-apimessagesid)  | JWT  | Update message (read/trash) |
+| DELETE | [`/api/messages/<id>`](#delete-apimessagesid) | JWT  | Delete message              |
+
+### [Uploads](#uploads-1)
+
+| Method | Path                                                  | Auth | Description              |
+|-------:|-------------------------------------------------------|------|--------------------------|
+|    GET | [`/api/upload/<path>`](#get-apiupload)                | —    | Serve uploaded files     |
+|   POST | [`/api/upload/audio`](#post-apiuploadaudio)           | JWT  | Upload audio files       |
+|   POST | [`/api/upload/gallery`](#post-apiuploadgallery)       | JWT  | Upload gallery images    |
+|   POST | [`/api/upload/background`](#post-apiuploadbackground) | JWT  | Upload background images |
+
+### [Orphaned files management](#orphaned-files)
+
+| Method | Path                                                | Auth | Description                 |
+|-------:|-----------------------------------------------------|------|-----------------------------|
+|    GET | [`/api/orphans/audio`](#get-apiorphansaudio)        | JWT  | List orphaned audio files   |
+| DELETE | [`/api/orphans/audio`](#delete-apiorphansaudio)     | JWT  | Delete orphaned audio files |
+|    GET | [`/api/orphans/gallery`](#get-apiorphansgallery)    | JWT  | List orphaned image files   |
+| DELETE | [`/api/orphans/gallery`](#delete-apiorphansgallery) | JWT  | Delete orphaned image files |
 
 ---
 
