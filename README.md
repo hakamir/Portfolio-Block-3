@@ -264,6 +264,7 @@ flowchart LR
     Orphan -->|GET /orphans/audio\nor /orphans/gallery| List[List orphans]
     List -->|DELETE /orphans/audio\nor /orphans/gallery| Cleaned[File deleted from /uploads]
     List -->|GET /upload/filepath?download = true| Download[Download file]
+    List -->|POST /orphans/audio/rollback| Rollback[Rollback metadata]
 ```
 
 ---
