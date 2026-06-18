@@ -262,6 +262,7 @@ flowchart LR
     DB -.->|file remains| Orphan[Orphaned file in /uploads]
     Orphan -->|GET /orphans/audio\nor /orphans/gallery| List[List orphans]
     List -->|DELETE /orphans/audio\nor /orphans/gallery| Cleaned[File deleted from /uploads]
+    List -->|GET /upload/filepath?download=true| Download[Download file]
 ```
 
 ---
@@ -297,7 +298,7 @@ flowchart LR
 ### Docker services
 
 **Development** runs four services. The frontend is exposed on `:80`, the Flask API on `:5000`, and MongoDB is
-accessible from the host on `:27018` (e.g. via Compass). A `seeder` service runs once on first startup to create the
+accessible from the host on `:27018` (e.g., via Compass). A `seeder` service runs once on first startup to create the
 admin user and default biography document.
 
 **Production** exposes only two ports through Nginx: `:80` returns a 301 redirect to HTTPS, and `:443` handles SSL
@@ -1229,6 +1230,11 @@ Permanently deletes a message. JWT required.
 Serves files from the `uploads/` directory (backgrounds, audio, and gallery). No authentication required.
 
 Example: `GET /api/upload/background/hero/hero-512.wepb`
+
+Can also be used to download files from the server with the `download` query parameter set to `true`, setting the response
+header `Content-Disposition: attachment`. 
+
+Examples: `GET /api/upload/audio/artist/album/track.mp3?download=true`
 
 ## `POST /api/upload/audio`
 
