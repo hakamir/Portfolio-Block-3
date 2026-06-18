@@ -416,7 +416,6 @@ flowchart TB
             P2["Login to GHCR"]:::green
             P3["Build & push\nbackend:latest"]:::green
             P4["Build & push\nfrontend:latest\n(VITE_API_URL secret)"]:::green
-            
             P1 --> P2 --> P3 & P4
         end
         subgraph deploy["Deploy on VPS"]
@@ -428,7 +427,7 @@ flowchart TB
         GHCR[("GHCR\nghcr.io/owner/\nbackend:latest\nfrontend:latest")]:::blue
         publish --> deploy
     end
-    
+
     VPS["VPS"]:::blue
     P3 & P4 --> GHCR
     GHCR -->|pull| D3
@@ -504,7 +503,7 @@ mongodb://root:<MONGO_ROOT_PASSWORD>@localhost:27018/?authSource=admin
 Or :
 
 ```
-mongodb://<MONGODB_USER>:<MONGO_PASSWORD>@localhost:27018/?authSource=admin
+mongodb://<MONGODB_USER>:<MONGO_PASSWORD>@localhost:27018/?authSource=<MONGODB_DATABASE>
 ```
 
 ### Production
@@ -770,6 +769,8 @@ Rate-limited to **5 req/min** by default. No authentication required.
   "token": "<JWT access token>"
 }
 ```
+
+Also, a refresh token is set in an HttpOnly cookie on success.
 
 **Errors:** `400` missing credentials - `401` invalid credentials
 

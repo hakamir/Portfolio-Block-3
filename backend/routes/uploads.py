@@ -10,8 +10,9 @@ uploads_bp = Blueprint('uploads', __name__)
 
 @uploads_bp.route('/upload/<path:filename>')
 def uploaded_file(filename):
+    download = request.args.get('download') == 'true'
     settings = current_app.config['settings']
-    return send_from_directory(settings.upload_folder, filename)
+    return send_from_directory(settings.upload_folder, filename, as_attachment=download)
 
 
 @uploads_bp.route('/upload/audio', methods=['POST'])

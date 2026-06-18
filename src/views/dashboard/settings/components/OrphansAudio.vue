@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import {useAudioStore} from '@stores'
-import {Trash2, Music, Music2, Disc, PackageOpen} from '@lucide/vue'
+import {Trash2, Music, Music2, Disc, PackageOpen, Download} from '@lucide/vue'
 import {computed, onMounted, ref} from "vue";
+import Tooltip from "@components/layout/Tooltip.vue";
 
 interface OrphanAudio {
   artist: string;
@@ -13,6 +14,8 @@ interface OrphanAudio {
 const audioStore = useAudioStore()
 const selectedOrphans = ref<string[]>([])
 const emit = defineEmits<{ requestDelete: [srcs: string[]] }>()
+
+const apiUrl = import.meta.env.VITE_API_URL + '/api'
 
 const orphansUrl = ref<string[]>([])
 const orphans = ref<OrphanAudio[]>([])
@@ -153,7 +156,8 @@ const formatData = () => {
             class="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-200 text-red-800 font-semibold border border-red-200 hover:bg-red-600 hover:text-white transition group">
           <Trash2 class="w-6 h-6"/>
           Delete selected
-          <span class="w-6 h-6 flex items-center justify-center border rounded-full text-sm bg-red-100 group-hover:bg-red-700 transition">
+          <span
+              class="w-6 h-6 flex items-center justify-center border rounded-full text-sm bg-red-100 group-hover:bg-red-700 transition">
             {{ selectedOrphans.length }}
           </span>
         </button>
@@ -192,7 +196,15 @@ const formatData = () => {
             <span :class="selectedOrphans.includes(orphan.src) ? 'font-semibold' : 'font-medium'">{{
                 orphan.track
               }}</span>
-            <span class="text-xs text-gray-400 ml-auto font-mono">{{ orphan.src }}</span>
+            <div class="ml-auto" @click.stop>
+              <Tooltip message="Download audio file" side="bottom" :icon="Download" iconBgColor="bg-lime-600">
+                <div class="flex gap-2 items-center group hover:bg-blue-100 hover:font-semibold transition px-3 py-2 rounded-full">
+                  <Download :size="18" class="text-gray-400 group-hover:text-blue-600"/>
+                  <a :href="`${apiUrl}/upload/audio/${orphan.src}?download=true`"
+                     class="text-xs text-gray-400 font-mono group-hover:text-blue-600">{{ orphan.src }}</a>
+                </div>
+              </Tooltip>
+            </div>
           </div>
         </div>
       </div>
