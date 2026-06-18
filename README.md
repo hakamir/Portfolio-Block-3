@@ -41,7 +41,8 @@ backend, with **MongoDB** as the database.
 - **Gallery** — Full CRUD for galleries and images; image upload (WebP)
 - **Biography** — Content editor
 - **Messages** — Inbox with read/unread status, trash and bulk actions
-- **Settings** — Change password; orphaned gallery and audio cleanup; change background images
+- **Settings** — Change password; orphaned gallery and audio cleanup; orphaned audio rollback from ID3 metadata; change
+  background images
 
 ---
 
@@ -262,6 +263,7 @@ flowchart LR
     DB -.->|file remains| Orphan[Orphaned file in /uploads]
     Orphan -->|GET /orphans/audio\nor /orphans/gallery| List[List orphans]
     List -->|DELETE /orphans/audio\nor /orphans/gallery| Cleaned[File deleted from /uploads]
+    List -->|GET /upload/filepath?download = true| Download[Download file]
 ```
 
 ---
@@ -297,7 +299,7 @@ flowchart LR
 ### Docker services
 
 **Development** runs four services. The frontend is exposed on `:80`, the Flask API on `:5000`, and MongoDB is
-accessible from the host on `:27018` (e.g. via Compass). A `seeder` service runs once on first startup to create the
+accessible from the host on `:27018` (e.g., via Compass). A `seeder` service runs once on first startup to create the
 admin user and default biography document.
 
 **Production** exposes only two ports through Nginx: `:80` returns a 301 redirect to HTTPS, and `:443` handles SSL
@@ -416,7 +418,6 @@ flowchart TB
             P2["Login to GHCR"]:::green
             P3["Build & push\nbackend:latest"]:::green
             P4["Build & push\nfrontend:latest\n(VITE_API_URL secret)"]:::green
-            
             P1 --> P2 --> P3 & P4
         end
         subgraph deploy["Deploy on VPS"]
@@ -428,7 +429,7 @@ flowchart TB
         GHCR[("GHCR\nghcr.io/owner/\nbackend:latest\nfrontend:latest")]:::blue
         publish --> deploy
     end
-    
+
     VPS["VPS"]:::blue
     P3 & P4 --> GHCR
     GHCR -->|pull| D3
@@ -504,7 +505,7 @@ mongodb://root:<MONGO_ROOT_PASSWORD>@localhost:27018/?authSource=admin
 Or :
 
 ```
-mongodb://<MONGODB_USER>:<MONGO_PASSWORD>@localhost:27018/?authSource=admin
+mongodb://<MONGODB_USER>:<MONGO_PASSWORD>@localhost:27018/?authSource=<MONGODB_DATABASE>
 ```
 
 ### Production
@@ -733,12 +734,13 @@ All routes are prefixed with `/api`.
 
 ### [Orphaned files management](#orphaned-files)
 
-| Method | Path                                                | Auth | Description                 |
-|-------:|-----------------------------------------------------|------|-----------------------------|
-|    GET | [`/api/orphans/audio`](#get-apiorphansaudio)        | JWT  | List orphaned audio files   |
-| DELETE | [`/api/orphans/audio`](#delete-apiorphansaudio)     | JWT  | Delete orphaned audio files |
-|    GET | [`/api/orphans/gallery`](#get-apiorphansgallery)    | JWT  | List orphaned image files   |
-| DELETE | [`/api/orphans/gallery`](#delete-apiorphansgallery) | JWT  | Delete orphaned image files |
+| Method | Path                                                           | Auth | Description                  |
+|-------:|----------------------------------------------------------------|------|------------------------------|
+|    GET | [`/api/orphans/audio`](#get-apiorphansaudio)                   | JWT  | List orphaned audio files    |
+|   POST | [`/api/orphans/audio/rollback`](#post-apiorphansaudiorollback) | JWT  | Restore orphaned audio files |
+| DELETE | [`/api/orphans/audio`](#delete-apiorphansaudio)                | JWT  | Delete orphaned audio files  |
+|    GET | [`/api/orphans/gallery`](#get-apiorphansgallery)               | JWT  | List orphaned image files    |
+| DELETE | [`/api/orphans/gallery`](#delete-apiorphansgallery)            | JWT  | Delete orphaned image files  |
 
 ---
 
@@ -770,6 +772,8 @@ Rate-limited to **5 req/min** by default. No authentication required.
   "token": "<JWT access token>"
 }
 ```
+
+Also, a refresh token is set in an HttpOnly cookie on success.
 
 **Errors:** `400` missing credentials - `401` invalid credentials
 
@@ -1229,15 +1233,27 @@ Serves files from the `uploads/` directory (backgrounds, audio, and gallery). No
 
 Example: `GET /api/upload/background/hero/hero-512.wepb`
 
+Can also be used to download files from the server with the `download` query parameter set to `true`, setting the
+response
+header `Content-Disposition: attachment`.
+
+Examples: `GET /api/upload/audio/artist/album/track.mp3?download=true`
+
 ## `POST /api/upload/audio`
 
-Uploads audio files. JWT required.
+Uploads an audio file. JWT required. Non-MP3 files are automatically converted to MP3 (192kbps, 44100 Hz stereo) via
+ffmpeg before saving. ID3 tags (artist, album, title, track number) are written to the file after conversion, enabling
+orphan rollback.
 
 ```formdata
 file: <file> [Content-Disposition: form-data; name="file"; filename="<filename>.ext" Content-Type: audio/*]
 artistSlug: artist_slug
 albumSlug: album_slug
-trackSrc: track_slug.ext
+trackSrc: track_slug.mp3
+artistTitle: Artist Title
+albumTitle: Album Title
+trackTitle: Track Title
+trackNumber: 1
 ```
 
 **Response `201`:**
@@ -1300,7 +1316,72 @@ destination: <destination> (hero | portfolio | biography)
 
 ## `GET /api/orphans/audio`
 
-Returns a list of audio files that are not associated with any artist. JWT required.
+Returns a list of audio files present on the server but not linked to any artist in the database. Each entry includes
+the relative file path and ID3 metadata if available. JWT required.
+
+**Response `200`:**
+
+```json
+[
+  {
+    "file": "artist_slug/album_slug/track.mp3",
+    "metadata": {
+      "artist": "Artist Title",
+      "album": "Album Title",
+      "title": "Track Title",
+      "track_number": 1
+    }
+  },
+  {
+    "file": "artist_slug/album_slug/track_no_tags.mp3",
+    "metadata": null
+  }
+]
+```
+
+`metadata` is `null` if the file has no ID3 tags (e.g., uploaded before ID3 support was introduced). Files with `null`
+metadata cannot be restored via the rollback endpoint and must be re-uploaded.
+
+## `POST /api/orphans/audio/rollback`
+
+Restores orphaned audio files to the database by reading their ID3 tags and upserting the corresponding artist → album →
+track structure into MongoDB. JWT required.
+
+Only files with valid ID3 metadata can be restored. If the artist or album does not exist, they are created with
+`order: 1` and the slug derived from the file path. If the track already exists in the database, it is skipped.
+
+**Request body:**
+
+```json
+{
+  "files": [
+    "artist_slug/album_slug/track.mp3",
+    "artist_slug/album_slug/track2.mp3"
+  ]
+}
+```
+
+**Response `200`:**
+
+```json
+{
+  "restored": [
+    "artist_slug/album_slug/track.mp3"
+  ],
+  "failed": [
+    {
+      "file": "artist_slug/album_slug/track2.mp3",
+      "error": "No ID3 metadata found"
+    }
+  ]
+}
+```
+
+`restored` contains paths successfully upserted into the database.`failed` contains paths that could not be restored,
+with an `error`field describing the reason. A `200` is returned even if some files failed — inspect `failed` to identify
+partial failures.
+
+**Errors:** `400` missing or invalid request body - `401` unauthorized
 
 ## `DELETE /api/orphans/audio`
 

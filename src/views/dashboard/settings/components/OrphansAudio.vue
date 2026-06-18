@@ -1,27 +1,32 @@
 <script setup lang="ts">
 import {useAudioStore} from '@stores'
-import {Trash2, Music, Music2, Disc, PackageOpen} from '@lucide/vue'
+import type {OrphanAudioRaw} from '@stores'
+import {Trash2, Music, Music2, Disc, PackageOpen, Download, RotateCcw} from '@lucide/vue'
 import {computed, onMounted, ref} from "vue";
+import Tooltip from "@components/layout/Tooltip.vue";
 
 interface OrphanAudio {
   artist: string;
   album: string;
   track: string;
   src: string;
+  metadata: OrphanAudioRaw['metadata'];
 }
 
 const audioStore = useAudioStore()
 const selectedOrphans = ref<string[]>([])
-const emit = defineEmits<{ requestDelete: [srcs: string[]] }>()
+const emit = defineEmits<{
+  requestDelete: [srcs: string[]],
+  requestRollback: [srcs: string[]]
+}>()
 
-const orphansUrl = ref<string[]>([])
+const apiUrl = import.meta.env.VITE_API_URL + '/api'
 const orphans = ref<OrphanAudio[]>([])
 
 // Fetch orphan audio files from store and transform them into structured data for UI
 onMounted(async () => {
   await audioStore.fetchOrphans()
       .then(() => {
-        orphansUrl.value = audioStore.orphans
         formatData()
       })
       .catch(error => console.error('Error fetching orphans:', error))
@@ -45,14 +50,13 @@ const toggleSelectAll = () => {
     selectedOrphans.value = orphans.value.map(o => o.src)
   }
 }
+
 // Toggle selection of all tracks for a given artist
 const toggleSelectArtist = (artistName: string) => {
   const artistSrcs = Object.values(groupedOrphans.value[artistName])
       .flat()
       .map(o => o.src)
-
   const allSelected = artistSrcs.every(src => selectedOrphans.value.includes(src))
-
   if (allSelected) {
     selectedOrphans.value = selectedOrphans.value.filter(src => !artistSrcs.includes(src))
   } else {
@@ -63,9 +67,7 @@ const toggleSelectArtist = (artistName: string) => {
 // Toggle selection of all tracks for a given album
 const toggleSelectAlbum = (artistName: string, albumName: string) => {
   const albumSrcs = groupedOrphans.value[artistName][albumName].map(o => o.src)
-
   const allSelected = albumSrcs.every(src => selectedOrphans.value.includes(src))
-
   if (allSelected) {
     selectedOrphans.value = selectedOrphans.value.filter(src => !albumSrcs.includes(src))
   } else {
@@ -94,23 +96,30 @@ const isAlbumSelected = (artistName: string, albumName: string) => {
   return albumSrcs.every(src => selectedOrphans.value.includes(src))
 }
 
-// Convert raw file paths into structured objects with human-readable labels
-const formatData = () => {
-  orphans.value = orphansUrl.value.map(url => {
-    // Split the URL into artist, album, and track slugs
-    const [artistSlug, albumSlug, trackSrc] = url.split('/')
-    // Convert slug (e.g., "my_track.mp3") into "My Track" for readability
-    const toLabel = (slug: string) => slug
-        .replace(/\.[^.]+$/, '')     // remove extension (e.g., .mp3)
-        .split('_')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ')
+// Indicates if all selected orphans have ID3 metadata available for rollback
+const canRollback = computed(() =>
+    selectedOrphans.value.length > 0 &&
+    selectedOrphans.value.every(src =>
+        orphans.value.find(o => o.src === src)?.metadata !== null
+    )
+)
 
+const toLabel = (slug: string) => slug
+    .replace(/\.[^.]+$/, '')
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+
+// Convert raw API response into structured objects with human-readable labels
+const formatData = () => {
+  orphans.value = audioStore.orphans.map((orphan: OrphanAudioRaw) => {
+    const [artistSlug, albumSlug, trackSrc] = orphan.file.split('/')
     return {
-      artist: toLabel(artistSlug),
-      album: toLabel(albumSlug),
-      track: toLabel(trackSrc),
-      src: url
+      artist: orphan.metadata?.artist || toLabel(artistSlug),
+      album: orphan.metadata?.album || toLabel(albumSlug),
+      track: orphan.metadata?.title || toLabel(trackSrc),
+      src: orphan.file,
+      metadata: orphan.metadata ?? null
     } as OrphanAudio
   })
 }
@@ -137,7 +146,7 @@ const formatData = () => {
     <div v-else class="flex flex-col gap-2">
 
       <!-- Select all -->
-      <div class="flex justify-between items-center mb-2">
+      <div class="lg:flex justify-between items-center mb-2">
         <label
             class="bg-gray-200 flex items-center gap-2 text-gray-700 cursor-pointer select-none border border-gray-200 rounded-xl px-4 py-2 has-[input:checked]:bg-blue-400 has-[input:checked]:text-white transition">
           <input type="checkbox"
@@ -146,17 +155,32 @@ const formatData = () => {
                  class="hidden"/>
           Select all ({{ selectedOrphans.length }} / {{ orphans.length }})
         </label>
-        <!-- Delete selected -->
-        <button
-            v-if="selectedOrphans.length > 0"
-            @click="emit('requestDelete', selectedOrphans)"
-            class="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-200 text-red-800 font-semibold border border-red-200 hover:bg-red-600 hover:text-white transition group">
-          <Trash2 class="w-6 h-6"/>
-          Delete selected
-          <span class="w-6 h-6 flex items-center justify-center border rounded-full text-sm bg-red-100 group-hover:bg-red-700 transition">
+        <!-- Rollback selected -->
+        <div class="flex gap-2 justify-between">
+          <button
+              v-if="selectedOrphans.length > 0 && canRollback"
+              @click="emit('requestRollback', selectedOrphans)"
+              class="flex items-center gap-2 px-4 py-2 rounded-xl bg-lime-200 text-lime-800 font-semibold border border-green-200 hover:bg-lime-600 hover:text-white transition group">
+            <RotateCcw class="w-6 h-6"/>
+            Restore selected
+            <span
+                class="w-6 h-6 flex items-center justify-center border rounded-full text-sm bg-green-100 group-hover:bg-lime-700 transition">
             {{ selectedOrphans.length }}
           </span>
-        </button>
+          </button>
+          <!-- Delete selected -->
+          <button
+              v-if="selectedOrphans.length > 0"
+              @click="emit('requestDelete', selectedOrphans)"
+              class="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-200 text-red-800 font-semibold border border-red-200 hover:bg-red-600 hover:text-white transition group">
+            <Trash2 class="w-6 h-6"/>
+            Delete selected
+            <span
+                class="w-6 h-6 flex items-center justify-center border rounded-full text-sm bg-red-100 group-hover:bg-red-700 transition">
+            {{ selectedOrphans.length }}
+          </span>
+          </button>
+        </div>
       </div>
 
       <!-- Group by artist -->
@@ -192,7 +216,16 @@ const formatData = () => {
             <span :class="selectedOrphans.includes(orphan.src) ? 'font-semibold' : 'font-medium'">{{
                 orphan.track
               }}</span>
-            <span class="text-xs text-gray-400 ml-auto font-mono">{{ orphan.src }}</span>
+            <div class="ml-auto" @click.stop>
+              <Tooltip message="Download audio file" side="bottom" :icon="Download" iconBgColor="bg-lime-600">
+                <div
+                    class="flex gap-2 items-center group bg-blue-100 lg:bg-transparent hover:bg-blue-100 hover:font-semibold transition px-3 py-2 rounded-full">
+                  <Download :size="18" class="text-blue-600 md:text-gray-700 group-hover:text-blue-600"/>
+                  <a :href="`${apiUrl}/upload/audio/${orphan.src}?download=true`"
+                     class="hidden md:block text-xs text-gray-700 font-mono group-hover:text-blue-600">{{ orphan.src }}</a>
+                </div>
+              </Tooltip>
+            </div>
           </div>
         </div>
       </div>

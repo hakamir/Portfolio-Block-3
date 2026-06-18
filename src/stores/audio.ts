@@ -27,13 +27,25 @@ export interface Artist {
     albums: Album[]
 }
 
+export interface OrphanMetadata {
+  artist: string;
+  album: string;
+  title: string;
+  track_number: number;
+}
+
+export interface OrphanAudioRaw {
+  file: string;
+  metadata: OrphanMetadata | null;
+}
+
 export const useAudioStore = defineStore('audio', () => {
     const artists = ref<Artist[]>([])
     const loading = ref(false)
     const fetchStatus = ref<'idle' | 'loading' | 'error'>('idle')
     const isSubmitted = ref(false);
     const uploadStatuses = ref<Map<Track, TrackUploadStatus>>(new Map())
-    const orphans = ref<string[]>([])
+    const orphans = ref<OrphanAudioRaw[]>([])
     const isDirty = ref(false)
     let isInitialized = false
 
@@ -158,6 +170,10 @@ export const useAudioStore = defineStore('audio', () => {
                 formData.append('artistSlug', artist.slug)
                 formData.append('albumSlug', album.slug)
                 formData.append('trackSrc', track.src)
+                formData.append('artistTitle', artist.title)
+                formData.append('albumTitle', album.title)
+                formData.append('trackTitle', track.title)
+                formData.append('trackNumber', track.trackNumber.toString())
 
                 uploadStatuses.value.set(track, 'uploading')
                 try {
@@ -251,6 +267,17 @@ export const useAudioStore = defineStore('audio', () => {
         }
     }
 
+    const rollbackOrphans = async (files: string[]) => {
+        try {
+            const res = await instance.post(audiosApi.rollbackOrphans, {files})
+            await fetchOrphans()
+            return res.data as { restored: string[], failed: {file: string, error: string}[]}
+        } catch (err) {
+            console.error('Error rolling back orphans:', err)
+            return null;
+        }
+    }
+
     return {
         artists,
         loading,
@@ -268,6 +295,7 @@ export const useAudioStore = defineStore('audio', () => {
         addPendingUpload,
         saveAudios,
         deleteOrphans,
+        rollbackOrphans,
         isArtistDuplicate,
         isAlbumDuplicate,
         isTrackDuplicate,
