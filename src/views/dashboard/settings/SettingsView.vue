@@ -2,7 +2,7 @@
 import OrphansAudio from "@views/dashboard/settings/components/OrphansAudio.vue";
 import {ref} from "vue";
 import {useAudioStore} from "@stores";
-import {Trash2} from "@lucide/vue";
+import {Trash2, RotateCcw} from "@lucide/vue";
 import Modal from "@components/Modal.vue";
 import ChangePassword from "@views/dashboard/settings/components/ChangePassword.vue";
 import OrphansGallery from "@views/dashboard/settings/components/OrphansGallery.vue";
@@ -13,6 +13,9 @@ const audioStore = useAudioStore()
 const showAudioDeleteModal = ref(false)
 const orphansAudioToDelete = ref<string[]>([])
 const orphansAudioRefreshKey = ref(0);
+const showAudioRollbackModal = ref(false)
+const orphansAudioToRollback = ref<string[]>([])
+const rollbackResult = ref<{ restored: string[], failed: { file: string, error: string }[] } | null>(null)
 
 // Receive delete request from child and open confirmation modal with selected items
 const onAudioRequestDelete = (srcs: string[]) => {
@@ -46,6 +49,18 @@ const onGalleryConfirmDelete = async () => {
   orphansGalleryRefreshKey.value += 1;
 }
 
+const onAudioRequestRollback = (srcs: string[]) => {
+  orphansAudioToRollback.value = srcs
+  showAudioRollbackModal.value = true
+}
+
+const onAudioConfirmRollback = async () => {
+  const result = await audioStore.rollbackOrphans(orphansAudioToRollback.value)
+  showAudioRollbackModal.value = false
+  rollbackResult.value = result
+  orphansAudioToRollback.value = []
+  orphansAudioRefreshKey.value += 1
+}
 </script>
 
 <template>
@@ -53,7 +68,8 @@ const onGalleryConfirmDelete = async () => {
     <h1 class="text-4xl font-bold font-unbounded mb-8">Settings</h1>
     <div class="flex flex-col gap-8">
       <ChangePassword/>
-      <OrphansAudio @request-delete="onAudioRequestDelete" :key="orphansAudioRefreshKey"/>
+      <OrphansAudio @request-delete="onAudioRequestDelete" @request-rollback="onAudioRequestRollback"
+                    :key="orphansAudioRefreshKey"/>
       <OrphansGallery @request-delete="onGalleryRequestDelete" :key="orphansGalleryRefreshKey"/>
       <Backgrounds/>
     </div>
@@ -91,6 +107,53 @@ const onGalleryConfirmDelete = async () => {
           orphansGalleryToDelete.length > 1 ? 's' : ''
         }}</span>.
       This action cannot be undone.
+    </Modal>
+
+    <!-- Modal for audio rollback confirmation -->
+    <Modal
+        v-if="showAudioRollbackModal"
+        :icon="RotateCcw"
+        :buttons="[
+      { label: 'Cancel', color: 'white', action: () => showAudioRollbackModal = false },
+      { label: 'Restore', color: 'green', action: onAudioConfirmRollback }
+    ]"
+        @close="showAudioRollbackModal = false"
+    >
+      <template #header>Confirm restore</template>
+      You are about to restore
+      <span class="font-semibold text-green-600">{{ orphansAudioToRollback.length }} file{{
+          orphansAudioToRollback.length > 1 ? 's' : ''
+        }}</span>
+      to the database.<br><br> Their metadata will be reconstructed from the previous versions.
+    </Modal>
+
+    <!-- Modal for rollback result -->
+    <Modal
+        v-if="rollbackResult"
+        :icon="RotateCcw"
+        :buttons="[
+      { label: 'Close', color: 'white', action: () => rollbackResult = null }
+    ]"
+        @close="rollbackResult = null"
+    >
+      <template #header>Restore complete</template>
+      <div class="flex flex-col gap-2">
+        <p>
+      <span class="font-semibold text-green-600">{{ rollbackResult.restored.length }} file{{
+          rollbackResult.restored.length > 1 ? 's' : ''
+        }} restored</span> successfully.
+        </p>
+        <div v-if="rollbackResult?.failed.length > 0">
+          <p class="font-semibold text-red-600 mb-1">
+            {{ rollbackResult.failed.length }} file{{ rollbackResult.failed.length > 1 ? 's' : '' }} failed :
+          </p>
+          <ul class="text-sm text-red-500 list-disc list-inside">
+            <li v-for="f in rollbackResult?.failed" :key="f.file">
+              <span class="font-mono">{{ f.file }}</span> — {{ f.error }}
+            </li>
+          </ul>
+        </div>
+      </div>
     </Modal>
   </section>
 </template>

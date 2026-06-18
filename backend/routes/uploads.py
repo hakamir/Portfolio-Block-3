@@ -4,6 +4,7 @@ from flask_jwt_extended import jwt_required
 from werkzeug.utils import secure_filename
 from utils.AudioConverter import AudioConverter
 from utils.image_validation import is_valid_webp
+from mutagen.id3 import ID3, ID3NoHeaderError, TPE1, TALB, TIT2, TRCK
 
 uploads_bp = Blueprint('uploads', __name__)
 
@@ -26,9 +27,16 @@ def upload_audio():
     if not file.mimetype.startswith('audio/'):
         return jsonify({'error': 'Invalid mime type'}), 415
 
+    # Champs techniques (sauvegarde du fichier)
     artist_slug = secure_filename(request.form.get('artistSlug', ''))
     album_slug = secure_filename(request.form.get('albumSlug', ''))
     track_src = secure_filename(request.form.get('trackSrc', ''))
+
+    # Champs metadata (tags ID3)
+    artist_title = request.form.get('artistTitle', artist_slug)
+    album_title = request.form.get('albumTitle', album_slug)
+    track_title = request.form.get('trackTitle', track_src.rsplit('.', 1)[0])
+    track_number = request.form.get('trackNumber', '0')
 
     extension = file.filename.rsplit('.', 1)[-1].lower()
     if extension not in settings.allowed_audio_file_types:
@@ -44,7 +52,23 @@ def upload_audio():
 
     dest = os.path.join(settings.upload_folder, 'audio', artist_slug, album_slug)
     os.makedirs(dest, exist_ok=True)
-    file.save(os.path.join(dest, track_src))
+    final_path = os.path.join(dest, track_src)
+    file.save(final_path)
+
+    try:
+        try:
+            tags = ID3(final_path)
+            tags.delete()
+        except ID3NoHeaderError:
+            tags = ID3()
+
+        tags[TPE1] = TPE1(encoding=3, text=artist_title)
+        tags[TALB] = TALB(encoding=3, text=album_title)
+        tags[TIT2] = TIT2(encoding=3, text=track_title)
+        tags[TRCK] = TRCK(encoding=3, text=track_number)
+        tags.save(final_path)
+    except Exception as e:
+        current_app.logger.warning(f"Failed to write ID3 tags to {final_path}: {e}")
 
     return jsonify({'uploaded': True}), 201
 
