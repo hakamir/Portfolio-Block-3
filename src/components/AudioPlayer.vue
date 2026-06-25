@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {onBeforeUnmount, onMounted, ref, computed} from 'vue'
 import {Play, Pause, Tag} from '@lucide/vue'
-import {useAudioPlayerStore} from "@stores"
+import {useAudioPlayerStore, useAudioStore} from "@stores"
 import {useSearchStore} from "@stores/search"
 import type {SearchEntry} from "@composables/useSearchIndex"
 
@@ -14,6 +14,7 @@ const props = defineProps<{
 
 const playerStore = useAudioPlayerStore()
 const searchStore = useSearchStore()
+const audioStore = useAudioStore()
 
 const audioRef = ref<HTMLAudioElement | null>(null)
 const isPlaying = ref(false)
@@ -28,6 +29,9 @@ const rootRef = ref<HTMLDivElement | null>(null)
 const containerWidth = ref(0)
 const visibleTags = computed(() => props.tags.slice(0, maxVisible.value)) // Shown tags
 const hiddenTags = computed(() => props.tags.slice(maxVisible.value)) // Tags in the dropdown
+
+const audioSrc = ref<string | null>(null)
+const audioNotFound = ref(false)
 
 let ro: ResizeObserver | null = null
 
@@ -54,7 +58,12 @@ const onPause = () => {
   isPlaying.value = false
 }
 
-onMounted(() => {
+onMounted(async () => {
+  if (await audioStore.checkAudioExists(props.src)) {
+    audioSrc.value = props.src
+  } else {
+    audioNotFound.value = true
+  }
   audioRef.value?.addEventListener('pause', onPause)
   document.addEventListener('mousemove', onMouseMove)
   document.addEventListener('mouseup', stopDrag)
@@ -69,6 +78,7 @@ onMounted(() => {
     containerWidth.value = rootRef.value.getBoundingClientRect().width
   }
 })
+
 onBeforeUnmount(() => {
   audioRef.value?.removeEventListener('pause', onPause)
   document.removeEventListener('mousemove', onMouseMove)
@@ -171,7 +181,7 @@ const closeDropdown = () => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-2" ref="rootRef">
+  <div v-if="!audioNotFound" class="flex flex-col gap-2" ref="rootRef">
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-4 flex-1 min-w-0">
         <!-- Play Button -->
@@ -257,12 +267,11 @@ const closeDropdown = () => {
       </span>
 
       <!-- Audio file -->
-      <audio ref="audioRef" :src="props.src"
+      <audio ref="audioRef" :src="audioSrc ?? undefined"
              preload="metadata"
              @timeupdate="onTimeUpdate"
              @loadedmetadata="onLoaded"/>
     </div>
-
     <!-- Drag bar -->
     <div class="hidden sm:flex text-sm relative h-8 cursor-pointer group items-center"
          @mousedown="startDrag"
