@@ -1,6 +1,7 @@
 import os
 
-from mutagen.id3 import ID3, ID3NoHeaderError
+from flask import current_app
+from mutagen.id3 import ID3, ID3NoHeaderError, TPE1, TALB, TRCK, TIT2, TCON
 
 
 def get_files(folder, tracked_files):
@@ -23,7 +24,7 @@ def cleanup_empty_dirs(folder):
                 os.rmdir(dir_path)
 
 
-def read_id3_metadata(filepath: str) -> dict | None:
+def read_id3_tags(filepath: str) -> dict | None:
     try:
         tags = ID3(filepath)
     except ID3NoHeaderError:
@@ -33,7 +34,7 @@ def read_id3_metadata(filepath: str) -> dict | None:
     album = str(tags.get('TALB', ''))
     title = str(tags.get('TIT2', ''))
     track_number = str(tags.get('TRCK', '0'))
-
+    track_tags = [t.strip() for t in str(tags.get('TCON', '')).split(',') if t.strip()]
     if not any([artist, album, title]):
         return None
 
@@ -41,5 +42,24 @@ def read_id3_metadata(filepath: str) -> dict | None:
         'artist': artist,
         'album': album,
         'title': title,
-        'track_number': int(track_number) if track_number.isdigit() else 0
+        'track_number': int(track_number) if track_number.isdigit() else 0,
+        'tags': track_tags
     }
+
+def write_id3_tags(filepath: str, metadata: dict) -> None:
+    try:
+        try:
+            tags = ID3(filepath)
+            tags.delete()
+        except ID3NoHeaderError:
+            tags = ID3()
+
+        tags[TPE1] = TPE1(encoding=3, text=metadata.get('artist', ''))
+        tags[TALB] = TALB(encoding=3, text=metadata.get('album', ''))
+        tags[TIT2] = TIT2(encoding=3, text=metadata.get('title', ''))
+        tags[TRCK] = TRCK(encoding=3, text=str(metadata.get('track_number', 0)))
+        tags[TCON] = TCON(encoding=3)
+        tags[TCON].genres = metadata.get('tags', [])
+        tags.save(filepath)
+    except Exception as e:
+        current_app.logger.warning(f"Failed to write ID3 tags to {filepath}: {e}")

@@ -1,10 +1,12 @@
+import os
 from bson import ObjectId
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from flask_jwt_extended import jwt_required
 from mongoengine import ValidationError as MongoEngineValidationError, DoesNotExist
 from pydantic import ValidationError as PydanticValidationError
 from Schemas.artist import ArtistIn
 from models.artist import Artist, Track, Album
+from utils.filesystem import write_id3_tags
 
 artists_bp = Blueprint('artists', __name__)
 
@@ -47,6 +49,22 @@ def update_artists():
                     order=item.order,
                     albums=albums
                 ).save()
+
+            # Include metadata in audio files
+            for album in item.albums:
+                for track in album.tracks:
+                    print(track.tags, flush=True)
+                    settings = current_app.config['settings']
+                    file_path = os.path.join(settings.upload_folder, 'audio', item.slug, album.slug, track.src)
+                    if os.path.exists(file_path):
+                        write_id3_tags(file_path, {
+                            'artist': item.title,
+                            'album': album.title,
+                            'title': track.title,
+                            'track_number': str(track.trackNumber),
+                            'tags': ",".join(track.tags),
+                        })
+
         return jsonify({'updated': True}), 200
     except PydanticValidationError:
         return jsonify({'error': 'Invalid payload'}), 400
