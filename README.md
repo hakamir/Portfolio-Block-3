@@ -264,6 +264,7 @@ flowchart LR
     Orphan -->|GET /orphans/audio\nor /orphans/gallery| List[List orphans]
     List -->|DELETE /orphans/audio\nor /orphans/gallery| Cleaned[File deleted from /uploads]
     List -->|GET /upload/filepath?download = true| Download[Download file]
+    List -->|POST /orphans/audio/rollback| Rollback[Rollback metadata]
 ```
 
 ---
@@ -688,8 +689,8 @@ All routes are prefixed with `/api`.
 |-------:|----------------------------------------------|------|-------------------|
 |   POST | [`/api/auth/login`](#post-apiauthlogin)      | —    | Login (5 req/min) |
 |   POST | [`/api/auth/logout`](#post-apiauthlogout)    | JWT  | Logout            |
-|   POST | [`/api/auth/refresh`](#put-apiauthpassword)  | JWT  | Refresh token     |
-|    PUT | [`/api/auth/password`](#post-apiauthrefresh) | JWT  | Change password   |
+|   POST | [`/api/auth/refresh`](#post-apiauthrefresh)  | JWT  | Refresh token     |
+|    PUT | [`/api/auth/password`](#put-apiauthpassword) | JWT  | Change password   |
 
 ### [Artists](#artists-1)
 
