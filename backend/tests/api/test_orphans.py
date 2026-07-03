@@ -54,7 +54,7 @@ class TestGetOrphanAudio:
 
     def test_returns_orphan_files_without_metadata(self, client, auth_headers, test_artist):
         with patch('routes.orphans.get_files', return_value=_ORPHAN_AUDIO_FILES), \
-                patch('routes.orphans.read_id3_metadata', return_value=None):
+                patch('routes.orphans.read_id3_tags', return_value=None):
             response = client.get("/api/orphans/audio", headers=auth_headers)
         assert response.status_code == 200
         assert response.get_json() == [
@@ -66,10 +66,11 @@ class TestGetOrphanAudio:
             'artist': 'Artist 1',
             'album': 'Album 1',
             'title': 'Orphan Track',
-            'track_number': 1
+            'track_number': 1,
+            'tags': []
         }
         with patch('routes.orphans.get_files', return_value=_ORPHAN_AUDIO_FILES), \
-                patch('routes.orphans.read_id3_metadata', return_value=metadata):
+                patch('routes.orphans.read_id3_tags', return_value=metadata):
             response = client.get("/api/orphans/audio", headers=auth_headers)
         assert response.status_code == 200
         assert response.get_json() == [
@@ -81,7 +82,8 @@ _ROLLBACK_METADATA = {
     'artist': 'Artist 1',
     'album': 'Album 1',
     'title': 'Orphan Track',
-    'track_number': 1
+    'track_number': 1,
+    'tags': []
 }
 
 
@@ -115,7 +117,7 @@ class TestRollbackOrphanAudio:
 
     def test_fails_if_no_metadata(self, client, auth_headers):
         with patch('os.path.exists', return_value=True), \
-                patch('routes.orphans.read_id3_metadata', return_value=None):
+                patch('routes.orphans.read_id3_tags', return_value=None):
             response = client.post(
                 "/api/orphans/audio/rollback",
                 json={"files": _ORPHAN_AUDIO_FILES},
@@ -129,7 +131,7 @@ class TestRollbackOrphanAudio:
     def test_fails_on_invalid_path_structure(self, client, auth_headers):
         invalid_path = ["orphan.mp3"]  # un seul segment, pas 3
         with patch('os.path.exists', return_value=True), \
-                patch('routes.orphans.read_id3_metadata', return_value=_ROLLBACK_METADATA):
+                patch('routes.orphans.read_id3_tags', return_value=_ROLLBACK_METADATA):
             response = client.post(
                 "/api/orphans/audio/rollback",
                 json={"files": invalid_path},
@@ -143,7 +145,7 @@ class TestRollbackOrphanAudio:
     def test_restores_orphan_creating_new_artist(self, client, auth_headers):
         # Aucun artiste en base — doit créer artiste + album + track
         with patch('os.path.exists', return_value=True), \
-                patch('routes.orphans.read_id3_metadata', return_value=_ROLLBACK_METADATA):
+                patch('routes.orphans.read_id3_tags', return_value=_ROLLBACK_METADATA):
             response = client.post(
                 "/api/orphans/audio/rollback",
                 json={"files": _ORPHAN_AUDIO_FILES},
@@ -164,7 +166,7 @@ class TestRollbackOrphanAudio:
         # L'artiste existe déjà, l'album aussi — doit ajouter le track
         orphan = ["artist-1/album-1/orphan.mp3"]
         with patch('os.path.exists', return_value=True), \
-                patch('routes.orphans.read_id3_metadata', return_value=_ROLLBACK_METADATA):
+                patch('routes.orphans.read_id3_tags', return_value=_ROLLBACK_METADATA):
             response = client.post(
                 "/api/orphans/audio/rollback",
                 json={"files": orphan},
@@ -183,7 +185,7 @@ class TestRollbackOrphanAudio:
         existing = ["artist-1/album-1/track.mp3"]
         metadata = {**_ROLLBACK_METADATA, 'title': 'Track 1'}
         with patch('os.path.exists', return_value=True), \
-                patch('routes.orphans.read_id3_metadata', return_value=metadata):
+                patch('routes.orphans.read_id3_tags', return_value=metadata):
             response = client.post(
                 "/api/orphans/audio/rollback",
                 json={"files": existing},
@@ -210,7 +212,7 @@ class TestRollbackOrphanAudio:
             return None
 
         with patch('os.path.exists', return_value=True), \
-                patch('routes.orphans.read_id3_metadata', side_effect=mock_metadata):
+                patch('routes.orphans.read_id3_tags', side_effect=mock_metadata):
             response = client.post(
                 "/api/orphans/audio/rollback",
                 json={"files": files},

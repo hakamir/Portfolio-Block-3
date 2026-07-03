@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required
 from models.artist import Artist
 from services.audio_service import upsert_track
 from models.gallery import Gallery
-from utils.filesystem import cleanup_empty_dirs, get_files, read_id3_metadata
+from utils.filesystem import cleanup_empty_dirs, get_files, read_id3_tags
 
 orphans_bp = Blueprint('orphans', __name__)
 
@@ -28,7 +28,7 @@ def get_orphan_audio():
     result = []
     for relative_path in orphans_paths:
         full_path = os.path.join(audio_folder, relative_path)
-        metadata = read_id3_metadata(full_path)
+        metadata = read_id3_tags(full_path)
         result.append({
             'file': relative_path,
             'metadata': metadata
@@ -74,8 +74,8 @@ def rollback_orphan_audio():
             failed.append({'file': relative_path, 'error': 'File not found'})
             continue
 
-        metadata = read_id3_metadata(full_path)
-        print(metadata)
+        metadata = read_id3_tags(full_path)
+
         if not metadata:
             failed.append({'file': relative_path, 'error': 'No ID3 metadata found'})
             continue

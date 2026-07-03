@@ -3,8 +3,8 @@ from flask import Blueprint, jsonify, request, send_from_directory, current_app
 from flask_jwt_extended import jwt_required
 from werkzeug.utils import secure_filename
 from utils.AudioConverter import AudioConverter
+from utils.filesystem import write_id3_tags
 from utils.image_validation import is_valid_webp
-from mutagen.id3 import ID3, ID3NoHeaderError, TPE1, TALB, TIT2, TRCK
 
 uploads_bp = Blueprint('uploads', __name__)
 
@@ -37,7 +37,7 @@ def upload_audio():
     album_title = request.form.get('albumTitle', album_slug)
     track_title = request.form.get('trackTitle', track_src.rsplit('.', 1)[0])
     track_number = request.form.get('trackNumber', '0')
-
+    track_tags = request.form.get('trackTags', '')
     extension = file.filename.rsplit('.', 1)[-1].lower()
     if extension not in settings.allowed_audio_file_types:
         return jsonify({'error': 'Invalid file type'}), 415
@@ -55,20 +55,13 @@ def upload_audio():
     final_path = os.path.join(dest, track_src)
     file.save(final_path)
 
-    try:
-        try:
-            tags = ID3(final_path)
-            tags.delete()
-        except ID3NoHeaderError:
-            tags = ID3()
-
-        tags[TPE1] = TPE1(encoding=3, text=artist_title)
-        tags[TALB] = TALB(encoding=3, text=album_title)
-        tags[TIT2] = TIT2(encoding=3, text=track_title)
-        tags[TRCK] = TRCK(encoding=3, text=track_number)
-        tags.save(final_path)
-    except Exception as e:
-        current_app.logger.warning(f"Failed to write ID3 tags to {final_path}: {e}")
+    write_id3_tags(filepath=final_path, metadata={
+        'artist': artist_title,
+        'album': album_title,
+        'title': track_title,
+        'track_number': track_number,
+        'tags': track_tags
+    })
 
     return jsonify({'uploaded': True}), 201
 

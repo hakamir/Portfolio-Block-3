@@ -174,6 +174,7 @@ export const useAudioStore = defineStore('audio', () => {
                 formData.append('albumTitle', album.title)
                 formData.append('trackTitle', track.title)
                 formData.append('trackNumber', track.trackNumber.toString())
+                formData.append('trackTags', track.tags.join(","))
 
                 uploadStatuses.value.set(track, 'uploading')
                 try {

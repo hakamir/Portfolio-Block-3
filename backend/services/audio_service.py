@@ -8,7 +8,7 @@ def upsert_track(artist_slug, album_slug, track_src, metadata):
         trackNumber=track_number,
         title=metadata['title'],
         src=track_src,
-        tags=[]
+        tags=metadata.get('tags', [])
     )
 
     artist = Artist.objects(slug=artist_slug).first()
