@@ -1,6 +1,8 @@
 import os
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import jwt_required
+
+from middleware.roles import roles_required
 from models.artist import Artist
 from services.audio_service import upsert_track
 from models.gallery import Gallery
@@ -10,7 +12,7 @@ orphans_bp = Blueprint('orphans', __name__)
 
 
 @orphans_bp.route('/orphans/audio', methods=['GET'])
-@jwt_required()
+@roles_required('artist', 'admin')
 def get_orphan_audio():
     settings = current_app.config['settings']
     tracked_files = set()
@@ -37,7 +39,7 @@ def get_orphan_audio():
 
 
 @orphans_bp.route('/orphans/audio', methods=['DELETE'])
-@jwt_required()
+@roles_required('artist', 'admin')
 def delete_orphan_audio():
     settings = current_app.config['settings']
     data = request.get_json()
@@ -56,7 +58,7 @@ def delete_orphan_audio():
 
 
 @orphans_bp.route('/orphans/audio/rollback', methods=['POST'])
-@jwt_required()
+@roles_required('artist', 'admin')
 def rollback_orphan_audio():
     settings = current_app.config['settings']
     data = request.get_json()
@@ -96,7 +98,7 @@ def rollback_orphan_audio():
 
 
 @orphans_bp.route('/orphans/gallery', methods=['GET'])
-@jwt_required()
+@roles_required('artist', 'admin')
 def get_orphan_gallery():
     settings = current_app.config['settings']
     tracked_files = set()
@@ -112,7 +114,7 @@ def get_orphan_gallery():
 
 
 @orphans_bp.route('/orphans/gallery', methods=['DELETE'])
-@jwt_required()
+@roles_required('artist', 'admin')
 def delete_orphan_gallery():
     settings = current_app.config['settings']
     data = request.get_json()

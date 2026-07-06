@@ -7,6 +7,7 @@ from pydantic import ValidationError
 from werkzeug.exceptions import UnsupportedMediaType
 from Schemas.auth import Login, PasswordUpdate
 from extensions import limiter
+from middleware.roles import roles_required
 from models.user import User
 
 auth_bp = Blueprint('auth', __name__)
@@ -28,7 +29,7 @@ def login():
         if not user.verify_password(data.pwd):
             raise DoesNotExist
 
-        access_token = create_access_token(identity=str(user.id))
+        access_token = create_access_token(identity=str(user.id), additional_claims={'role': user.role})
         refresh_token = create_refresh_token(identity=str(user.id))
 
         response = jsonify({'token': access_token})
@@ -45,19 +46,23 @@ def login():
 @jwt_required(refresh=True)
 def refresh():
     identity = get_jwt_identity()
-    new_access_token = create_access_token(identity=identity)
+    user = User.objects.get(id=identity)
+    if not user:
+        return jsonify({'error': 'user not found'}), 404
+    new_access_token = create_access_token(identity=identity, additional_claims={'role': user.role})
     return jsonify({'token': new_access_token}), 200
 
 
 @auth_bp.route('/auth/logout', methods=['POST'])
 def logout():
     response = jsonify({'logged_out': True})
+    #TODO: Blacklist tokens here (Redis)
     unset_jwt_cookies(response)
     return response, 200
 
 
 @auth_bp.route('/auth/password', methods=['PUT'])
-@jwt_required()
+@roles_required('artist', 'admin')
 @limiter.limit("5/minute")
 def update_password():
     try:
@@ -82,3 +87,15 @@ def update_password():
             errors.append({"field": field, "message": err.get('msg').replace('Value error, ', '')})
 
         return jsonify({'error': {'Invalid payload': errors}}), 400
+
+
+@auth_bp.route('auth/role/<user_id>', methods=['PUT'])
+@roles_required('admin')
+def update_role(user_id: str):
+    user = User.objects.get(id=user_id)
+    role = request.get_json().get('role')
+    if role not in ['artist', 'admin']:
+        return jsonify({'error': 'Invalid role'}), 400
+    user.role = role
+    user.save()
+    return jsonify({'updated': True}), 200

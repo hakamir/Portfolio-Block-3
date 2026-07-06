@@ -5,6 +5,7 @@ from flask_jwt_extended import jwt_required
 from mongoengine import ValidationError as MongoEngineValidationError, DoesNotExist
 from pydantic import ValidationError as PydanticValidationError
 from Schemas.artist import ArtistIn
+from middleware.roles import roles_required
 from models.artist import Artist, Track, Album
 from utils.filesystem import write_id3_tags
 
@@ -17,7 +18,7 @@ def get_artists():
 
 
 @artists_bp.route('/artists', methods=['PUT'])
-@jwt_required()
+@roles_required('artist', 'admin')
 def update_artists():
     if not request.is_json:
         return jsonify({'error': 'Invalid content-type'}), 415
@@ -75,7 +76,7 @@ def update_artists():
 
 
 @artists_bp.route('/artists/<id>', methods=['DELETE'])
-@jwt_required()
+@roles_required('artist', 'admin')
 def delete_artist(id):
     if not ObjectId.is_valid(id):
         return jsonify({'error': 'Invalid ID'}), 400

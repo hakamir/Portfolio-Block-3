@@ -5,6 +5,7 @@ from flask_jwt_extended import jwt_required
 from mongoengine import DoesNotExist, ValidationError as MongoEngineValidationError
 from pydantic import ValidationError as PydanticValidationError
 from Schemas.gallery import GalleryIn
+from middleware.roles import roles_required
 from models.gallery import Gallery, GalleryImage
 
 gallery_bp = Blueprint('gallery', __name__)
@@ -16,7 +17,7 @@ def get_gallery():
 
 
 @gallery_bp.route('/gallery', methods=['PUT'])
-@jwt_required()
+@roles_required('artist', 'admin')
 def update_galleries():
     if not request.is_json:
         return jsonify({"error": "invalid content-type"}), 415
@@ -59,7 +60,7 @@ def update_galleries():
 
 
 @gallery_bp.route('/gallery/<id>', methods=['DELETE'])
-@jwt_required()
+@roles_required('artist', 'admin')
 def delete_gallery(id):
     if not ObjectId.is_valid(id):
         return jsonify({'error': 'Invalid ID'}), 400

@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required
 from mongoengine import DoesNotExist, ValidationError
 from pydantic import ValidationError as PydanticValidationError
 from Schemas.biography import BiographyIn
+from middleware.roles import roles_required
 from models.biography import Biography, ImageSize, Section
 from datetime import datetime, timezone
 
@@ -18,7 +19,7 @@ def get_biography():
 
 
 @biography_bp.route('/biography', methods=['PUT'])
-@jwt_required()
+@roles_required('artist', 'admin')
 def update_biography():
     if not request.is_json:
         return jsonify({"error": "invalid content-type"}), 415
@@ -38,3 +39,19 @@ def update_biography():
         return jsonify({"error": "biography not found"}), 404
     except ValidationError:
         return jsonify({"error": "invalid ID"}), 400
+
+@biography_bp.route('/biography', methods=['POST'])
+@roles_required('admin')
+def create_biography():
+    biography = Biography.objects.first()
+    if biography is not None:
+        return jsonify({"error": "biography already exists"}), 400
+    try:
+        data = BiographyIn.model_validate(request.get_json())
+    except PydanticValidationError:
+        return jsonify({"error": "invalid payload"}), 400
+    try:
+        Biography(**data.model_dump()).save()
+        return jsonify({"created": True}), 201
+    except ValidationError:
+        return jsonify({"error": "invalid payload"}), 400

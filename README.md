@@ -1243,7 +1243,7 @@ Examples: `GET /api/upload/audio/artist/album/track.mp3?download=true`
 ## `POST /api/upload/audio`
 
 Uploads an audio file. JWT required. Non-MP3 files are automatically converted to MP3 (192kbps, 44100 Hz stereo) via
-ffmpeg before saving. ID3 tags (artist, album, title, track number) are written to the file after conversion, enabling
+ffmpeg before saving. ID3 tags (artist, album, title, track number, track tags) are written to the file after conversion, enabling
 orphan rollback.
 
 ```formdata
@@ -1255,6 +1255,7 @@ artistTitle: Artist Title
 albumTitle: Album Title
 trackTitle: Track Title
 trackNumber: 1
+trackTags: tag1,tag2
 ```
 
 **Response `201`:**
@@ -1341,7 +1342,8 @@ the relative file path and ID3 metadata if available. JWT required.
 ```
 
 `metadata` is `null` if the file has no ID3 tags (e.g., uploaded before ID3 support was introduced). Files with `null`
-metadata cannot be restored via the rollback endpoint and must be re-uploaded.
+metadata cannot be restored via the rollback endpoint and must be re-uploaded. Track tags are automatically saved in
+files with ID3 tags on `PUT /api/artists`.
 
 ## `POST /api/orphans/audio/rollback`
 

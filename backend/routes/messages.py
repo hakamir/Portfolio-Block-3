@@ -4,6 +4,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 from mongoengine.errors import ValidationError, DoesNotExist
 from extensions import limiter
+from middleware.roles import roles_required
 from models.message import Message
 from pydantic import ValidationError as PydanticValidationError
 from Schemas.message import MessageIn, MessageUpdate
@@ -12,7 +13,7 @@ messages_bp = Blueprint('messages', __name__)
 
 
 @messages_bp.route('/messages', methods=['GET'])
-@jwt_required()
+@roles_required('artist', 'admin')
 def get_messages():
     messages = Message.objects().order_by('-date')
     return jsonify([msg.to_json_dict() for msg in messages]), 200
