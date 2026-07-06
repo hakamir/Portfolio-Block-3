@@ -73,8 +73,8 @@ const headerStyle = computed(() => {
     <div class="py-4">
       <div class="mx-auto px-4">
         <div class="flex items-center md:px-10 md:py-4">
-          <Logo :color="textColor"/>
-          <Navbar :color="textColor"/>
+          <Logo/>
+          <Navbar/>
           <MobileMenu :color="textColor"/>
         </div>
       </div>
