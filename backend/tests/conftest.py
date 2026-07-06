@@ -50,7 +50,7 @@ def client(app):
 @pytest.fixture
 def auth_headers(app):
     with app.app_context():
-        token = create_access_token(identity="test-user")
+        token = create_access_token(identity="test-user", additional_claims={'role': 'artist'})
     return {"Authorization": f"Bearer {token}"}
 
 

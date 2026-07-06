@@ -812,6 +812,8 @@ Unset JWT cookies from the client's browser, logging the user out.
 }
 ```
 
+**Errors:** `401` invalid credentials (No JWT provided)
+
 ## `PUT /api/auth/password`
 
 Rate-limited to **1 req/min** by default. Authentication required.
