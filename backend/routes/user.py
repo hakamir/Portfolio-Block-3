@@ -2,7 +2,6 @@ import bcrypt
 from flask import Blueprint, jsonify, request
 from mongoengine import ValidationError as MongoEngineValidationError
 from pydantic import ValidationError as PydanticValidationError
-
 from Schemas.user import CreateUser
 from middleware.roles import roles_required
 from models.user import User

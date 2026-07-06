@@ -1,8 +1,6 @@
 import os
 from flask import Blueprint, jsonify, request, send_from_directory, current_app
-from flask_jwt_extended import jwt_required
 from werkzeug.utils import secure_filename
-
 from middleware.roles import roles_required
 from utils.AudioConverter import AudioConverter
 from utils.filesystem import write_id3_tags

@@ -1,7 +1,5 @@
 import os
 from flask import Blueprint, current_app, jsonify, request
-from flask_jwt_extended import jwt_required
-
 from middleware.roles import roles_required
 from models.artist import Artist
 from services.audio_service import upsert_track

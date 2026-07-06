@@ -1,5 +1,4 @@
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required
 from mongoengine import DoesNotExist, ValidationError
 from pydantic import ValidationError as PydanticValidationError
 from Schemas.biography import BiographyIn
