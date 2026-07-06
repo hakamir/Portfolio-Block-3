@@ -15,6 +15,7 @@ def get_user():
     users = User.objects()
     return jsonify([user.to_json_dict() for user in users]), 200
 
+
 @user_bp.route('/users/<id>', methods=['GET'])
 @roles_required('admin')
 def get_user_by_id(id):
@@ -25,6 +26,8 @@ def get_user_by_id(id):
         )
     except User.DoesNotExist:
         return jsonify({'error': 'User not found'}), 404
+    except MongoEngineValidationError:
+        return jsonify({'error': 'Invalid ID'}), 400
 
 @user_bp.route('/users', methods=['POST'])
 @roles_required('admin')
@@ -38,8 +41,6 @@ def create_user():
     try:
         hashed = bcrypt.hashpw(data.password.encode('utf-8'), bcrypt.gensalt())
         user = User(
-            firstname=data.firstname,
-            lastname=data.lastname,
             email=data.email,
             password=hashed,
             role=data.role
@@ -47,9 +48,9 @@ def create_user():
         user.validate()
         user.save()
         return jsonify({'created': True}), 201
-    except MongoEngineValidationError as e:
-        print(str(e), flush=True)
+    except MongoEngineValidationError:
         return jsonify({'error': 'Invalid data'}), 400
+
 
 @user_bp.route('/users/<id>', methods=['DELETE'])
 @roles_required('admin')
@@ -57,3 +58,15 @@ def delete_user(id):
     user = User.objects.get(id=id)
     user.delete()
     return jsonify(None), 204
+
+
+@user_bp.route('/users/role/<user_id>', methods=['PUT'])
+@roles_required('admin')
+def update_role(user_id: str):
+    user = User.objects.get(id=user_id)
+    role = request.get_json().get('role')
+    if role not in ['artist', 'admin']:
+        return jsonify({'error': 'Invalid role'}), 400
+    user.role = role
+    user.save()
+    return jsonify({'updated': True}), 200

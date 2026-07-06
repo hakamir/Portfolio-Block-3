@@ -54,16 +54,17 @@ def refresh():
 
 
 @auth_bp.route('/auth/logout', methods=['POST'])
+@jwt_required()
 def logout():
     response = jsonify({'logged_out': True})
-    #TODO: Blacklist tokens here (Redis)
+    #TODO: Blacklist refresh token here (Redis)
     unset_jwt_cookies(response)
     return response, 200
 
 
 @auth_bp.route('/auth/password', methods=['PUT'])
 @roles_required('artist', 'admin')
-@limiter.limit("5/minute")
+@limiter.limit("1/minute")
 def update_password():
     try:
         data = PasswordUpdate.model_validate(request.get_json())
@@ -88,14 +89,3 @@ def update_password():
 
         return jsonify({'error': {'Invalid payload': errors}}), 400
 
-
-@auth_bp.route('auth/role/<user_id>', methods=['PUT'])
-@roles_required('admin')
-def update_role(user_id: str):
-    user = User.objects.get(id=user_id)
-    role = request.get_json().get('role')
-    if role not in ['artist', 'admin']:
-        return jsonify({'error': 'Invalid role'}), 400
-    user.role = role
-    user.save()
-    return jsonify({'updated': True}), 200

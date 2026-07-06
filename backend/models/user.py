@@ -3,8 +3,6 @@ from mongoengine import Document, StringField
 
 
 class User(Document):
-    firstname = StringField(required=False, default='')
-    lastname = StringField(required=False, default='')
     email = StringField(required=True, unique=True)
     password = StringField(required=True)
     role = StringField(required=True, choices=['artist', 'admin'], default='artist')
@@ -18,8 +16,6 @@ class User(Document):
         data['_id'] = str(data['_id'])
         return {
             'id': str(self.id),
-            'firstname': self.firstname,
-            'lastname': self.lastname,
             'email': self.email,
             'role': self.role,
         }

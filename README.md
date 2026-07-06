@@ -96,6 +96,7 @@ flowchart TB
         Messages[Messages Controller]:::green
         Uploads[Uploads Controller]:::green
         Orphans[Orphans Controller]:::green
+        User[Users Controller]:::green
     end
 
     subgraph Data["Data Layer"]
@@ -105,8 +106,8 @@ flowchart TB
 
     Router --> Pinia
     Pinia --> Axios
-    Axios -->|HTTP/JSON| Auth & Artists & Gallery & Bio & Messages & Uploads & Orphans
-    Auth & Artists & Gallery & Bio & Messages --> Mongo
+    Axios -->|HTTP/JSON| Auth & Artists & Gallery & Bio & Messages & Uploads & Orphans & User
+    Auth & Artists & Gallery & Bio & Messages & User --> Mongo
     Uploads & Orphans --> FS
 ```
 
@@ -118,6 +119,9 @@ Three tokens are involved in the authentication system, each stored differently 
 access token lives in-memory (Pinia) to avoid XSS exposure. The refresh token is stored in an HttpOnly cookie, making it
 inaccessible to JavaScript. The CSRF token is stored in a readable cookie so that Vue can extract it and send it as a
 request header, following the double-submit cookie pattern.
+
+Authentication introduces roles (`artist`, `admin`) and permissions to different endpoints are restricted based on
+the user's role with `roles_required` decorator. This information is stored in the access token.
 
 ```mermaid
 flowchart TB
@@ -230,6 +234,7 @@ erDiagram
         ObjectId _id
         string email
         string password
+        string role
     }
 
     ARTIST ||--o{ ALBUM: contains
@@ -464,8 +469,11 @@ JWT_SECRET_KEY=your_long_random_secret
 JWT_ACCESS_TOKEN_EXPIRES=15
 JWT_REFRESH_TOKEN_EXPIRES=30
 
-TEST_USER_EMAIL=admin@example.com
+TEST_USER_EMAIL=user@example.com
 TEST_USER_PASSWORD=P@ssw0rdT3$st
+
+ADMIN_USER=admin@example.com
+ADMIN_PASSWORD=P@ssw0rdT3$st@dm1n
 ```
 
 **2. Start all services**
@@ -476,16 +484,16 @@ docker compose up --build
 
 This runs four services:
 
-|  Service   | URL                   | Description                        |
-|:----------:|-----------------------|------------------------------------|
-| `frontend` | http://localhost      | Vue app (Vite dev server)          |
-| `backend`  | http://localhost:5000 | Flask API                          |
-| `mongodb`  | localhost:27018       | MongoDB (host access)              |
-|  `seeder`  | —                     | Creates test user + biography data |
+|  Service   | URL                   | Description                                               |
+|:----------:|-----------------------|-----------------------------------------------------------|
+| `frontend` | http://localhost      | Vue app (Vite dev server)                                 |
+| `backend`  | http://localhost:5000 | Flask API                                                 |
+| `mongodb`  | localhost:27018       | MongoDB (host access)                                     |
+|  `seeder`  | —                     | Creates two users (`artist` and `admin`) + biography data |
 
 On the first run, the seeder automatically creates:
 
-- An admin user with the email/password from `.env`
+- An admin and an artist user with the provided email/password from `.env`
 - A default biography document
 
 **3. Useful commands**
@@ -524,15 +532,15 @@ Both `docker-compose.yml` and `docker-compose.prod.yml` should be specified for 
 
 <sub>[← Back to summary](#summary)</sub>
 
-MongoDB collections, created automatically on first Docker startup:
+MongoDB collections, created automatically on the first Docker startup:
 
-| Collection  | Description                                    |
-|-------------|------------------------------------------------|
-| `users`     | Admin account (email + bcrypt-hashed password) |
-| `artists`   | Nested document: artist → album → tracks       |
-| `galleries` | Nested document: gallery → images              |
-| `biography` | Single document                                |
-| `messages`  | Contact form submissions                       |
+| Collection  | Description                              |
+|-------------|------------------------------------------|
+| `users`     | Users account                            |
+| `artists`   | Nested document: artist → album → tracks |
+| `galleries` | Nested document: gallery → images        |
+| `biography` | Single document                          |
+| `messages`  | Contact form submissions                 |
 
 Flask Limiter creates two additional collections automatically: `counter` and `windows`, used to store rate-limits by IP
 address and request.
@@ -685,63 +693,73 @@ All routes are prefixed with `/api`.
 
 ### [Authentication](#authentication-1)
 
-| Method | Path                                         | Auth | Description       |
-|-------:|----------------------------------------------|------|-------------------|
-|   POST | [`/api/auth/login`](#post-apiauthlogin)      | —    | Login (5 req/min) |
-|   POST | [`/api/auth/logout`](#post-apiauthlogout)    | JWT  | Logout            |
-|   POST | [`/api/auth/refresh`](#post-apiauthrefresh)  | JWT  | Refresh token     |
-|    PUT | [`/api/auth/password`](#put-apiauthpassword) | JWT  | Change password   |
+| Method | Path                                         | Auth                    | Description       |
+|-------:|----------------------------------------------|-------------------------|-------------------|
+|   POST | [`/api/auth/login`](#post-apiauthlogin)      | —                       | Login (5 req/min) |
+|   POST | [`/api/auth/logout`](#post-apiauthlogout)    | JWT (`artist`, `admin`) | Logout            |
+|   POST | [`/api/auth/refresh`](#post-apiauthrefresh)  | JWT (`artist`, `admin`) | Refresh token     |
+|    PUT | [`/api/auth/password`](#put-apiauthpassword) | JWT (`artist`, `admin`) | Change password   |
+
+### [Users](#users-1)
+
+| Method | Path                                          | Auth          | Description       |
+|-------:|-----------------------------------------------|---------------|-------------------|
+|    GET | [`/api/users`](#get-apiusers)                 | JWT (`admin`) | List users        |
+|    GET | [`/api/users/<id>`](#get-apiusersid)          | JWT (`admin`) | Get user by ID    |
+| DELETE | [`/api/users/<id>`](#delete-apiusersid)       | JWT (`admin`) | Delete user       |
+|   POST | [`/api/users`](#post-apiusers)                | JWT (`admin`) | Create a new user |
+|    PUT | [`/api/users/role/<id>`](#put-apiusersroleid) | JWT (`admin`) | Update user role  |
 
 ### [Artists](#artists-1)
 
-| Method | Path                                        | Auth | Description                      |
-|-------:|---------------------------------------------|------|----------------------------------|
-|    GET | [`/api/artists`](#get-apiartists)           | —    | All artists with albums & tracks |
-|    PUT | [`/api/artists`](#put-apiartists)           | JWT  | Create/update artists (bulk)     |
-| DELETE | [`/api/artists/<id>`](#delete-apiartistsid) | JWT  | Delete artist                    |
+| Method | Path                                        | Auth                    | Description                      |
+|-------:|---------------------------------------------|-------------------------|----------------------------------|
+|    GET | [`/api/artists`](#get-apiartists)           | —                       | All artists with albums & tracks |
+|    PUT | [`/api/artists`](#put-apiartists)           | JWT (`artist`, `admin`) | Create/update artists (bulk)     |
+| DELETE | [`/api/artists/<id>`](#delete-apiartistsid) | JWT (`artist`, `admin`) | Delete artist                    |
 
 ### [Biography](#biography-1)
 
-| Method | Path                                  | Auth | Description       |
-|-------:|---------------------------------------|------|-------------------|
-|    GET | [`/api/biography`](#get-apibiography) | —    | Biography content |
-|    PUT | [`/api/biography`](#put-apibiography) | JWT  | Update biography  |
+| Method | Path                                  | Auth                    | Description       |
+|-------:|---------------------------------------|-------------------------|-------------------|
+|    GET | [`/api/biography`](#get-apibiography) | —                       | Biography content |
+|    PUT | [`/api/biography`](#put-apibiography) | JWT (`artist`, `admin`) | Update biography  |
 
 ### [Gallery](#gallery-1)
 
-| Method | Path                                        | Auth | Description                    |
-|-------:|---------------------------------------------|------|--------------------------------|
-|    GET | [`/api/gallery`](#get-apigallery)           | —    | All galleries with images      |
-|    PUT | [`/api/gallery`](#put-apigallery)           | JWT  | Create/update galleries (bulk) |
-| DELETE | [`/api/gallery/<id>`](#delete-apigalleryid) | JWT  | Delete gallery                 |
+| Method | Path                                        | Auth                    | Description                    |
+|-------:|---------------------------------------------|-------------------------|--------------------------------|
+|    GET | [`/api/gallery`](#get-apigallery)           | —                       | All galleries with images      |
+|    PUT | [`/api/gallery`](#put-apigallery)           | JWT (`artist`, `admin`) | Create/update galleries (bulk) |
+| DELETE | [`/api/gallery/<id>`](#delete-apigalleryid) | JWT (`artist`, `admin`) | Delete gallery                 |
 
 ### [Messages](#messages-1)
 
-| Method | Path                                          | Auth | Description                 |
-|-------:|-----------------------------------------------|------|-----------------------------|
-|    GET | [`/api/messages`](#get-apimessages)           | JWT  | List messages               |
-|   POST | [`/api/messages`](#post-apimessages)          | —    | Submit message (1 req/min)  |
-|  PATCH | [`/api/messages/<id>`](#patch-apimessagesid)  | JWT  | Update message (read/trash) |
-| DELETE | [`/api/messages/<id>`](#delete-apimessagesid) | JWT  | Delete message              |
+| Method | Path                                          | Auth                    | Description                 |
+|-------:|-----------------------------------------------|-------------------------|-----------------------------|
+|    GET | [`/api/messages`](#get-apimessages)           | JWT (`artist`, `admin`) | List messages               |
+|   POST | [`/api/messages`](#post-apimessages)          | —                       | Submit message (1 req/min)  |
+|  PATCH | [`/api/messages/<id>`](#patch-apimessagesid)  | JWT (`artist`, `admin`) | Update message (read/trash) |
+| DELETE | [`/api/messages/<id>`](#delete-apimessagesid) | JWT (`artist`, `admin`) | Delete message              |
 
 ### [Uploads](#uploads-1)
 
-| Method | Path                                                  | Auth | Description              |
-|-------:|-------------------------------------------------------|------|--------------------------|
-|    GET | [`/api/upload/<path>`](#get-apiupload)                | —    | Serve uploaded files     |
-|   POST | [`/api/upload/audio`](#post-apiuploadaudio)           | JWT  | Upload audio files       |
-|   POST | [`/api/upload/gallery`](#post-apiuploadgallery)       | JWT  | Upload gallery images    |
-|   POST | [`/api/upload/background`](#post-apiuploadbackground) | JWT  | Upload background images |
+| Method | Path                                                  | Auth                    | Description              |
+|-------:|-------------------------------------------------------|-------------------------|--------------------------|
+|    GET | [`/api/upload/<path>`](#get-apiupload)                | —                       | Serve uploaded files     |
+|   POST | [`/api/upload/audio`](#post-apiuploadaudio)           | JWT (`artist`, `admin`) | Upload audio files       |
+|   POST | [`/api/upload/gallery`](#post-apiuploadgallery)       | JWT (`artist`, `admin`) | Upload gallery images    |
+|   POST | [`/api/upload/background`](#post-apiuploadbackground) | JWT (`artist`, `admin`) | Upload background images |
 
 ### [Orphaned files management](#orphaned-files)
 
-| Method | Path                                                           | Auth | Description                  |
-|-------:|----------------------------------------------------------------|------|------------------------------|
-|    GET | [`/api/orphans/audio`](#get-apiorphansaudio)                   | JWT  | List orphaned audio files    |
-|   POST | [`/api/orphans/audio/rollback`](#post-apiorphansaudiorollback) | JWT  | Restore orphaned audio files |
-| DELETE | [`/api/orphans/audio`](#delete-apiorphansaudio)                | JWT  | Delete orphaned audio files  |
-|    GET | [`/api/orphans/gallery`](#get-apiorphansgallery)               | JWT  | List orphaned image files    |
-| DELETE | [`/api/orphans/gallery`](#delete-apiorphansgallery)            | JWT  | Delete orphaned image files  |
+| Method | Path                                                           | Auth                    | Description                  |
+|-------:|----------------------------------------------------------------|-------------------------|------------------------------|
+|    GET | [`/api/orphans/audio`](#get-apiorphansaudio)                   | JWT (`artist`, `admin`) | List orphaned audio files    |
+|   POST | [`/api/orphans/audio/rollback`](#post-apiorphansaudiorollback) | JWT (`artist`, `admin`) | Restore orphaned audio files |
+| DELETE | [`/api/orphans/audio`](#delete-apiorphansaudio)                | JWT (`artist`, `admin`) | Delete orphaned audio files  |
+|    GET | [`/api/orphans/gallery`](#get-apiorphansgallery)               | JWT (`artist`, `admin`) | List orphaned image files    |
+| DELETE | [`/api/orphans/gallery`](#delete-apiorphansgallery)            | JWT (`artist`, `admin`) | Delete orphaned image files  |
 
 ---
 
@@ -836,6 +854,102 @@ Creates a new access token using a valid refresh token.
 ```
 
 **Errors:** `401` No refresh token found / expired - `422` Malformed/Wrong refresh token / invalid signature
+
+---
+
+### Users
+
+<sub>[← Back to API endpoints](#api-endpoints)</sub>
+
+## `GET /api/users`
+
+Returns all users. Authentication is required with an admin role.
+
+**Response `200`:**
+
+```json
+[
+  {
+    "email": "artist@example.com",
+    "id": "6d2af1c87a412ac5c24e977c",
+    "role": "artist"
+  },
+  {
+    "email": "admin@example.com",
+    "id": "6d8b9f3d1ddabefed984bccb",
+    "role": "admin"
+  }
+]
+```
+
+## `GET /api/users/<id>`
+
+Returns a single user by ID. Authentication is required with an admin role.
+
+**Response `200`:**
+
+```json
+{
+  "email": "artist@example.com",
+  "id": "6d2af1c87a412ac5c24e977c",
+  "role": "artist"
+}
+```
+
+**Errors:** `404` user not found - `400` invalid id
+
+## `DELETE /api/users/<id>`
+
+Deletes a user by ID. Authentication is required with an admin role.
+
+**Response `204`**
+
+## `POST /api/users`
+
+Create a new user. Authentication is required with an admin role.
+Requires a valid email address and a password.
+The user role is set to `artist` by default.
+
+**Request body:**
+
+```json
+{
+  "email": "example@example.com",
+  "password": "testpassword"
+}
+```
+
+**Response `201`:**
+
+```json
+{
+  "created": true
+}
+```
+
+**Errors:** `400` validation errors - `409` email already exists
+
+## `PUT /api/users/role/<id>`
+
+Update a user's role. Authentication is required with an admin role.
+
+**Request body:**
+
+```json
+{
+  "role": "admin"
+}
+```
+
+**Response `200`:**
+
+```json
+{
+  "updated": true
+}
+```
+
+**Errors:** `400` invalide role
 
 ---
 
@@ -1243,7 +1357,8 @@ Examples: `GET /api/upload/audio/artist/album/track.mp3?download=true`
 ## `POST /api/upload/audio`
 
 Uploads an audio file. JWT required. Non-MP3 files are automatically converted to MP3 (192kbps, 44100 Hz stereo) via
-ffmpeg before saving. ID3 tags (artist, album, title, track number, track tags) are written to the file after conversion, enabling
+ffmpeg before saving. ID3 tags (artist, album, title, track number, track tags) are written to the file after
+conversion, enabling
 orphan rollback.
 
 ```formdata
