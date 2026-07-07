@@ -39,6 +39,7 @@ def update_biography():
     except ValidationError:
         return jsonify({"error": "invalid ID"}), 400
 
+
 @biography_bp.route('/biography', methods=['POST'])
 @roles_required('admin')
 def create_biography():

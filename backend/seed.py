@@ -21,7 +21,7 @@ def get_uri():
     return f"mongodb://{user}:{password}@{host}:{port}/{db}?authSource={db}&serverSelectionTimeoutMS={timeout}"
 
 
-def seed_user(user_role: str = 'artist'):
+def seed_user(user_role: str = 'artist', is_active: bool = False):
     if user_role not in user_type:
         raise ValueError(f"Invalid user type: {user_role}")
     if user_role == 'artist':
@@ -40,7 +40,7 @@ def seed_user(user_role: str = 'artist'):
         return
 
     hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt(rounds=12))
-    User(email=email, password=hashed.decode('utf-8'), role=user_role).save()
+    User(email=email, password=hashed.decode('utf-8'), role=user_role, is_active=is_active).save()
     print(f"Created user: {email}")
 
 
@@ -65,8 +65,8 @@ def seed_biography():
 
 def seed():
     connect(host=get_uri())
-    seed_user('artist')
-    seed_user('admin')
+    seed_user(user_role='artist', is_active=True)
+    seed_user(user_role='admin', is_active=False)
     seed_biography()
 
 

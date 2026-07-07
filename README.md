@@ -702,13 +702,14 @@ All routes are prefixed with `/api`.
 
 ### [Users](#users-1)
 
-| Method | Path                                          | Auth          | Description       |
-|-------:|-----------------------------------------------|---------------|-------------------|
-|    GET | [`/api/users`](#get-apiusers)                 | JWT (`admin`) | List users        |
-|    GET | [`/api/users/<id>`](#get-apiusersid)          | JWT (`admin`) | Get user by ID    |
-| DELETE | [`/api/users/<id>`](#delete-apiusersid)       | JWT (`admin`) | Delete user       |
-|   POST | [`/api/users`](#post-apiusers)                | JWT (`admin`) | Create a new user |
-|    PUT | [`/api/users/role/<id>`](#put-apiusersroleid) | JWT (`admin`) | Update user role  |
+| Method | Path                                                  | Auth          | Description                |
+|-------:|-------------------------------------------------------|---------------|----------------------------|
+|    GET | [`/api/users`](#get-apiusers)                         | JWT (`admin`) | List users                 |
+|    GET | [`/api/users/<id>`](#get-apiusersid)                  | JWT (`admin`) | Get user by ID             |
+| DELETE | [`/api/users/<id>`](#delete-apiusersid)               | JWT (`admin`) | Delete user                |
+|   POST | [`/api/users`](#post-apiusers)                        | JWT (`admin`) | Create a new user          |
+|    PUT | [`/api/users/<id>/role`](#put-apiusersidrole)         | JWT (`admin`) | Update user role           |
+|    PUT | [`/api/users/<id>/activate`](#put-apiusersidactivate) | JWT (`admin`) | Set given artist as active |
 
 ### [Artists](#artists-1)
 
@@ -931,7 +932,7 @@ The user role is set to `artist` by default.
 
 **Errors:** `400` validation errors - `409` email already exists
 
-## `PUT /api/users/role/<id>`
+## `PUT /api/users/<id>/role`
 
 Update a user's role. Authentication is required with an admin role.
 
@@ -952,6 +953,23 @@ Update a user's role. Authentication is required with an admin role.
 ```
 
 **Errors:** `400` invalide role
+
+## `PUT /api/users/<id>/activate`
+
+Set the given artist as the active account. Only an active artist account can be set as active, has read/write 
+privilege, and is the owner of resources. Authentication is required with an admin role.
+
+**Request body:**
+- None
+
+**Response `200`:**
+```json
+{
+  "activated": true
+}
+```
+
+**Errors:** `400` invalid id, `404` user not found
 
 ---
 
