@@ -49,7 +49,7 @@ const handleSubmit = async () => {
   <div class="border border-gray-200 bg-gray-50 rounded-xl p-6 grid md:grid-cols-2">
     <div class="mb-6 flex flex-col justify-between">
       <div>
-        <h2 class="text-2xl font-semibold">Change password</h2>
+        <h2 class="text-2xl font-unbounded font-semibold">Change password</h2>
         <p class="text-sm text-gray-500 mt-1">Update your account password.</p>
       </div>
       <!-- Rules -->

@@ -29,6 +29,12 @@ router.beforeEach(async (to) => {
     if (to.meta.requiresAuth && !authStore.isAuthenticated()) {
         return { name: 'login' }
     }
+
+    const roles = to.meta.roles as string[] | undefined
+
+    if (roles && !roles.includes(authStore.payload?.role ?? '')) {
+        return { name: 'dashboard-admin'}
+    }
 })
 
 export default router;

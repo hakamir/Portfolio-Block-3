@@ -13,6 +13,7 @@ export default {
             path: 'messages',
             name: 'dashboard-messages',
             component: () => import('@views/dashboard/messages/MessagesView.vue'),
+            meta: {roles: ['artist']},
             redirect: {name: 'dashboard-messages-list'},
             children: [
                 {
@@ -32,16 +33,25 @@ export default {
             path: 'biography',
             name: 'dashboard-biography',
             component: () => import('@views/dashboard/biography/BiographyView.vue'),
+            meta: {roles: ['artist']},
         },
         {
             path: 'works',
             name: 'dashboard-works',
             component: () => import('@views/dashboard/works/WorksView.vue'),
+            meta: {roles: ['artist']},
+        },
+        {
+            path: 'admin',
+            name: 'dashboard-admin',
+            component: () => import('@views/dashboard/admin/AdminView.vue'),
+            meta: {roles: ['admin']},
         },
         {
             path: 'settings',
             name: 'dashboard-settings',
             component: () => import('@views/dashboard/settings/SettingsView.vue'),
+            meta: {roles: ['artist', 'admin']},
         }
     ]
 }
