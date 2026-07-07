@@ -174,8 +174,8 @@ sequenceDiagram
 ### Data model
 
 MongoDB stores five collections. Three of them use nested documents: `artists` embeds albums and tracks, `galleries`
-embeds images, and `biography` embeds sections. `messages` and `users` are flat collections.
-
+embeds images, and `biography` embeds sections. `messages` and `users` are flat collections. `artists`, `biography`, 
+`galleries` and `messages` reference `users` via a `user_id` field, linking content to its owner artist.
 ```mermaid
 erDiagram
     ARTIST {
@@ -183,6 +183,7 @@ erDiagram
         string slug
         string title
         int order
+        ObjectId user
     }
     ALBUM {
         string slug
@@ -214,6 +215,7 @@ erDiagram
         string title
         object image
         datetime updated_at
+        ObjectId user
     }
     SECTION {
         string title
@@ -229,18 +231,24 @@ erDiagram
         bool trashed
         bool replied
         datetime replied_at
+        ObjectId user
     }
     USER {
         ObjectId _id
         string email
         string password
         string role
+        bool is_active
     }
 
     ARTIST ||--o{ ALBUM: contains
     ALBUM ||--o{ TRACK: contains
     GALLERY ||--o{ IMAGE: contains
     BIOGRAPHY ||--o{ SECTION: contains
+    USER ||--o| BIOGRAPHY: owns
+    USER ||--o{ ARTIST: owns
+    USER ||--o{ GALLERY: owns
+    USER ||--o{ MESSAGE: receives
 ```
 
 ---
@@ -1141,25 +1149,22 @@ Updates the biography. The whole structure is required. JWT required.
 
 ```json
 {
-  "biography": {
     "_id": "b3f435dc399b11f1a3ca244bfe4c7954",
     "title": "Who am I?",
     "image": {
-      "sm": "/biography/biography-1-512.webp",
-      "md": "/biography/biography-1-1024.webp",
-      "lg": "/biography/biography-1-2048.webp"
+        "sm": "/biography/biography-1-512.webp",
+        "md": "/biography/biography-1-1024.webp",
+        "lg": "/biography/biography-1-2048.webp"
     },
-    "updated_at": "2026-05-19 14:49:19",
     "sections": [
-      {
-        "title": "Background & Musical Foundation",
-        "paragraphs": [
-          "I am a professional guitarist and composer...",
-          "Formally trained in contemporary music and jazz..."
-        ]
-      }
+        {
+            "title": "Background & Musical Foundation",
+            "paragraphs": [
+                "I am a professional guitarist and composer...",
+                "Formally trained in contemporary music and jazz..."
+            ]
+        }
     ]
-  }
 }
 ```
 

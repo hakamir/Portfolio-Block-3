@@ -48,7 +48,7 @@ def seed_biography():
     if Biography.objects.first():
         print("Biography already exists — skipping")
         return
-
+    artist = User.objects(role='artist', is_active=True).first()
     Biography(
         title="Biography",
         image=ImageSize(
@@ -59,6 +59,7 @@ def seed_biography():
         sections=[
             Section(title="Section Title", paragraphs=["Example paragraph"])
         ],
+        user=artist
     ).save()
     print("Created biography")
 
