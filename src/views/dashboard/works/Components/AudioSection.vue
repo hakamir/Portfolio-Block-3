@@ -23,7 +23,7 @@ onMounted(async () => {
   checkScreenSize()
   window.addEventListener('resize', checkScreenSize)
   window.addEventListener('click', handleClickOutside)
-  await audioStore.fetchAudios()
+  await audioStore.fetchArtists("dashboard")
   audioStore.artists.sort((a, b) => a.order - b.order)
   audioStore.artists.forEach(artist => {
     artist.albums.sort((a, b) => a.order - b.order)
@@ -141,7 +141,7 @@ const {fetchStatus} = storeToRefs(audioStore);
 const onSave = async () => {
   try {
     if (await audioStore.saveAudios()) {
-      await audioStore.fetchAudios()
+      await audioStore.fetchArtists("dashboard")
       refreshKey.value += 1;
     }
   } catch (error) {

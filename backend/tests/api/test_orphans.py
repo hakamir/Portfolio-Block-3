@@ -10,8 +10,9 @@ _ORPHAN_GALLERY_FILES = ["gallery-1/orphan.webp"]
 
 
 @pytest.fixture
-def test_artist():
+def test_artist(test_artist_user):
     return Artist(
+        user=test_artist_user,
         slug="artist-1",
         title="Artist 1",
         order=1,

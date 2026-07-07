@@ -12,7 +12,7 @@ const audioStore = useAudioStore()
 const searchStore = useSearchStore()
 
 onMounted(async () => {
-  await audioStore.fetchAudios()
+  await audioStore.fetchArtists("public")
   audioStore.artists.sort((a, b) => a.order - b.order)
   audioStore.artists.forEach(artist => {
     artist.albums.sort((a, b) => a.order - b.order)

@@ -1,7 +1,9 @@
 import os
 from flask import Blueprint, current_app, jsonify, request
+from flask_jwt_extended import get_jwt_identity
 from middleware.roles import roles_required
 from models.artist import Artist
+from models.user import User
 from services.audio_service import upsert_track
 from models.gallery import Gallery
 from utils.filesystem import cleanup_empty_dirs, get_files, read_id3_tags
@@ -64,6 +66,11 @@ def rollback_orphan_audio():
     if not data or 'files' not in data or not isinstance(data['files'], list):
         return jsonify({'error': 'Expected a list of files'}), 400
 
+    identity = get_jwt_identity()
+    user = User.objects(id=identity).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
     restored = []
     failed = []
 
@@ -88,7 +95,7 @@ def rollback_orphan_audio():
         artist_slug, album_slug, track_src = parts
 
         try:
-            upsert_track(artist_slug, album_slug, track_src, metadata)
+            upsert_track(user, artist_slug, album_slug, track_src, metadata)
             restored.append(relative_path)
         except Exception as e:
             failed.append({'file': relative_path, 'error': str(e)})

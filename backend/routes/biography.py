@@ -20,6 +20,17 @@ def get_biography():
     return jsonify({"biography": biography.to_json_dict()})
 
 
+@biography_bp.route('/biography/dashboard', methods=['GET'])
+@roles_required('artist', 'admin')
+def get_biography_dashboard():
+    identity = get_jwt_identity()
+    user = User.objects(id=identity).first()
+    biography = Biography.objects(user=user).first()
+    if biography is None:
+        return jsonify({"error": "biography not found"}), 404
+    return jsonify({"biography": biography.to_json_dict()})
+
+
 @biography_bp.route('/biography', methods=['PUT'])
 @roles_required('artist', 'admin')
 def update_biography():

@@ -3,7 +3,7 @@ import {instance} from "@api/axios.ts";
 import {nextTick, ref, watch} from "vue";
 import audiosApi from "@api/audios.ts";
 import artistsApi from "@api/artists.ts";
-import type {TrackUploadStatus} from "@/types";
+import type {TrackUploadStatus, Section} from "@/types";
 
 export interface Track {
     trackNumber: number
@@ -68,11 +68,11 @@ export const useAudioStore = defineStore('audio', () => {
         })
     }, {deep: true})
 
-    const fetchAudios = async () => {
+    const fetchArtists = async (section: Section) => {
         loading.value = true
         fetchStatus.value = 'loading'
         try {
-            const res = await instance.get(artistsApi.getArtists)
+            const res = await instance.get(section === "public" ? artistsApi.getArtists : artistsApi.getArtistsDashboard)
             artists.value = res.data
             await nextTick()
             isInitialized = true;
@@ -206,7 +206,7 @@ export const useAudioStore = defineStore('audio', () => {
 
     const syncDeletedArtists = async () => {
         // Fetch existing artists from server to detect deletions
-        const existingIds = (await instance.get(artistsApi.getArtists))
+        const existingIds = (await instance.get(artistsApi.getArtistsDashboard))
             .data.map((a: Artist) => a._id)
 
         // Compute artists that exist on server but were removed locally
@@ -288,7 +288,7 @@ export const useAudioStore = defineStore('audio', () => {
         orphans,
         isSubmitted,
         isDirty,
-        fetchAudios,
+        fetchArtists,
         fetchOrphans,
         checkAudioExists,
         removeTrackState,

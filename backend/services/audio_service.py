@@ -1,7 +1,7 @@
 from models.artist import Artist, Album, Track
 
 
-def upsert_track(artist_slug, album_slug, track_src, metadata):
+def upsert_track(user, artist_slug, album_slug, track_src, metadata):
     track_number = metadata['track_number'] if metadata['track_number'] > 0 else 1
 
     track_obj = Track(
@@ -22,6 +22,7 @@ def upsert_track(artist_slug, album_slug, track_src, metadata):
             tracks=[track_obj]
         )
         artist = Artist(
+            user=user,
             slug=artist_slug,
             title=metadata['artist'],
             order=1,

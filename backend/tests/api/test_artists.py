@@ -9,8 +9,9 @@ _NONEXISTENT_ID = "000000000000000000000001"
 
 
 @pytest.fixture
-def test_artist():
+def test_artist(test_artist_user):
     return Artist(
+        user=test_artist_user,
         slug="artist-1",
         title="Artist 1",
         order=1,

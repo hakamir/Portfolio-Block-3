@@ -1,5 +1,7 @@
 from mongoengine import EmbeddedDocument, IntField, StringField, ListField, EmbeddedDocumentField, Document, \
-    ValidationError
+    ValidationError, ReferenceField
+
+from models.user import User
 
 
 class Track(EmbeddedDocument):
@@ -17,6 +19,7 @@ class Album(EmbeddedDocument):
 
 
 class Artist(Document):
+    user = ReferenceField(User, required=True)
     slug = StringField(required=True)
     title = StringField(required=True)
     order = IntField(required=True)
@@ -26,6 +29,7 @@ class Artist(Document):
     def to_json_dict(self):
         data = self.to_mongo().to_dict()
         data['_id'] = str(data['_id'])
+        data.pop('user')
         return data
 
     def clean(self):
