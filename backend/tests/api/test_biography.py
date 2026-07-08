@@ -1,5 +1,3 @@
-from urllib import response
-
 from models.biography import Biography, Section
 from models.user import User
 
@@ -8,12 +6,12 @@ _NONEXISTENT_ID = "000000000000000000000001"
 
 
 class TestGetBiography:
-    def test_returns_404_when_no_biography(self, client):
+    def test_returns_404_when_no_active_biography(self, client):
         response = client.get("/api/biography")
         assert response.status_code == 404
         assert response.get_json() == {"error": "biography not found"}
 
-    def test_returns_biography(self, client, test_artist_user):
+    def test_returns_active_biography(self, client, test_artist_user):
         Biography(
             user=test_artist_user,
             title="Test Biography",
@@ -28,6 +26,7 @@ class TestGetBiography:
         assert data["biography"]["title"] == "Test Biography"
         assert "_id" in data["biography"]
         assert "user" not in data["biography"]
+
 
 
 class TestUpdateBiography:
@@ -165,3 +164,127 @@ class TestCreateBiography:
         assert response.get_json() == {"created": True}
         assert Biography.objects(user=test_artist_user).first() is not None
         assert Biography.objects(user=test_artist_user).first().title == "New Biography"
+
+    def test_returns_404_when_user_id_is_not_an_artist(self, client, admin_auth_headers, test_admin_user):
+        response = client.post("/api/biography", json={
+            "title": "New Biography",
+            "sections": _VALID_SECTIONS,
+            "user_id": str(test_admin_user.id)
+        }, headers=admin_auth_headers)
+        assert response.status_code == 404
+        assert response.get_json() == {"error": "user not found"}
+
+
+class TestGetDashboardBiography:
+    def test_requires_authentication(self, client):
+        response = client.get("/api/biography/dashboard")
+        assert response.status_code == 401
+
+    def test_returns_404_when_no_biography(self, client, auth_headers):
+        response = client.get("/api/biography/dashboard", headers=auth_headers)
+        assert response.status_code == 404
+        assert response.get_json() == {"error": "biography not found"}
+
+    def test_artist_returns_own_biography(self, client, auth_headers, test_artist_user):
+        Biography(
+            user=test_artist_user,
+            title="Artist Bio",
+            sections=[Section(title="Section 1", paragraphs=["Para 1"])]
+        ).save()
+
+        response = client.get("/api/biography/dashboard", headers=auth_headers)
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "biography" in data
+        assert data["biography"]["title"] == "Artist Bio"
+        assert "_id" in data["biography"]
+        assert "user" not in data["biography"]
+
+    def test_admin_returns_own_biography(self, client, admin_auth_headers, test_admin_user):
+        Biography(
+            user=test_admin_user,
+            title="Admin Bio",
+            sections=[]
+        ).save()
+
+        response = client.get("/api/biography/dashboard", headers=admin_auth_headers)
+
+        assert response.status_code == 200
+        assert response.get_json()["biography"]["title"] == "Admin Bio"
+
+    def test_does_not_return_other_user_biography(self, client, auth_headers):
+        other_artist = User(
+            email="other@test.com",
+            password="hashed",
+            role="artist",
+            is_active=False
+        ).save()
+        Biography(user=other_artist, title="Other Bio", sections=[]).save()
+
+        response = client.get("/api/biography/dashboard", headers=auth_headers)
+
+        assert response.status_code == 404
+
+
+class TestGetBiographyByUserId:
+    def test_requires_authentication(self, client, test_artist_user):
+        response = client.get(f"/api/biography/{test_artist_user.id}")
+        assert response.status_code == 401
+
+    def test_requires_admin_role(self, client, auth_headers, test_artist_user):
+        response = client.get(f"/api/biography/{test_artist_user.id}", headers=auth_headers)
+        assert response.status_code == 403
+
+    def test_returns_404_when_user_not_found(self, client, admin_auth_headers):
+        response = client.get(f"/api/biography/{_NONEXISTENT_ID}", headers=admin_auth_headers)
+        assert response.status_code == 404
+        assert response.get_json() == {"error": "user not found"}
+
+    def test_returns_404_when_biography_not_found(self, client, admin_auth_headers, test_artist_user):
+        response = client.get(f"/api/biography/{test_artist_user.id}", headers=admin_auth_headers)
+        assert response.status_code == 404
+        assert response.get_json() == {"error": "biography not found"}
+
+    def test_returns_biography(self, client, admin_auth_headers, test_artist_user):
+        Biography(
+            user=test_artist_user,
+            title="Artist Bio",
+            sections=[Section(title="S", paragraphs=["P"])]
+        ).save()
+
+        response = client.get(f"/api/biography/{test_artist_user.id}", headers=admin_auth_headers)
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "biography" in data
+        assert data["biography"]["title"] == "Artist Bio"
+        assert "user" not in data["biography"]
+
+
+class TestDeleteBiography:
+    def test_requires_authentication(self, client, test_artist_user):
+        response = client.delete(f"/api/biography/{test_artist_user.id}")
+        assert response.status_code == 401
+
+    def test_requires_admin_role(self, client, auth_headers, test_artist_user):
+        response = client.delete(f"/api/biography/{test_artist_user.id}", headers=auth_headers)
+        assert response.status_code == 403
+
+    def test_returns_404_when_user_not_found(self, client, admin_auth_headers):
+        response = client.delete(f"/api/biography/{_NONEXISTENT_ID}", headers=admin_auth_headers)
+        assert response.status_code == 404
+        assert response.get_json() == {"error": "user not found"}
+
+    def test_returns_404_when_biography_not_found(self, client, admin_auth_headers, test_artist_user):
+        response = client.delete(f"/api/biography/{test_artist_user.id}", headers=admin_auth_headers)
+        assert response.status_code == 404
+        assert response.get_json() == {"error": "biography not found"}
+
+    def test_deletes_biography(self, client, admin_auth_headers, test_artist_user):
+        Biography(user=test_artist_user, title="To Delete", sections=[]).save()
+
+        response = client.delete(f"/api/biography/{test_artist_user.id}", headers=admin_auth_headers)
+
+        assert response.status_code == 204
+        assert Biography.objects(user=test_artist_user).first() is None
