@@ -46,6 +46,20 @@ export default {
             name: 'dashboard-admin',
             component: () => import('@views/dashboard/admin/AdminView.vue'),
             meta: {roles: ['admin']},
+            redirect: {name: 'dashboard-admin-users-list'},
+            children: [
+                {
+                    path: 'users',
+                    name: 'dashboard-admin-users-list',
+                    component: () => import('@views/dashboard/admin/components/UserView.vue'),
+                },
+                {
+                    path: 'user/:id',
+                    name: 'dashboard-admin-user-detail',
+                    component: () => import('@views/dashboard/admin/components/UserDetails.vue'),
+
+                }
+            ]
         },
         {
             path: 'settings',

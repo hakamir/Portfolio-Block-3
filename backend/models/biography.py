@@ -5,13 +5,6 @@ from datetime import datetime, timezone
 
 from models.user import User
 
-
-class ImageSize(EmbeddedDocument):
-    sm = StringField(required=True)
-    md = StringField(required=True)
-    lg = StringField(required=True)
-
-
 class Section(EmbeddedDocument):
     title = StringField(required=True)
     paragraphs = ListField(StringField(), required=True)
@@ -19,7 +12,6 @@ class Section(EmbeddedDocument):
 
 class Biography(Document):
     title = StringField(required=True)
-    image = EmbeddedDocumentField(ImageSize)
     sections = ListField(EmbeddedDocumentField(Section))
     updatedAt = DateTimeField(default=lambda: datetime.now(timezone.utc))
     user = ReferenceField(User, required=True)

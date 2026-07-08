@@ -213,7 +213,6 @@ erDiagram
     BIOGRAPHY {
         ObjectId _id
         string title
-        object image
         datetime updated_at
         ObjectId user
     }
@@ -721,18 +720,24 @@ All routes are prefixed with `/api`.
 
 ### [Artists](#artists-1)
 
-| Method | Path                                        | Auth                    | Description                      |
-|-------:|---------------------------------------------|-------------------------|----------------------------------|
-|    GET | [`/api/artists`](#get-apiartists)           | —                       | All artists with albums & tracks |
-|    PUT | [`/api/artists`](#put-apiartists)           | JWT (`artist`, `admin`) | Create/update artists (bulk)     |
-| DELETE | [`/api/artists/<id>`](#delete-apiartistsid) | JWT (`artist`, `admin`) | Delete artist                    |
+| Method | Path                                                 | Auth                    | Description                                         |
+|-------:|------------------------------------------------------|-------------------------|-----------------------------------------------------|
+|    GET | [`/api/artists`](#get-apiartists)                    | —                       | Get all active artists with albums & tracks         |
+|    GET | [`/api/artists/dashboard`](#get-apiartistsdashboard) | JWT (`artist`, `admin`) | Get all owned artists with albums & tracks          |
+|    GET | [`/api/artists/<user_id>`](#get-apiartistsuser_id)   | JWT (`admin`)           | Get artists with albums & tracks from specific user |
+|    PUT | [`/api/artists`](#put-apiartists)                    | JWT (`artist`, `admin`) | Create/update owned artists (bulk)                  |
+| DELETE | [`/api/artists/<id>`](#delete-apiartistsid)          | JWT (`artist`, `admin`) | Delete owned artist                                 |
 
 ### [Biography](#biography-1)
 
-| Method | Path                                  | Auth                    | Description       |
-|-------:|---------------------------------------|-------------------------|-------------------|
-|    GET | [`/api/biography`](#get-apibiography) | —                       | Biography content |
-|    PUT | [`/api/biography`](#put-apibiography) | JWT (`artist`, `admin`) | Update biography  |
+| Method | Path                                                      | Auth                    | Description                            |
+|-------:|-----------------------------------------------------------|-------------------------|----------------------------------------|
+|    GET | [`/api/biography`](#get-apibiography)                     | —                       | Get active biography content           |
+|    GET | [`/api/biography/dahsboard`](#get-apibiographydashboard)  | JWT (`artist`, `admin`) | Get owned biography content            |
+|    GET | [`/api/biography/<user_id>`](#get-apibiographyuser_id)    | JWT (`admin`)           | Get biography of a specific user       |
+|    PUT | [`/api/biography`](#put-apibiography)                     | JWT (`artist`, `admin`) | Update owned biography                 |
+|   POST | [`/api/biography`](#post-apibiography)                    | JWT (`admin`)           | Create a biography for a specific user |
+| DELETE | [`/api/biography/<user_id>`](#delete-apibiographyuser_id) | JWT (`admin`)           | Delete an user's biography             |
 
 ### [Gallery](#gallery-1)
 
@@ -1065,6 +1070,17 @@ Returns all artists with albums and tracks. No authentication required.
 ]
 ```
 
+## `GET /api/artists/dashboard`
+
+Similar to [`GET /api/artists`](#get-apiartists), except it returns the owned artists data instead of active
+(public data). JWT required. 
+
+## `GET /api/artists/<user_id>`
+
+Similar to [`GET /api/artists`](#get-apiartists), except it returns the artists from a specific user. Authentication is
+required with an admin role.
+
+
 ## `PUT /api/artists`
 
 Applicative bulk upsert: Processes a list of artists. Each entry is validated, then either updated (if an ID is
@@ -1111,7 +1127,7 @@ albums and tracks become [orphans](#get-apiorphansaudio).
 
 ## `GET /api/biography`
 
-Returns the biography structure, including the main title, associated image URL, and sections with paragraphs.
+Returns the biography structure, including the main title and sections with paragraphs.
 The biography is stored as a singleton document. No authentication required.
 
 **Response `200`:**
@@ -1121,11 +1137,6 @@ The biography is stored as a singleton document. No authentication required.
   "biography": {
     "_id": "3e5f65c9500d4440b1ad7c4c3103bf19",
     "title": "Biography",
-    "image": {
-      "sm": "/biography/biography-1-512.webp",
-      "md": "/biography/biography-1-1024.webp",
-      "lg": "/biography/biography-1-2048.webp"
-    },
     "updated_at": "2026-05-19 14:35:17",
     "sections": [
       {
@@ -1141,6 +1152,16 @@ The biography is stored as a singleton document. No authentication required.
 
 **Error** `404`: No biography entry found, caused when the seeder was not run.
 
+## `GET /api/biography/dashboard`
+
+Similar to [`GET /api/biography`](#get-apiartists), except it returns the biography by the logged user data instead of
+active data (public). JWT required. 
+
+## `GET /api/biography/<user_id>`
+
+Similar to [`GET /api/biography`](#get-apiartists), except it returns the biography from a specific user. Authentication is
+required with an admin role.
+
 ## `PUT /api/biography`
 
 Updates the biography. The whole structure is required. JWT required.
@@ -1149,28 +1170,64 @@ Updates the biography. The whole structure is required. JWT required.
 
 ```json
 {
-    "_id": "b3f435dc399b11f1a3ca244bfe4c7954",
-    "title": "Who am I?",
-    "image": {
-        "sm": "/biography/biography-1-512.webp",
-        "md": "/biography/biography-1-1024.webp",
-        "lg": "/biography/biography-1-2048.webp"
-    },
-    "sections": [
-        {
-            "title": "Background & Musical Foundation",
-            "paragraphs": [
-                "I am a professional guitarist and composer...",
-                "Formally trained in contemporary music and jazz..."
-            ]
-        }
-    ]
+  "_id": "b3f435dc399b11f1a3ca244bfe4c7954",
+  "title": "Who am I?",
+  "sections": [
+    {
+      "title": "Background & Musical Foundation",
+      "paragraphs": [
+        "I am a professional guitarist and composer...",
+        "Formally trained in contemporary music and jazz..."
+      ]
+    }
+  ]
 }
 ```
 
 **Response `200`:** Updated biography object (same shape as GET).
 
 **Errors:** `400` malformed body - `401` missing/invalid token
+
+## `POST /api/biography`
+
+Create a biography for a specific user. User ID must be provided in the request body. Authentication is required with
+an admin role.
+
+**Request body:**
+```json
+{
+  "title": "Who am I?",
+  "sections": [
+    {
+      "title": "Background & Musical Foundation",
+      "paragraphs": [
+        "I am a professional guitarist and composer...",
+        "Formally trained in contemporary music and jazz..."
+      ]
+    }
+  ],
+  "user_id": "6a4d24d3d19315b4c5e1e162"
+}
+```
+
+**Response `201`:**
+```json
+{
+  "created": true
+}
+```
+
+**Errors:** `400` invalid payload - `404` Target user not found - `409` Biography already exists - `415` Invalid content type
+
+## `DELETE /api/biography/<user_id>`
+
+Delete the biography of a given user. Authentication is required with an admin role.
+
+**Response `204`:**
+
+- None
+
+**Errors:** `404` : User not found || Biography not found.
 
 ---
 

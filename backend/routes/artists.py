@@ -14,7 +14,8 @@ artists_bp = Blueprint('artists', __name__)
 
 
 @artists_bp.route('/artists', methods=['GET'])
-def get_artists():
+def get_active_artists():
+    """Get tracks of the active artist. Public."""
     active_user = User.objects(role='artist', is_active=True).first()
     if not active_user:
         return jsonify([]), 200
@@ -23,15 +24,27 @@ def get_artists():
 
 @artists_bp.route('/artists/dashboard', methods=['GET'])
 @roles_required('artist', 'admin')
-def get_artists_dashboard():
+def get_owned_artists():
+    """Get tracks owned by the authenticated user."""
     identity = get_jwt_identity()
     user = User.objects(id=identity).first()
     return jsonify([artist.to_json_dict() for artist in Artist.objects(user=user)]), 200
 
 
+@artists_bp.route('/artists/<user_id>', methods=['GET'])
+@roles_required('admin')
+def get_artist_by_user_id(user_id: str):
+    """Get tracks from a specific user. Admin only."""
+    user = User.objects(id=user_id).first()
+    if user is None:
+        return jsonify({"error": "user not found"}), 404
+    return jsonify([artist.to_json_dict() for artist in Artist.objects(user=user)]), 200
+
+
 @artists_bp.route('/artists', methods=['PUT'])
 @roles_required('artist', 'admin')
-def update_artists():
+def update_owned_artists():
+    """Update tracks of the authenticated artist. Applicative bulk upsert."""
     if not request.is_json:
         return jsonify({'error': 'Invalid content-type'}), 415
     payload = request.get_json()
@@ -94,6 +107,10 @@ def update_artists():
 @artists_bp.route('/artists/<id>', methods=['DELETE'])
 @roles_required('artist', 'admin')
 def delete_artist(id):
+    """
+    Delete a document (artist) from the artists' collection by its ID.
+    Can only delete documents owned by the authenticated user.
+    """
     if not ObjectId.is_valid(id):
         return jsonify({'error': 'Invalid ID'}), 400
     identity = get_jwt_identity()

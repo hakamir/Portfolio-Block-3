@@ -1,9 +1,8 @@
 from urllib import response
 
-from models.biography import Biography, ImageSize, Section
+from models.biography import Biography, Section
 from models.user import User
 
-_VALID_IMAGE = {"sm": "/bio-512.webp", "md": "/bio-1024.webp", "lg": "/bio-2048.webp"}
 _VALID_SECTIONS = [{"title": "Section", "paragraphs": ["Para"]}]
 _NONEXISTENT_ID = "000000000000000000000001"
 
@@ -18,7 +17,6 @@ class TestGetBiography:
         Biography(
             user=test_artist_user,
             title="Test Biography",
-            image=ImageSize(sm="/bio-512.webp", md="/bio-1024.webp", lg="/bio-2048.webp"),
             sections=[Section(title="Section 1", paragraphs=["Paragraph 1"])]
         ).save()
 
@@ -35,7 +33,9 @@ class TestGetBiography:
 class TestUpdateBiography:
     def test_requires_authentication(self, client):
         response = client.put("/api/biography", json={
-            "_id": _NONEXISTENT_ID, "title": "T", "image": _VALID_IMAGE, "sections": _VALID_SECTIONS
+            "_id": _NONEXISTENT_ID,
+            "title": "T",
+            "sections": _VALID_SECTIONS
         })
         assert response.status_code == 401
 
@@ -53,14 +53,18 @@ class TestUpdateBiography:
 
     def test_returns_400_on_invalid_id_format(self, client, auth_headers):
         response = client.put("/api/biography", json={
-            "_id": "not-a-valid-id", "title": "T", "image": _VALID_IMAGE, "sections": _VALID_SECTIONS
+            "_id": "not-a-valid-id",
+            "title": "T",
+            "sections": _VALID_SECTIONS
         }, headers=auth_headers)
         assert response.status_code == 400
         assert response.get_json() == {"error": "invalid ID"}
 
     def test_returns_404_when_biography_not_found(self, client, auth_headers):
         response = client.put("/api/biography", json={
-            "_id": _NONEXISTENT_ID, "title": "T", "image": _VALID_IMAGE, "sections": _VALID_SECTIONS
+            "_id": _NONEXISTENT_ID,
+            "title": "T",
+            "sections": _VALID_SECTIONS
         }, headers=auth_headers)
         assert response.status_code == 404
         assert response.get_json() == {"error": "biography not found"}
@@ -69,14 +73,12 @@ class TestUpdateBiography:
         bio = Biography(
             user=test_artist_user,
             title="Original",
-            image=ImageSize(sm="/bio-512.webp", md="/bio-1024.webp", lg="/bio-2048.webp"),
             sections=[]
         ).save()
 
         response = client.put("/api/biography", json={
             "_id": str(bio.id),
             "title": "Updated Title",
-            "image": _VALID_IMAGE,
             "sections": [{"title": "New Section", "paragraphs": ["New para"]}]
         }, headers=auth_headers)
 
@@ -95,7 +97,6 @@ class TestUpdateBiography:
         bio = Biography(
             user=other_artist,
             title="Other Artist Bio",
-            image=ImageSize(**{k: v for k, v in zip(['sm', 'md', 'lg'], _VALID_IMAGE.values())}),
             sections=[]
         ).save()
 
@@ -103,7 +104,6 @@ class TestUpdateBiography:
         response = client.put("/api/biography", json={
             "_id": str(bio.id),
             "title": "Hacked Title",
-            "image": _VALID_IMAGE,
             "sections": []
         }, headers=auth_headers)
 
@@ -135,23 +135,20 @@ class TestCreateBiography:
     def test_returns_404_when_artist_not_found(self, client, admin_auth_headers):
         response = client.post("/api/biography", json={
             "title": "Test Biography",
-            "image": _VALID_IMAGE,
             "sections": _VALID_SECTIONS,
             "user_id": _NONEXISTENT_ID
         }, headers=admin_auth_headers)
         assert response.status_code == 404
-        assert response.get_json() == {"error": "artist not found"}
+        assert response.get_json() == {"error": "user not found"}
 
     def test_returns_409_when_biography_already_exists(self, client, admin_auth_headers, test_artist_user):
         Biography(
             user=test_artist_user,
             title="Existing Bio",
-            image=ImageSize(sm="/bio-512.webp", md="/bio-1024.webp", lg="/bio-2048.webp"),
             sections=[]
         ).save()
         response = client.post("/api/biography", json={
             "title": "New Bio",
-            "image": _VALID_IMAGE,
             "sections": _VALID_SECTIONS,
             "user_id": str(test_artist_user.id)
         }, headers=admin_auth_headers)
@@ -161,7 +158,6 @@ class TestCreateBiography:
     def test_creates_biography(self, client, admin_auth_headers, test_artist_user):
         response = client.post("/api/biography", json={
             "title": "New Biography",
-            "image": _VALID_IMAGE,
             "sections": _VALID_SECTIONS,
             "user_id": str(test_artist_user.id)
         }, headers=admin_auth_headers)

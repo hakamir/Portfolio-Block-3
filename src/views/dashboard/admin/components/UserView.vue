@@ -123,6 +123,10 @@ onMounted(() => {
       <div
           v-for="user in userStore.users"
           :key="user.id"
+          @click="$router.push({
+            name: 'dashboard-admin-user-detail',
+            params: {id: user.id}
+          })"
           class="flex items-center gap-2 sm:gap-3 px-4 py-3 bg-white border-b border-gray-200 last:border-0 group hover:bg-gray-50 transition">
 
         <!-- Active dot -->
@@ -131,7 +135,9 @@ onMounted(() => {
 
         <!-- Email + role badge (mobile only, shown below email) -->
         <div class="grow min-w-0">
-          <span class="block text-sm text-gray-800 truncate group-hover:translate-x-1 transition">{{ user.email }}</span>
+          <span class="block text-sm text-gray-800 truncate group-hover:translate-x-1 transition">
+            {{ user.email }}
+          </span>
           <span
               class="sm:hidden inline-flex mt-0.5 text-xs font-semibold px-2 py-0.5 rounded-full border select-none"
               :class="user.role === 'admin'
@@ -142,10 +148,11 @@ onMounted(() => {
         </div>
 
         <!-- Actions -->
-        <div class="flex items-center gap-1 sm:w-28 justify-end shrink-0">
+        <div class="flex items-center gap-1 sm:w-28 justify-end shrink-0" @click.stop>
 
           <!-- Activate (inactive artists only) -->
-          <Tooltip v-if="!isSelf(user) && user.role === 'artist' && !user.is_active" message="Set as active artist" side="bottom" :icon="Zap" iconBgColor="bg-lime-700/50">
+          <Tooltip v-if="!isSelf(user) && user.role === 'artist' && !user.is_active" message="Set as active artist"
+                   side="bottom" :icon="Zap" iconBgColor="bg-lime-700/50">
             <button
                 @click="openActivateModal(user)"
                 class="p-2 rounded-full text-gray-400 hover:text-lime-600 hover:bg-lime-100 transition">
@@ -154,7 +161,8 @@ onMounted(() => {
           </Tooltip>
 
           <!-- Change role (hidden for self) -->
-          <Tooltip v-if="!isSelf(user) && !user.is_active" message="Change role" side="bottom" :icon="ShieldCheck" iconBgColor="bg-blue-700/50">
+          <Tooltip v-if="!isSelf(user) && !user.is_active" message="Change role" side="bottom" :icon="ShieldCheck"
+                   iconBgColor="bg-blue-700/50">
             <button
                 @click="openRoleModal(user)"
                 class="p-2 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-100 transition">
@@ -163,7 +171,8 @@ onMounted(() => {
           </Tooltip>
 
           <!-- Delete (blocked for active users and self) -->
-          <Tooltip v-if="!isSelf(user) && !user.is_active" message="Delete user" side="bottom" :icon="Trash2" iconBgColor="bg-red-700/50">
+          <Tooltip v-if="!isSelf(user) && !user.is_active" message="Delete user" side="bottom" :icon="Trash2"
+                   iconBgColor="bg-red-700/50">
             <button
                 @click="openDeleteModal(user)"
                 class="p-2 rounded-full text-gray-400 hover:text-red-600 hover:bg-red-100 transition">
@@ -177,10 +186,15 @@ onMounted(() => {
               class="hidden sm:inline-flex text-xs font-semibold px-2.5 py-1 rounded-full text-gray-100 bg-violet-700 select-none text-center shrink-0">
           Your account
         </span>
+        <span v-else-if="user.is_active"
+              class="hidden sm:inline-flex text-xs font-semibold px-2.5 py-1 rounded-full text-gray-100 bg-green-700 select-none text-center shrink-0">
+          Active
+        </span>
 
         <!-- Role badge: desktop only -->
-        <span class="hidden sm:inline-flex text-xs font-semibold px-2.5 py-1 rounded-full border select-none w-14 text-center shrink-0"
-              :class="user.role === 'admin'
+        <span
+            class="hidden sm:inline-flex text-xs font-semibold px-2.5 py-1 rounded-full border select-none w-14 text-center shrink-0 justify-center"
+            :class="user.role === 'admin'
                 ? 'bg-lime-100 text-lime-800 border-lime-200'
                 : 'bg-blue-100 text-blue-800 border-blue-200'">
           {{ user.role }}
@@ -235,9 +249,9 @@ onMounted(() => {
         </select>
       </div>
       <div class="flex items-center gap-2">
-      <TriangleAlert class="text-red-500 w-5 h-5"/>
-      <span v-if="createError" class="text-sm! text-red-500">{{ createError }}</span>
-        </div>
+        <TriangleAlert class="text-red-500 w-5 h-5"/>
+        <span v-if="createError" class="text-sm! text-red-500">{{ createError }}</span>
+      </div>
     </div>
   </Modal>
 

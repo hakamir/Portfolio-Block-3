@@ -48,7 +48,7 @@ const autoResizeAll = () => {
 }
 
 onMounted(async () => {
-  await store.fetchBiographyDashboard()
+  await store.fetchBiography('dashboard')
   await nextTick()
   autoResizeAll()
 })
