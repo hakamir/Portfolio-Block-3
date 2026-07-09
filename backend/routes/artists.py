@@ -83,7 +83,6 @@ def update_owned_artists():
             # Include metadata in audio files
             for album in item.albums:
                 for track in album.tracks:
-                    print(track.tags, flush=True)
                     settings = current_app.config['settings']
                     file_path = os.path.join(settings.upload_folder, 'audio', item.slug, album.slug, track.src)
                     if os.path.exists(file_path):

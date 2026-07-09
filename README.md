@@ -741,11 +741,13 @@ All routes are prefixed with `/api`.
 
 ### [Gallery](#gallery-1)
 
-| Method | Path                                        | Auth                    | Description                    |
-|-------:|---------------------------------------------|-------------------------|--------------------------------|
-|    GET | [`/api/gallery`](#get-apigallery)           | —                       | All galleries with images      |
-|    PUT | [`/api/gallery`](#put-apigallery)           | JWT (`artist`, `admin`) | Create/update galleries (bulk) |
-| DELETE | [`/api/gallery/<id>`](#delete-apigalleryid) | JWT (`artist`, `admin`) | Delete gallery                 |
+| Method | Path                                                 | Auth                    | Description                      |
+|-------:|------------------------------------------------------|-------------------------|----------------------------------|
+|    GET | [`/api/gallery`](#get-apigallery)                    | —                       | Get active galleries with images |
+|    GET | [`/api/gallery/dashboard`](#get-apigallerydashboard) | JWT (`artist`, `admin`) | Get owned galleries with images  |
+|    GET | [`/api/gallery/<user_id>`](#get-apigalleryuser_id)   | JWT (`admin`)           | Get galleries of a specific user |
+|    PUT | [`/api/gallery`](#put-apigallery)                    | JWT (`artist`, `admin`) | Create/update galleries (bulk)   |
+| DELETE | [`/api/gallery/<id>`](#delete-apigalleryid)          | JWT (`artist`, `admin`) | Delete gallery                   |
 
 ### [Messages](#messages-1)
 
@@ -1275,6 +1277,16 @@ Returns all galleries with associated image metadata and URL. No authentication 
   }
 ]
 ```
+
+## `GET /api/gallery/dashboard`
+
+Similar to [`GET /api/gallery`](#get-apigallery), except it returns the owned galleries data instead of active
+(public data). JWT required. 
+
+## `GET /api/gallery/<user_id>`
+
+Similar to [`GET /api/gallery`](#get-apigallery), except it returns the galleries from a specific user. Authentication is
+required with an admin role.
 
 ## `PUT /api/gallery`
 
