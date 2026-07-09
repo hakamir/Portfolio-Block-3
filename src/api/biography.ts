@@ -4,4 +4,5 @@ export default {
     getBiographyByUser: (id: string) => `/api/biography/${id}`,
     updateBiography: `/api/biography`,
     createBiography: `/api/biography`,
+    deleteBiography: (id: string) => `/api/biography/${id}`,
 }

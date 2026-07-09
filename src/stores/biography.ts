@@ -23,10 +23,26 @@ export const useBiographyStore = defineStore("biography", () => {
         isDirty.value = false
     }
 
+    const fetchBiographyByUser = async (id: string) => {
+        return await instance.get(biographyApi.getBiographyByUser(id))
+    }
+
     const updateBiography = async () => {
         await instance.put(biographyApi.updateBiography, biography.value)
         isDirty.value = false
     }
 
-    return {biography, isDirty, fetchBiography, updateBiography}
+    const createBiography = async (id: string) => {
+        await instance.post(biographyApi.createBiography, {
+            user_id: id,
+            title: '',
+            sections: [],
+        })
+    }
+
+    const deleteBiography = async (id: string) => {
+        await instance.delete(biographyApi.deleteBiography(id))
+    }
+
+    return {biography, isDirty, fetchBiography, fetchBiographyByUser, updateBiography, createBiography, deleteBiography}
 })

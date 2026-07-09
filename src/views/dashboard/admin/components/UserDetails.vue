@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {useRoute, useRouter} from "vue-router"
 import {computed, onMounted, ref} from "vue"
-import {useUserStore, useAuthStore} from "@stores"
+import {useUserStore, useAuthStore, useBiographyStore} from "@stores"
 import {Undo2, Trash2, ShieldCheck, Zap, PlusCircle, PackageOpen, BookOpen, Music2} from "@lucide/vue"
 import Tooltip from "@components/layout/Tooltip.vue"
 import Modal from "@components/Modal.vue"
@@ -15,6 +15,9 @@ const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const authStore = useAuthStore()
+
+
+const biographyStore = useBiographyStore()
 
 const user = computed(() =>
     userStore.users?.find(u => u.id === route.params.id)
@@ -78,15 +81,16 @@ const fetchGalleries = async (userId: string) => {
 }
 
 // --- Modals ---
-const showDeleteModal = ref(false)
+const showDeleteUserModal = ref(false)
+const showDeleteBiographyModal = ref(false)
 const showRoleModal = ref(false)
 const showActivateModal = ref(false)
 const showCreateBioModal = ref(false)
 
-const onConfirmDelete = async () => {
+const onConfirmDeleteUser = async () => {
   if (!user.value) return
   await userStore.deleteUser(user.value.id)
-  showDeleteModal.value = false
+  showDeleteUserModal.value = false
   router.push('/dashboard')
 }
 
@@ -104,12 +108,15 @@ const onConfirmActivate = async () => {
 
 const onConfirmCreateBio = async () => {
   if (!user.value) return
-  await instance.post(biographyApi.createBiography, {
-    user_id: user.value.id,
-    title: '',
-    sections: [],
-  })
+  await biographyStore.createBiography(user.value.id)
   showCreateBioModal.value = false
+  await fetchBiography(user.value.id)
+}
+
+const onConfirmDeleteBio = async () => {
+  if (!user.value) return
+  await biographyStore.deleteBiography(user.value.id)
+  showDeleteBiographyModal.value = false
   await fetchBiography(user.value.id)
 }
 
@@ -187,7 +194,7 @@ onMounted(async () => {
 
           <button
               v-if="!user.is_active"
-              @click="showDeleteModal = true"
+              @click="showDeleteUserModal = true"
               class="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
             <Trash2 class="w-4 h-4"/>
             Delete user
@@ -209,19 +216,28 @@ onMounted(async () => {
         <div v-if="biographyLoading" class="text-sm text-gray-400">Loading…</div>
 
         <div v-else-if="biography"
-             class="bg-white border border-gray-200 rounded-xl p-4 flex flex-col gap-2">
-          <p class="text-sm font-semibold text-gray-800 truncate">
-            {{ biography.title || '(no title)' }}
-          </p>
-          <p class="text-xs text-gray-500">
-            {{ biography.sections?.length ?? 0 }} section{{ biography.sections?.length === 1 ? '' : 's' }}
-          </p>
-          <ul v-if="biography.sections?.length"
-              class="text-xs text-gray-600 space-y-0.5 pl-2 border-l-2 border-gray-100">
-            <li v-for="(section, i) in biography.sections" :key="i" class="truncate">
-              {{ section.title || '(unnamed section)' }}
-            </li>
-          </ul>
+             class="bg-white border border-gray-200 rounded-xl p-4 flex justify-between">
+          <div class="flex flex-col gap-2">
+            <p class="text-sm font-semibold text-gray-800 truncate">
+              {{ biography.title || '(no title)' }}
+            </p>
+            <p class="text-xs text-gray-500">
+              {{ biography.sections?.length ?? 0 }} section{{ biography.sections?.length === 1 ? '' : 's' }}
+            </p>
+            <ul v-if="biography.sections?.length"
+                class="text-xs text-gray-600 space-y-0.5 pl-2 border-l-2 border-gray-100">
+              <li v-for="(section, i) in biography.sections" :key="i" class="truncate">
+                {{ section.title || '(unnamed section)' }}
+              </li>
+            </ul>
+          </div>
+          <div v-if="!user.is_active" class="flex items-center">
+            <button @click="showDeleteBiographyModal=true"
+                    class="px-2 py-1 rounded-full text-red-500 text-sm hover:bg-red-100 transition flex items-center gap-1 self-start md:self-auto">
+              <Trash2 class="w-4 h-4"/>
+              Delete biography
+            </button>
+          </div>
         </div>
 
         <button
@@ -292,28 +308,45 @@ onMounted(async () => {
         </div>
 
 
-        <div v-else class="flex items-center gap-2 text-sm text-gray-500">
+        <div v-else class="flex items-center gap-2 text-sm text-gray-400">
           <PackageOpen class="w-4 h-4"/>
-          No artist data found.
+          No gallery data found.
         </div>
       </div>
 
     </div>
   </div>
 
-  <!-- Delete modal -->
+  <!-- Delete user modal -->
   <Modal
-      v-if="showDeleteModal"
+      v-if="showDeleteUserModal"
       :icon="Trash2"
       :buttons="[
-        { label: 'Cancel', color: 'white', action: () => showDeleteModal = false },
-        { label: 'Delete', color: 'red', action: onConfirmDelete },
+        { label: 'Cancel', color: 'white', action: () => showDeleteUserModal = false },
+        { label: 'Delete', color: 'red', action: onConfirmDeleteUser },
       ]"
-      @close="showDeleteModal = false">
+      @close="showDeleteUserModal = false">
     <template #header>Delete user</template>
     <p class="text-sm text-gray-600">
       Are you sure you want to delete
       <span class="font-semibold text-gray-800">{{ user?.email }}</span>?
+      This action cannot be undone.
+    </p>
+  </Modal>
+
+  <!-- Delete biography modal -->
+  <Modal
+      v-if="showDeleteBiographyModal"
+      :icon="Trash2"
+      :buttons="[
+        { label: 'Cancel', color: 'white', action: () => showDeleteBiographyModal = false },
+        { label: 'Delete', color: 'red', action: onConfirmDeleteBio },
+      ]"
+      @close="showDeleteBiographyModal = false">
+    <template #header>Delete biography</template>
+    <p class="text-sm text-gray-600">
+      Are you sure you want to delete the biography of
+      <span class="font-semibold text-gray-800">{{ user?.email }}</span>?<br/>
       This action cannot be undone.
     </p>
   </Modal>
