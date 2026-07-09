@@ -2,6 +2,7 @@ import {defineStore} from "pinia";
 import {nextTick, ref, watch} from "vue";
 import {instance} from "@api/axios.ts";
 import galleryApi from "@api/gallery.ts";
+import type {Section} from "@/types";
 
 
 export interface Image {
@@ -31,8 +32,8 @@ export const useGalleriesStore = defineStore('galleries', () => {
     let isInitialized = false
     const isSubmitted = ref(false);
 
-    const fetchGalleries = async () => {
-        const res = await instance.get(galleryApi.getGalleries)
+    const fetchGalleries = async (section: Section) => {
+        const res = await instance.get(section === 'public' ? galleryApi.getGalleries : galleryApi.getGalleriesDashboard)
         galleries.value = res.data
         galleries.value.sort((a, b) => a.order - b.order)
         galleries.value.forEach(gallery => {
@@ -95,7 +96,7 @@ export const useGalleriesStore = defineStore('galleries', () => {
         pendingUploads.value.clear()
         uploadedFileName.value = undefined;
         // Delete galleries that no longer exist
-        const existingIds = (await instance.get(galleryApi.getGalleries)).data
+        const existingIds = (await instance.get(galleryApi.getGalleriesDashboard)).data
             .map((g: Gallery) => g._id)
         const currentIds = galleries.value.map(g => g._id).filter(id => id)
         const toDelete = existingIds.filter((id: string) => !currentIds.includes(id))

@@ -144,7 +144,6 @@ class TestRollbackOrphanAudio:
         assert data['failed'][0]['error'] == 'Unexpected path structure'
 
     def test_restores_orphan_creating_new_artist(self, client, auth_headers):
-        # Aucun artiste en base — doit créer artiste + album + track
         with patch('os.path.exists', return_value=True), \
                 patch('routes.orphans.read_id3_tags', return_value=_ROLLBACK_METADATA):
             response = client.post(
@@ -157,14 +156,12 @@ class TestRollbackOrphanAudio:
         assert _ORPHAN_AUDIO_FILES[0] in data['restored']
         assert data['failed'] == []
 
-        # Vérifie que l'artiste a bien été créé en base
         artist = Artist.objects(slug="artist-1").first()
         assert artist is not None
         assert artist.albums[0].slug == "album-1"
         assert artist.albums[0].tracks[0].src == "orphan.mp3"
 
     def test_restores_orphan_into_existing_artist(self, client, auth_headers, test_artist):
-        # L'artiste existe déjà, l'album aussi — doit ajouter le track
         orphan = ["artist-1/album-1/orphan.mp3"]
         with patch('os.path.exists', return_value=True), \
                 patch('routes.orphans.read_id3_tags', return_value=_ROLLBACK_METADATA):
@@ -182,7 +179,6 @@ class TestRollbackOrphanAudio:
         assert "orphan.mp3" in srcs
 
     def test_skips_already_existing_track(self, client, auth_headers, test_artist):
-        # Le track existe déjà — doit être ignoré sans erreur
         existing = ["artist-1/album-1/track.mp3"]
         metadata = {**_ROLLBACK_METADATA, 'title': 'Track 1'}
         with patch('os.path.exists', return_value=True), \
@@ -194,14 +190,12 @@ class TestRollbackOrphanAudio:
             )
         assert response.status_code == 200
         data = response.get_json()
-        # Restauré sans erreur, mais pas de doublon en base
         assert existing[0] in data['restored']
         artist = Artist.objects(slug="artist-1").first()
         srcs = [t.src for t in artist.albums[0].tracks]
         assert srcs.count("track.mp3") == 1
 
     def test_partial_failure_returns_200(self, client, auth_headers):
-        # Un fichier valide, un sans metadata — résultat partiel
         files = [
             "artist-1/album-1/orphan.mp3",
             "artist-1/album-1/no_tags.mp3"

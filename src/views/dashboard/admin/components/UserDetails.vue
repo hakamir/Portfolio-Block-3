@@ -9,6 +9,7 @@ import UserField from "@views/dashboard/admin/components/UserField.vue"
 import {instance} from "@api/axios"
 import biographyApi from "@api/biography"
 import artistsApi from "@api/artists"
+import galleryApi from "@api/gallery"
 
 const route = useRoute()
 const router = useRouter()
@@ -61,6 +62,21 @@ const fetchArtists = async (userId: string) => {
   }
 }
 
+const galleries = ref<any[]>([])
+const galleriesLoading = ref(false)
+
+const fetchGalleries = async (userId: string) => {
+  galleriesLoading.value = true
+  try {
+    const res = await instance.get(galleryApi.getGalleriesByUser(userId))
+    galleries.value = res.data
+  } catch {
+    galleries.value = []
+  } finally {
+    galleriesLoading.value = false
+  }
+}
+
 // --- Modals ---
 const showDeleteModal = ref(false)
 const showRoleModal = ref(false)
@@ -91,7 +107,6 @@ const onConfirmCreateBio = async () => {
   await instance.post(biographyApi.createBiography, {
     user_id: user.value.id,
     title: '',
-    image: {sm: '', md: '', lg: ''},
     sections: [],
   })
   showCreateBioModal.value = false
@@ -104,7 +119,7 @@ onMounted(async () => {
   }
   if (user.value?.role === 'artist') {
     const userId = route.params.id as string
-    await Promise.all([fetchBiography(userId), fetchArtists(userId)])
+    await Promise.all([fetchBiography(userId), fetchArtists(userId), fetchGalleries(userId)])
   }
 })
 </script>
@@ -151,7 +166,7 @@ onMounted(async () => {
 
       <!-- === Admin actions === -->
       <div v-if="!isSelf" class="border-t border-gray-200 pt-5">
-        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Admin actions</h3>
+        <h3 class="text-md font-semibold text-gray-500 uppercase tracking-widest mb-3">Admin actions</h3>
         <div class="flex flex-wrap gap-2">
 
           <button
@@ -178,15 +193,15 @@ onMounted(async () => {
             Delete user
           </button>
 
-          <p v-if="user.is_active" class="text-sm text-gray-400 italic">
-            Actions are disabled while a user is the active artist.
-          </p>
+          <span v-if="user.is_active" class="text-md text-gray-400 italic">
+            Actions are disabled while a user is active.
+          </span>
         </div>
       </div>
 
       <!-- Biography (artists only) -->
       <div v-if="user.role === 'artist'" class="border-t border-gray-200 pt-5">
-        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+        <h3 class="text-md font-semibold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
           <BookOpen class="w-3.5 h-3.5"/>
           Biography
         </h3>
@@ -220,9 +235,9 @@ onMounted(async () => {
 
       <!-- Artist data (artists only) -->
       <div v-if="user.role === 'artist'" class="border-t border-gray-200 pt-5">
-        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+        <h3 class="text-md font-semibold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
           <Music2 class="w-3.5 h-3.5"/>
-          Artist data
+          Artists
         </h3>
 
         <div v-if="artistsLoading" class="text-sm text-gray-400">Loading…</div>
@@ -231,18 +246,53 @@ onMounted(async () => {
           <div v-for="artist in artists" :key="artist._id"
                class="bg-white border border-gray-200 rounded-xl p-4">
             <p class="text-sm font-semibold text-gray-800">{{ artist.title }}</p>
-            <p class="text-xs text-gray-500 mt-1">{{ artist.albums?.length ?? 0 }} album{{ artist.albums?.length === 1 ? '' : 's' }}</p>
+            <p class="text-xs text-gray-500 mt-1">{{ artist.albums?.length ?? 0 }}
+              album{{ artist.albums?.length === 1 ? '' : 's' }}</p>
             <ul v-if="artist.albums?.length"
                 class="mt-2 text-xs text-gray-600 space-y-1 pl-2 border-l-2 border-gray-100">
               <li v-for="album in artist.albums" :key="album._id">
                 {{ album.title }}
-                <span class="text-gray-400">· {{ album.tracks?.length ?? 0 }} track{{ album.tracks?.length === 1 ? '' : 's' }}</span>
+                <span class="text-gray-400">· {{
+                    album.tracks?.length ?? 0
+                  }} track{{ album.tracks?.length === 1 ? '' : 's' }}</span>
               </li>
             </ul>
           </div>
         </div>
 
+
         <div v-else class="flex items-center gap-2 text-sm text-gray-400">
+          <PackageOpen class="w-4 h-4"/>
+          No artist data found.
+        </div>
+      </div>
+
+      <!-- Galleries data -->
+      <div v-if="user.role === 'artist'" class="border-t border-gray-200 pt-5">
+        <h3 class="text-md font-semibold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+          <Music2 class="w-3.5 h-3.5"/>
+          Galleries
+        </h3>
+
+        <div v-if="galleriesLoading" class="text-sm text-gray-400">Loading…</div>
+
+        <div v-else-if="galleries.length" class="flex flex-col gap-2">
+          <div v-for="gallery in galleries" :key="gallery._id"
+               class="bg-white border border-gray-200 rounded-xl p-4">
+            <p class="text-sm font-semibold text-gray-800">{{ gallery.title }}</p>
+            <p class="text-xs text-gray-500 mt-1">{{ gallery.images?.length ?? 0 }}
+              image{{ gallery.images?.length === 1 ? '' : 's' }}</p>
+            <ul v-if="gallery.images?.length"
+                class="mt-2 text-xs text-gray-600 space-y-1 pl-2 border-l-2 border-gray-100">
+              <li v-for="image in gallery.images" :key="image._id">
+                {{ image.alt }}
+              </li>
+            </ul>
+          </div>
+        </div>
+
+
+        <div v-else class="flex items-center gap-2 text-sm text-gray-500">
           <PackageOpen class="w-4 h-4"/>
           No artist data found.
         </div>
