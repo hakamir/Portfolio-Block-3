@@ -105,7 +105,6 @@ def create_biography():
 def delete_biography(user_id):
     """Delete a biography of a specific user. Admin only."""
     user = User.objects(id=user_id).first()
-    print(user.id, flush=True)
     if user is None:
         return jsonify({"error": "user not found"}), 404
     if user.is_active:

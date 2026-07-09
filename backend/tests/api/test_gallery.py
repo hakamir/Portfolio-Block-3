@@ -21,11 +21,12 @@ _NONEXISTENT_ID = "000000000000000000000001"
 
 
 @pytest.fixture
-def test_gallery():
+def test_gallery(test_artist_user):
     return Gallery(
         slug="gallery-1",
         title="Gallery 1",
         order=1,
+        user=test_artist_user,
         images=[GalleryImage(
             src="gallery-1_a296a2f6-5ff9-4e49-bd5a-23d16b34b863.webp",
             title="Image 1",

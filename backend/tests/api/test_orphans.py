@@ -26,8 +26,9 @@ def test_artist(test_artist_user):
 
 
 @pytest.fixture
-def test_gallery():
+def test_gallery(test_artist_user):
     return Gallery(
+        user=test_artist_user,
         slug="gallery-1",
         title="Gallery 1",
         order=1,

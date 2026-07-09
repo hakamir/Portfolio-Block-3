@@ -32,7 +32,7 @@ export const useGalleriesStore = defineStore('galleries', () => {
     let isInitialized = false
     const isSubmitted = ref(false);
 
-    const fetchGalleries = async (section: Section) => {
+    const fetchGalleries = async (section: Section = 'public') => {
         const res = await instance.get(section === 'public' ? galleryApi.getGalleries : galleryApi.getGalleriesDashboard)
         galleries.value = res.data
         galleries.value.sort((a, b) => a.order - b.order)

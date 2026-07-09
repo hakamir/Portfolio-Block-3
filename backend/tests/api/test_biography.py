@@ -1,8 +1,20 @@
+import pytest
 from models.biography import Biography, Section
 from models.user import User
 
 _VALID_SECTIONS = [{"title": "Section", "paragraphs": ["Para"]}]
 _NONEXISTENT_ID = "000000000000000000000001"
+
+
+@pytest.fixture
+def inactive_artist_user(app):
+    with app.app_context():
+        return User(
+            email="inactive_artist@test.com",
+            password="hashed_password",
+            role="artist",
+            is_active=False
+        ).save()
 
 
 class TestGetBiography:
@@ -276,15 +288,15 @@ class TestDeleteBiography:
         assert response.status_code == 404
         assert response.get_json() == {"error": "user not found"}
 
-    def test_returns_404_when_biography_not_found(self, client, admin_auth_headers, test_artist_user):
-        response = client.delete(f"/api/biography/{test_artist_user.id}", headers=admin_auth_headers)
+    def test_returns_404_when_biography_not_found(self, client, admin_auth_headers, inactive_artist_user):
+        response = client.delete(f"/api/biography/{inactive_artist_user.id}", headers=admin_auth_headers)
         assert response.status_code == 404
         assert response.get_json() == {"error": "biography not found"}
 
-    def test_deletes_biography(self, client, admin_auth_headers, test_artist_user):
-        Biography(user=test_artist_user, title="To Delete", sections=[]).save()
+    def test_deletes_biography(self, client, admin_auth_headers, inactive_artist_user):
+        Biography(user=inactive_artist_user, title="To Delete", sections=[]).save()
 
-        response = client.delete(f"/api/biography/{test_artist_user.id}", headers=admin_auth_headers)
+        response = client.delete(f"/api/biography/{inactive_artist_user.id}", headers=admin_auth_headers)
 
         assert response.status_code == 204
-        assert Biography.objects(user=test_artist_user).first() is None
+        assert Biography.objects(user=inactive_artist_user).first() is None
