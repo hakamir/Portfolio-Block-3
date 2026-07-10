@@ -4,23 +4,26 @@ from unittest.mock import patch
 
 from models.artist import Artist, Album, Track
 from models.gallery import Gallery, GalleryImage
+from models.orphan import Orphan
 
-_ORPHAN_AUDIO_FILES = ["artist-1/album-1/orphan.mp3"]
-_ORPHAN_GALLERY_FILES = ["gallery-1/orphan.webp"]
+_ARTIST_SLUG = "artist-uuid-1"
+_ALBUM_SLUG = "album-uuid-1"
+_TRACK_SRC = "track-uuid-1.mp3"
+_ORPHAN_SRC = "orphan-uuid.mp3"
 
 
 @pytest.fixture
 def test_artist(test_artist_user):
     return Artist(
         user=test_artist_user,
-        slug="artist-1",
+        slug=_ARTIST_SLUG,
         title="Artist 1",
         order=1,
         albums=[Album(
-            slug="album-1",
+            slug=_ALBUM_SLUG,
             title="Album 1",
             order=1,
-            tracks=[Track(trackNumber=1, title="Track 1", src="track.mp3")]
+            tracks=[Track(trackNumber=1, title="Track 1", src=_TRACK_SRC)]
         )]
     ).save()
 
@@ -43,216 +46,206 @@ def test_gallery(test_artist_user):
     ).save()
 
 
+@pytest.fixture
+def test_orphan(test_artist_user):
+    return Orphan(
+        user=test_artist_user,
+        artist_id=None,
+        artist_slug=_ARTIST_SLUG,
+        artist_title="Artist 1",
+        album_slug=_ALBUM_SLUG,
+        album_title="Album 1",
+        track_title="Orphan Track",
+        track_number=2,
+        track_src=_ORPHAN_SRC,
+        tags=[],
+        deleted_at=datetime.now(timezone.utc),
+    ).save()
+
+
 class TestGetOrphanAudio:
     def test_requires_authentication(self, client):
         response = client.get("/api/orphans/audio")
         assert response.status_code == 401
 
     def test_returns_empty_list_when_no_orphans(self, client, auth_headers):
-        with patch('routes.orphans.get_files', return_value=[]):
-            response = client.get("/api/orphans/audio", headers=auth_headers)
+        response = client.get("/api/orphans/audio", headers=auth_headers)
         assert response.status_code == 200
         assert response.get_json() == []
 
-    def test_returns_orphan_files_without_metadata(self, client, auth_headers, test_artist):
-        with patch('routes.orphans.get_files', return_value=_ORPHAN_AUDIO_FILES), \
-                patch('routes.orphans.read_id3_tags', return_value=None):
-            response = client.get("/api/orphans/audio", headers=auth_headers)
+    def test_returns_orphan_records(self, client, auth_headers, test_orphan):
+        response = client.get("/api/orphans/audio", headers=auth_headers)
         assert response.status_code == 200
-        assert response.get_json() == [
-            {'file': 'artist-1/album-1/orphan.mp3', 'metadata': None}
-        ]
-
-    def test_returns_orphan_files_with_metadata(self, client, auth_headers, test_artist):
-        metadata = {
-            'artist': 'Artist 1',
-            'album': 'Album 1',
-            'title': 'Orphan Track',
-            'track_number': 1,
-            'tags': []
-        }
-        with patch('routes.orphans.get_files', return_value=_ORPHAN_AUDIO_FILES), \
-                patch('routes.orphans.read_id3_tags', return_value=metadata):
-            response = client.get("/api/orphans/audio", headers=auth_headers)
-        assert response.status_code == 200
-        assert response.get_json() == [
-            {'file': 'artist-1/album-1/orphan.mp3', 'metadata': metadata}
-        ]
-
-
-_ROLLBACK_METADATA = {
-    'artist': 'Artist 1',
-    'album': 'Album 1',
-    'title': 'Orphan Track',
-    'track_number': 1,
-    'tags': []
-}
+        data = response.get_json()
+        assert len(data) == 1
+        assert data[0]['_id'] == str(test_orphan.id)
+        assert data[0]['artist_title'] == 'Artist 1'
+        assert data[0]['album_title'] == 'Album 1'
+        assert data[0]['track_title'] == 'Orphan Track'
+        assert data[0]['src'] == f'{_ARTIST_SLUG}/{_ALBUM_SLUG}/{_ORPHAN_SRC}'
 
 
 class TestRollbackOrphanAudio:
     def test_requires_authentication(self, client):
-        response = client.post("/api/orphans/audio/rollback", json={"files": []})
+        response = client.post("/api/orphans/audio/rollback", json={"ids": []})
         assert response.status_code == 401
 
-    def test_returns_400_on_missing_body(self, client, auth_headers):
-        response = client.post("/api/orphans/audio/rollback",
-                               json={}, headers=auth_headers)
+    def test_returns_400_on_missing_ids(self, client, auth_headers):
+        response = client.post("/api/orphans/audio/rollback", json={}, headers=auth_headers)
         assert response.status_code == 400
 
-    def test_returns_400_on_invalid_files_type(self, client, auth_headers):
-        response = client.post("/api/orphans/audio/rollback",
-                               json={"files": "not-a-list"}, headers=auth_headers)
+    def test_returns_400_on_invalid_ids_type(self, client, auth_headers):
+        response = client.post(
+            "/api/orphans/audio/rollback",
+            json={"ids": "not-a-list"},
+            headers=auth_headers
+        )
         assert response.status_code == 400
 
-    def test_fails_if_file_not_found(self, client, auth_headers):
+    def test_fails_if_file_not_found(self, client, auth_headers, test_orphan):
         with patch('os.path.exists', return_value=False):
             response = client.post(
                 "/api/orphans/audio/rollback",
-                json={"files": _ORPHAN_AUDIO_FILES},
+                json={"ids": [str(test_orphan.id)]},
                 headers=auth_headers
             )
         assert response.status_code == 200
         data = response.get_json()
         assert data['restored'] == []
-        assert data['failed'][0]['file'] == _ORPHAN_AUDIO_FILES[0]
+        assert data['failed'][0]['id'] == str(test_orphan.id)
         assert data['failed'][0]['error'] == 'File not found'
+        assert Orphan.objects.count() == 1
 
-    def test_fails_if_no_metadata(self, client, auth_headers):
-        with patch('os.path.exists', return_value=True), \
-                patch('routes.orphans.read_id3_tags', return_value=None):
+    def test_restores_orphan_creating_new_artist(self, client, auth_headers, test_orphan):
+        with patch('os.path.exists', return_value=True):
             response = client.post(
                 "/api/orphans/audio/rollback",
-                json={"files": _ORPHAN_AUDIO_FILES},
+                json={"ids": [str(test_orphan.id)]},
                 headers=auth_headers
             )
         assert response.status_code == 200
         data = response.get_json()
-        assert data['restored'] == []
-        assert data['failed'][0]['error'] == 'No ID3 metadata found'
-
-    def test_fails_on_invalid_path_structure(self, client, auth_headers):
-        invalid_path = ["orphan.mp3"]  # un seul segment, pas 3
-        with patch('os.path.exists', return_value=True), \
-                patch('routes.orphans.read_id3_tags', return_value=_ROLLBACK_METADATA):
-            response = client.post(
-                "/api/orphans/audio/rollback",
-                json={"files": invalid_path},
-                headers=auth_headers
-            )
-        assert response.status_code == 200
-        data = response.get_json()
-        assert data['restored'] == []
-        assert data['failed'][0]['error'] == 'Unexpected path structure'
-
-    def test_restores_orphan_creating_new_artist(self, client, auth_headers):
-        with patch('os.path.exists', return_value=True), \
-                patch('routes.orphans.read_id3_tags', return_value=_ROLLBACK_METADATA):
-            response = client.post(
-                "/api/orphans/audio/rollback",
-                json={"files": _ORPHAN_AUDIO_FILES},
-                headers=auth_headers
-            )
-        assert response.status_code == 200
-        data = response.get_json()
-        assert _ORPHAN_AUDIO_FILES[0] in data['restored']
+        assert str(test_orphan.id) in data['restored']
         assert data['failed'] == []
-
-        artist = Artist.objects(slug="artist-1").first()
+        assert Orphan.objects.count() == 0
+        artist = Artist.objects(slug=_ARTIST_SLUG).first()
         assert artist is not None
-        assert artist.albums[0].slug == "album-1"
-        assert artist.albums[0].tracks[0].src == "orphan.mp3"
+        assert artist.albums[0].tracks[0].src == _ORPHAN_SRC
 
-    def test_restores_orphan_into_existing_artist(self, client, auth_headers, test_artist):
-        orphan = ["artist-1/album-1/orphan.mp3"]
-        with patch('os.path.exists', return_value=True), \
-                patch('routes.orphans.read_id3_tags', return_value=_ROLLBACK_METADATA):
+    def test_restores_orphan_into_existing_artist(self, client, auth_headers, test_artist, test_orphan):
+        with patch('os.path.exists', return_value=True):
             response = client.post(
                 "/api/orphans/audio/rollback",
-                json={"files": orphan},
+                json={"ids": [str(test_orphan.id)]},
                 headers=auth_headers
             )
         assert response.status_code == 200
         data = response.get_json()
-        assert orphan[0] in data['restored']
-
-        artist = Artist.objects(slug="artist-1").first()
+        assert str(test_orphan.id) in data['restored']
+        artist = Artist.objects(slug=_ARTIST_SLUG).first()
         srcs = [t.src for t in artist.albums[0].tracks]
-        assert "orphan.mp3" in srcs
+        assert _ORPHAN_SRC in srcs
 
-    def test_skips_already_existing_track(self, client, auth_headers, test_artist):
-        existing = ["artist-1/album-1/track.mp3"]
-        metadata = {**_ROLLBACK_METADATA, 'title': 'Track 1'}
-        with patch('os.path.exists', return_value=True), \
-                patch('routes.orphans.read_id3_tags', return_value=metadata):
+    def test_skips_already_existing_track(self, client, auth_headers, test_artist, test_artist_user):
+        orphan = Orphan(
+            user=test_artist_user,
+            artist_id=test_artist.id,
+            artist_slug=_ARTIST_SLUG,
+            artist_title="Artist 1",
+            album_slug=_ALBUM_SLUG,
+            album_title="Album 1",
+            track_title="Track 1",
+            track_number=1,
+            track_src=_TRACK_SRC,
+            tags=[],
+            deleted_at=datetime.now(timezone.utc),
+        ).save()
+        with patch('os.path.exists', return_value=True):
             response = client.post(
                 "/api/orphans/audio/rollback",
-                json={"files": existing},
+                json={"ids": [str(orphan.id)]},
                 headers=auth_headers
             )
         assert response.status_code == 200
         data = response.get_json()
-        assert existing[0] in data['restored']
-        artist = Artist.objects(slug="artist-1").first()
+        assert str(orphan.id) in data['restored']
+        artist = Artist.objects(slug=_ARTIST_SLUG).first()
         srcs = [t.src for t in artist.albums[0].tracks]
-        assert srcs.count("track.mp3") == 1
+        assert srcs.count(_TRACK_SRC) == 1
 
-    def test_partial_failure_returns_200(self, client, auth_headers):
-        files = [
-            "artist-1/album-1/orphan.mp3",
-            "artist-1/album-1/no_tags.mp3"
-        ]
+    def test_partial_failure_returns_200(self, client, auth_headers, test_orphan, test_artist_user):
+        missing_orphan = Orphan(
+            user=test_artist_user,
+            artist_id=None,
+            artist_slug=_ARTIST_SLUG,
+            artist_title="Artist 1",
+            album_slug=_ALBUM_SLUG,
+            album_title="Album 1",
+            track_title="Missing File",
+            track_number=3,
+            track_src="no-file.mp3",
+            tags=[],
+            deleted_at=datetime.now(timezone.utc),
+        ).save()
 
-        def mock_metadata(path):
-            if "orphan" in path:
-                return _ROLLBACK_METADATA
-            return None
+        def file_exists(path):
+            return _ORPHAN_SRC in path
 
-        with patch('os.path.exists', return_value=True), \
-                patch('routes.orphans.read_id3_tags', side_effect=mock_metadata):
+        with patch('os.path.exists', side_effect=file_exists):
             response = client.post(
                 "/api/orphans/audio/rollback",
-                json={"files": files},
+                json={"ids": [str(test_orphan.id), str(missing_orphan.id)]},
                 headers=auth_headers
             )
         assert response.status_code == 200
         data = response.get_json()
         assert len(data['restored']) == 1
         assert len(data['failed']) == 1
-        assert data['failed'][0]['file'] == "artist-1/album-1/no_tags.mp3"
+        assert data['failed'][0]['id'] == str(missing_orphan.id)
 
 
 class TestDeleteOrphanAudio:
     def test_requires_authentication(self, client):
-        response = client.delete("/api/orphans/audio", json={"files": []})
+        response = client.delete("/api/orphans/audio", json={"ids": []})
         assert response.status_code == 401
 
-    def test_returns_deleted_true_on_empty_list(self, client, auth_headers):
-        with patch('routes.orphans.cleanup_empty_dirs'):
-            response = client.delete("/api/orphans/audio", json={"files": []},
-                                     headers=auth_headers)
-        assert response.status_code == 200
-        assert response.get_json() == {"deleted": True}
+    def test_returns_400_on_missing_ids(self, client, auth_headers):
+        response = client.delete("/api/orphans/audio", json={}, headers=auth_headers)
+        assert response.status_code == 400
 
-    def test_deletes_existing_files(self, client, auth_headers):
-        files = ["artist-1/album-1/track.mp3"]
-        with patch('os.path.exists', return_value=True), \
-                patch('os.remove') as mock_remove, \
-                patch('routes.orphans.cleanup_empty_dirs'):
-            response = client.delete("/api/orphans/audio", json={"files": files},
-                                     headers=auth_headers)
+    def test_returns_empty_deleted_on_empty_ids(self, client, auth_headers):
+        response = client.delete("/api/orphans/audio", json={"ids": []}, headers=auth_headers)
         assert response.status_code == 200
-        assert response.get_json() == {"deleted": True}
+        assert response.get_json() == {"deleted": []}
+
+    def test_deletes_orphan_doc_and_file(self, client, auth_headers, test_orphan):
+        with patch('os.path.exists', return_value=True), patch('os.remove') as mock_remove:
+            response = client.delete(
+                "/api/orphans/audio",
+                json={"ids": [str(test_orphan.id)]},
+                headers=auth_headers
+            )
+        assert response.status_code == 200
+        assert str(test_orphan.id) in response.get_json()['deleted']
         assert mock_remove.call_count == 1
+        assert Orphan.objects.count() == 0
 
-    def test_skips_nonexistent_files(self, client, auth_headers):
-        files = ["artist-1/album-1/missing.mp3"]
-        with patch('os.path.exists', return_value=False), \
-                patch('os.remove') as mock_remove, \
-                patch('routes.orphans.cleanup_empty_dirs'):
-            response = client.delete("/api/orphans/audio", json={"files": files},
-                                     headers=auth_headers)
+    def test_deletes_orphan_doc_even_if_file_missing(self, client, auth_headers, test_orphan):
+        with patch('os.path.exists', return_value=False), patch('os.remove') as mock_remove:
+            response = client.delete(
+                "/api/orphans/audio",
+                json={"ids": [str(test_orphan.id)]},
+                headers=auth_headers
+            )
         assert response.status_code == 200
-        assert mock_remove.call_count == 0
+        assert str(test_orphan.id) in response.get_json()['deleted']
+        mock_remove.assert_not_called()
+        assert Orphan.objects.count() == 0
+
+    def test_skips_invalid_id_format(self, client, auth_headers):
+        response = client.delete("/api/orphans/audio", json={"ids": ["not-valid"]}, headers=auth_headers)
+        assert response.status_code == 200
+        assert response.get_json()['deleted'] == []
 
 
 class TestGetOrphanGallery:
@@ -267,10 +260,11 @@ class TestGetOrphanGallery:
         assert response.get_json() == []
 
     def test_returns_orphan_files(self, client, auth_headers, test_gallery):
-        with patch('routes.orphans.get_files', return_value=_ORPHAN_GALLERY_FILES):
+        orphan_files = ["gallery-1/orphan.webp"]
+        with patch('routes.orphans.get_files', return_value=orphan_files):
             response = client.get("/api/orphans/gallery", headers=auth_headers)
         assert response.status_code == 200
-        assert response.get_json() == _ORPHAN_GALLERY_FILES
+        assert response.get_json() == orphan_files
 
 
 class TestDeleteOrphanGallery:

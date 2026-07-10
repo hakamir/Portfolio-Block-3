@@ -15,7 +15,7 @@ const orphansAudioToDelete = ref<string[]>([])
 const orphansAudioRefreshKey = ref(0);
 const showAudioRollbackModal = ref(false)
 const orphansAudioToRollback = ref<string[]>([])
-const rollbackResult = ref<{ restored: string[], failed: { file: string, error: string }[] } | null>(null)
+const rollbackResult = ref<{ restored: string[], failed: { id: string, title: string, error: string }[] } | null>(null)
 
 // Receive delete request from child and open confirmation modal with selected items
 const onAudioRequestDelete = (srcs: string[]) => {
@@ -148,8 +148,8 @@ const onAudioConfirmRollback = async () => {
             {{ rollbackResult.failed.length }} file{{ rollbackResult.failed.length > 1 ? 's' : '' }} failed :
           </p>
           <ul class="text-sm text-red-500 list-disc list-inside">
-            <li v-for="f in rollbackResult?.failed" :key="f.file">
-              <span class="font-mono">{{ f.file }}</span> — {{ f.error }}
+            <li v-for="f in rollbackResult?.failed" :key="f.id">
+              <span class="font-mono">{{ f.title }}</span> — {{ f.error }}
             </li>
           </ul>
         </div>

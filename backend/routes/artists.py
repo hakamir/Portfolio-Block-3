@@ -1,4 +1,3 @@
-import os
 from bson import ObjectId
 from flask import Blueprint, jsonify, request, current_app
 from flask_jwt_extended import get_jwt_identity
@@ -6,9 +5,9 @@ from mongoengine import ValidationError as MongoEngineValidationError, DoesNotEx
 from pydantic import ValidationError as PydanticValidationError
 from Schemas.artist import ArtistIn
 from middleware.roles import roles_required
-from models.artist import Artist, Track, Album
+from models.artist import Artist
 from models.user import User
-from utils.filesystem import write_id3_tags
+from services.artist_service import orphan_removed_tracks, orphan_all_tracks, build_albums, sync_id3_tags
 from uuid import uuid4
 
 artists_bp = Blueprint('artists', __name__)
@@ -54,54 +53,20 @@ def update_owned_artists():
     try:
         identity = get_jwt_identity()
         user = User.objects(id=identity).first()
-        artist_input = [ArtistIn.model_validate(artist) for artist in payload]
+        artists_input = [ArtistIn.model_validate(a) for a in payload]
+        settings = current_app.config['settings']
 
         result = []
-        for item in artist_input:
-            # Resolve artist slug
+        for item in artists_input:
             if item.id:
                 artist = Artist.objects.get(id=item.id, user=user)
-                artist_slug = artist.slug
+                orphan_removed_tracks(user, artist, item.albums, settings.upload_folder)
             else:
-                artist_slug = str(uuid4())
                 artist = None
 
-            # Build album with slug resolution
-            existing_album_slug = {album.slug: album for album in artist.albums} if artist else {}
+            albums = build_albums(item.albums, artist)
 
-            albums = []
-            for album in item.albums:
-                if album.slug and album.slug in existing_album_slug:
-                    album_slug = album.slug
-                    existing_track = {track.src: track for track in existing_album_slug[album.slug].tracks}
-                else:
-                    album_slug = str(uuid4())
-                    existing_track = {}
-
-                # Build tracks with src resolution
-                tracks = []
-                for track in album.tracks:
-                    if track.src and track.src in existing_track:
-                        track_src = track.src
-                    else:
-                        track_src = str(uuid4()) + '.mp3'
-
-                    tracks.append(Track(
-                        trackNumber=track.trackNumber,
-                        title=track.title,
-                        src=track_src,
-                        tags=track.tags,
-                    ))
-                albums.append(Album(
-                    slug=album_slug,
-                    title=album.title,
-                    order=album.order,
-                    tracks=tracks,
-                ))
-
-            # Save artist
             if artist:
-                artist.slug = artist_slug
                 artist.title = item.title
                 artist.order = item.order
                 artist.albums = albums
@@ -109,30 +74,14 @@ def update_owned_artists():
             else:
                 artist = Artist(
                     user=user,
-                    slug=artist_slug,
+                    slug=str(uuid4()),
                     title=item.title,
                     order=item.order,
                     albums=albums,
                 )
                 artist.save()
 
-            # Write ID3 tags in existing files
-            settings = current_app.config['settings']
-            for album in artist.albums:
-                for track in album.tracks:
-                    file_path = os.path.join(
-                        settings.upload_folder, 'audio',
-                        artist.slug, album.slug, track.src
-                    )
-                    if os.path.exists(file_path):
-                        write_id3_tags(file_path, {
-                            'artist': artist.title,
-                            'album': album.title,
-                            'title': track.title,
-                            'track_number': str(track.trackNumber),
-                            'tags': ','.join(track.tags),
-                        })
-
+            sync_id3_tags(artist, settings.upload_folder)
             result.append(artist.to_json_dict())
 
         return jsonify(result), 200
@@ -147,16 +96,15 @@ def update_owned_artists():
 @artists_bp.route('/artists/<id>', methods=['DELETE'])
 @roles_required('artist', 'admin')
 def delete_artist(id):
-    """
-    Delete a document (artist) from the artists' collection by its ID.
-    Can only delete documents owned by the authenticated user.
-    """
+    """Delete an artist document. Can only delete documents owned by the authenticated user."""
     if not ObjectId.is_valid(id):
         return jsonify({'error': 'Invalid ID'}), 400
     identity = get_jwt_identity()
     user = User.objects(id=identity).first()
     try:
         artist = Artist.objects.get(id=id, user=user)
+        settings = current_app.config['settings']
+        orphan_all_tracks(user, artist, settings.upload_folder)
         artist.delete()
         return jsonify({'deleted': True}), 200
     except DoesNotExist:
