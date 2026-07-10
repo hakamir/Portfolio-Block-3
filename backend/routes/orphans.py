@@ -24,6 +24,14 @@ def get_orphan_audio():
     orphans = OrphanAudio.objects(user=user).order_by('artist_title', 'album_title', 'track_number')
     return jsonify([o.to_json_dict() for o in orphans]), 200
 
+@orphans_bp.route('/orphans/audio/<user_id>', methods=['GET'])
+@roles_required('admin')
+def get_orphan_audio_by_user(user_id):
+    user = User.objects(id=user_id).first()
+    if user is None:
+        return jsonify({'error': 'User not found'}), 404
+    orphans = OrphanAudio.objects(user=user).order_by('artist_title', 'album_title', 'track_number')
+    return jsonify([o.to_json_dict() for o in orphans]), 200
 
 @orphans_bp.route('/orphans/audio', methods=['DELETE'])
 @roles_required('artist', 'admin')
@@ -111,6 +119,14 @@ def get_orphan_gallery():
     orphans = OrphanGallery.objects(user=user).order_by('gallery_title', 'image_order')
     return jsonify([o.to_json_dict() for o in orphans]), 200
 
+@orphans_bp.route('/orphans/gallery/<user_id>', methods=['GET'])
+@roles_required('admin')
+def get_orphan_gallery_by_user(user_id):
+    user = User.objects(id=user_id).first()
+    if user is None:
+        return jsonify({'error': 'User not found'}), 404
+    orphans = OrphanGallery.objects(user=user).order_by('gallery_title', 'image_order')
+    return jsonify([o.to_json_dict() for o in orphans]), 200
 
 @orphans_bp.route('/orphans/gallery', methods=['DELETE'])
 @roles_required('artist', 'admin')

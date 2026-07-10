@@ -2,7 +2,7 @@
 import {useRoute, useRouter} from "vue-router"
 import {computed, onMounted, ref} from "vue"
 import {useUserStore, useAuthStore, useBiographyStore} from "@stores"
-import {Undo2, Trash2, ShieldCheck, Zap, PlusCircle, PackageOpen, BookOpen, Music2} from "@lucide/vue"
+import {Undo2, Trash2, ShieldCheck, Zap, PlusCircle, PackageOpen, BookOpen, Music2, HeadphoneOff, ImageOff} from "@lucide/vue"
 import Tooltip from "@components/layout/Tooltip.vue"
 import Modal from "@components/Modal.vue"
 import UserField from "@views/dashboard/admin/components/UserField.vue"
@@ -10,12 +10,14 @@ import {instance} from "@api/axios"
 import biographyApi from "@api/biography"
 import artistsApi from "@api/artists"
 import galleryApi from "@api/gallery"
+import AudioApi from "@api/audios"
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const authStore = useAuthStore()
 
+const apiUrl = import.meta.env.VITE_API_URL + '/api'
 
 const biographyStore = useBiographyStore()
 
@@ -65,6 +67,7 @@ const fetchArtists = async (userId: string) => {
   }
 }
 
+// --- Galleries ---
 const galleries = ref<any[]>([])
 const galleriesLoading = ref(false)
 
@@ -77,6 +80,38 @@ const fetchGalleries = async (userId: string) => {
     galleries.value = []
   } finally {
     galleriesLoading.value = false
+  }
+}
+
+// --- Orphan audios ---
+const orphanAudios = ref<any[]>([])
+const orphanAudiosLoading = ref(false)
+
+const fetchOrphanAudios = async (userId: string) => {
+  orphanAudiosLoading.value = true
+  try {
+    const res = await instance.get(AudioApi.getOrphanAudiosByUser(userId))
+    orphanAudios.value = res.data
+  } catch {
+    orphanAudios.value = []
+  } finally {
+    orphanAudiosLoading.value = false
+  }
+}
+
+// --- Orphan galleries ---
+const orphanGalleries = ref<any[]>([])
+const orphanGalleriesLoading = ref(false)
+
+const fetchOrphansGalleries = async (userId: string) => {
+  orphanGalleriesLoading.value = true
+  try {
+    const res = await instance.get(galleryApi.getOrphanGalleriesByUser(userId))
+    orphanGalleries.value = res.data
+  } catch {
+    orphanGalleries.value = []
+  } finally {
+    orphanGalleriesLoading.value = false
   }
 }
 
@@ -126,7 +161,7 @@ onMounted(async () => {
   }
   if (user.value?.role === 'artist') {
     const userId = route.params.id as string
-    await Promise.all([fetchBiography(userId), fetchArtists(userId), fetchGalleries(userId)])
+    await Promise.all([fetchBiography(userId), fetchArtists(userId), fetchGalleries(userId), fetchOrphanAudios(userId), fetchOrphansGalleries(userId)])
   }
 })
 </script>
@@ -311,6 +346,66 @@ onMounted(async () => {
         <div v-else class="flex items-center gap-2 text-sm text-gray-400">
           <PackageOpen class="w-4 h-4"/>
           No gallery data found.
+        </div>
+      </div>
+
+      <!-- Orphan Audios data -->
+      <div v-if="user.role === 'artist'" class="border-t border-gray-200 pt-5">
+        <h3 class="text-md font-semibold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+          <HeadphoneOff class="w-3.5 h-3.5"/>
+          Orphan Audios
+        </h3>
+
+        <div v-if="orphanAudiosLoading" class="text-sm text-gray-400">Loading…</div>
+
+        <div v-else-if="orphanAudios.length" class="flex flex-col gap-2">
+          <div v-for="audio in orphanAudios" :key="audio._id"
+               class="bg-white border border-gray-200 rounded-xl p-4">
+            <p class="text-sm font-semibold text-gray-800">{{ audio.track_title }}</p>
+            <p class="text-xs text-gray-500 mt-1">{{ audio.artist_title }} - {{ audio.album_title }}</p>
+            <div class="grid gap-y-2 grid-cols-[max-content_1fr]">
+              <UserField label="Source" :value="`${apiUrl}/upload/audio/${audio.src}`" clipboard/>
+            </div>
+            <ul v-if="audio.audio?.length"
+                class="mt-2 text-xs text-gray-600 space-y-1 pl-2 border-l-2 border-gray-100">
+              <li v-for="tags in audio.tags">
+                {{ tags }}
+              </li>
+            </ul>
+          </div>
+        </div>
+
+
+        <div v-else class="flex items-center gap-2 text-sm text-gray-400">
+          <PackageOpen class="w-4 h-4"/>
+          No orphan audio data found.
+        </div>
+      </div>
+
+      <!-- Orphan Galleries data -->
+      <div v-if="user.role === 'artist'" class="border-t border-gray-200 pt-5">
+        <h3 class="text-md font-semibold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+          <ImageOff class="w-3.5 h-3.5"/>
+          Orphan Galleries
+        </h3>
+
+        <div v-if="orphanGalleriesLoading" class="text-sm text-gray-400">Loading…</div>
+
+        <div v-else-if="orphanGalleries.length" class="flex flex-col gap-2">
+          <div v-for="gallery in orphanGalleries" :key="gallery._id"
+               class="bg-white border border-gray-200 rounded-xl p-4">
+            <p class="text-sm font-semibold text-gray-800">{{ gallery.image_title }}</p>
+            <p class="text-xs text-gray-500 mt-1">from "{{ gallery.gallery_title }}" gallery</p>
+            <div class="grid gap-y-2 grid-cols-[max-content_1fr]">
+              <UserField label="Source" :value="`${apiUrl}/upload/gallery/${gallery.src}`" clipboard/>
+            </div>
+          </div>
+        </div>
+
+
+        <div v-else class="flex items-center gap-2 text-sm text-gray-400">
+          <PackageOpen class="w-4 h-4"/>
+          No orphan galleries data found.
         </div>
       </div>
 

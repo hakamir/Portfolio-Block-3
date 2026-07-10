@@ -22,7 +22,7 @@ onMounted(async () => {
   checkScreenSize()
   window.addEventListener('resize', checkScreenSize)
   window.addEventListener('click', handleClickOutside)
-  await galleriesStore.fetchGalleries()
+  await galleriesStore.fetchGalleries("dashboard")
 })
 
 onUnmounted(() => {
@@ -80,7 +80,7 @@ const {fetchStatus, uploadedFileName} = storeToRefs(galleriesStore);
 const onSave = async () => {
   try {
     if (await galleriesStore.saveGalleries()) {
-      await galleriesStore.fetchGalleries()
+      await galleriesStore.fetchGalleries('dashboard')
       refreshKey.value += 1;
     }
   } catch {
