@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {GripVertical, Upload} from "@lucide/vue"
 import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
-import {type Album, type Artist, type Track, useAudioStore} from "@stores";
+import {type Album, type Artist, type Track, useArtistsStore, useAudioStore} from "@stores";
 import AudioPlayerMini from "@components/AudioPlayerMini.vue";
 import TagSelector from "@views/dashboard/works/Components/TagSelector.vue";
 import DeleteButton from "@views/dashboard/works/Components/DeleteButton.vue";
@@ -20,6 +20,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits(['TagSelectorToggled', 'deleteTrack'])
 const fileExists = ref(false)
+const artistsStore = useArtistsStore()
 const audioStore = useAudioStore()
 
 const uploadStatus = computed(() => props.track ? audioStore.uploadStatuses.get(props.track) : undefined)
@@ -67,16 +68,16 @@ watch(() => props.src, (newSrc) => {
 })
 
 const isInvalid = computed(() => {
-  const empty = audioStore.isSubmitted && !model.value?.trim()
+  const empty = artistsStore.isSubmitted && !model.value?.trim()
 
   if (props.type === 'artist' && props.artist) {
-    return empty || audioStore.isArtistDuplicate(props.artist)
+    return empty || artistsStore.isArtistDuplicate(props.artist)
   }
   if (props.type === 'album' && props.album && props.artist) {
-    return empty || audioStore.isAlbumDuplicate(props.album, props.artist)
+    return empty || artistsStore.isAlbumDuplicate(props.album, props.artist)
   }
   if (props.type === 'track' && props.track && props.album) {
-    return empty || audioStore.isTrackDuplicate(props.track, props.album)
+    return empty || artistsStore.isTrackDuplicate(props.track, props.album)
   }
 
   return empty

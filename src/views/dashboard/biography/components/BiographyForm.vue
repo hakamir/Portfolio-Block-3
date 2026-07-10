@@ -8,11 +8,6 @@ const store = useBiographyStore()
 const {biography} = storeToRefs(store)
 const saveStatus = ref<'idle' | 'loading' | 'saved' | 'error'>('idle')
 
-
-onMounted(async () => {
-  await store.fetchBiography()
-})
-
 const addSection = () => {
   biography.value.sections.push({title: '', paragraphs: ['']})
 }
@@ -53,7 +48,7 @@ const autoResizeAll = () => {
 }
 
 onMounted(async () => {
-  await store.fetchBiography()
+  await store.fetchBiography('dashboard')
   await nextTick()
   autoResizeAll()
 })
@@ -119,7 +114,8 @@ onMounted(async () => {
     </button>
 
     <!-- Save -->
-    <div class="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 md:relative md:bottom-auto md:left-auto md:right-auto md:p-0 md:border-0 md:bg-transparent flex flex-col items-center gap-4">
+    <div
+        class="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 md:relative md:bottom-auto md:left-auto md:right-auto md:p-0 md:border-0 md:bg-transparent flex flex-col items-center gap-4">
       <button @click="save"
               class="w-full md:w-auto bg-black text-white px-8 py-3 font-unbounded rounded-xl hover:bg-neutral-700 transition">
         <span v-if="saveStatus !== 'loading'" class="flex items-center justify-center gap-2"><Save/>Save</span>

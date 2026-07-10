@@ -1,14 +1,17 @@
 import pytest
 
 from models.message import Message
+from models.user import User
+from tests.conftest import test_artist_user
 
 _VALID_PAYLOAD = {"name": "Test User", "email": "test@example.com", "message": "Hello"}
 _NONEXISTENT_ID = "000000000000000000000001"
 
 
 @pytest.fixture
-def test_message():
+def test_message(test_artist_user):
     return Message(
+        user=test_artist_user,
         name="Test User",
         email="test@example.com",
         message="Hello",
@@ -36,6 +39,16 @@ class TestGetMessages:
         assert data[0]["name"] == "Test User"
         assert "_id" in data[0]
 
+    def test_artist_only_sees_own_messages(self, client, auth_headers, test_artist_user):
+        Message(user=test_artist_user, name="Test", email="test@example.com", message="Message").save()
+        other = User(email="other@test.com", password="x", role="artist").save()
+        Message(user=other, name="Other", email="other@example.com", message="Other").save()
+
+        response = client.get("/api/messages", headers=auth_headers)
+        data = response.get_json()
+        assert len(data) == 1
+        assert data[0]["name"] == "Test"
+
 
 class TestCreateMessage:
     def test_returns_400_on_invalid_payload(self, client):
@@ -43,11 +56,16 @@ class TestCreateMessage:
         assert response.status_code == 400
         assert response.get_json() == {"error": "Invalid payload"}
 
-    def test_creates_message(self, client):
+    def test_returns_404_when_no_active_artist(self, client):
+        response = client.post("/api/messages", json=_VALID_PAYLOAD)
+        assert response.status_code == 404
+        assert response.get_json() == {"error": "No active artist found"}
+
+    def test_creates_message(self, client, test_artist_user):
         response = client.post("/api/messages", json=_VALID_PAYLOAD)
         assert response.status_code == 201
         assert response.get_json() == {"created": True}
-        assert Message.objects.count() == 1
+        assert Message.objects(user=test_artist_user).count() == 1
 
 
 class TestUpdateMessage:
@@ -88,6 +106,14 @@ class TestUpdateMessage:
         assert response.status_code == 400
         assert response.get_json() == {"error": "No fields to update"}
 
+    def test_artist_cannot_update_other_artist_message(self, client, auth_headers):
+        other = User(email="other@test.com", password="x", role="artist", is_active=False).save()
+        msg = Message(user=other, name="Other", email="b@b.com", message="World").save()
+
+        response = client.patch(f"/api/messages/{msg.id}",
+                                json={"read": True}, headers=auth_headers)
+        assert response.status_code == 404
+
 
 class TestDeleteMessage:
     def test_requires_authentication(self, client, test_message):
@@ -109,3 +135,11 @@ class TestDeleteMessage:
         assert response.status_code == 200
         assert response.get_json() == {"deleted": True}
         assert Message.objects.count() == 0
+
+    def test_artist_cannot_delete_other_artist_message(self, client, auth_headers):
+        other = User(email="other@test.com", password="x", role="artist", is_active=False).save()
+        msg = Message(user=other, name="Other", email="b@b.com", message="World").save()
+
+        response = client.delete(f"/api/messages/{msg.id}", headers=auth_headers)
+        assert response.status_code == 404
+        assert Message.objects.count() == 1

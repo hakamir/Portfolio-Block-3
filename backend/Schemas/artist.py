@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 class TrackIn(BaseModel):
     trackNumber: int = Field(gt=0)
     title: str = Field(min_length=1)
-    src: str = Field(min_length=1)
+    src: str = Field(default='')
     tags: list[str] = []
 
     model_config = {

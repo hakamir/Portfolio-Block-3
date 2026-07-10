@@ -1,7 +1,7 @@
 import os
 from flask import Blueprint, jsonify, request, send_from_directory, current_app
-from flask_jwt_extended import jwt_required
 from werkzeug.utils import secure_filename
+from middleware.roles import roles_required
 from utils.AudioConverter import AudioConverter
 from utils.filesystem import write_id3_tags
 from utils.image_validation import is_valid_webp
@@ -10,14 +10,14 @@ uploads_bp = Blueprint('uploads', __name__)
 
 
 @uploads_bp.route('/upload/<path:filename>')
-def uploaded_file(filename):
+def get_file(filename):
     download = request.args.get('download') == 'true'
     settings = current_app.config['settings']
     return send_from_directory(settings.upload_folder, filename, as_attachment=download)
 
 
 @uploads_bp.route('/upload/audio', methods=['POST'])
-@jwt_required()
+@roles_required('artist', 'admin')
 def upload_audio():
     settings = current_app.config['settings']
     if 'file' not in request.files:
@@ -67,7 +67,7 @@ def upload_audio():
 
 
 @uploads_bp.route('/upload/gallery', methods=['POST'])
-@jwt_required()
+@roles_required('artist', 'admin')
 def upload_image():
     settings = current_app.config['settings']
 
@@ -96,7 +96,7 @@ def upload_image():
 
 
 @uploads_bp.route('/upload/background', methods=['POST'])
-@jwt_required()
+@roles_required('artist', 'admin')
 def upload_background():
     destination = request.form.get('destination')
     file_2048 = request.files.get('image-2048')

@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import {useAudioStore, type Artist, type Album, type Track} from "@stores";
+import {useArtistsStore, useAudioStore, type Artist, type Album, type Track} from "@stores";
 import {onMounted, onUnmounted, ref} from "vue";
 import {LoaderCircle, Plus, Save, Ban, GripVertical, ChevronDown, Trash2, MoreHorizontal} from "@lucide/vue";
-import {v4 as uuidv4} from 'uuid';
 import DeleteButton from "@views/dashboard/works/Components/DeleteButton.vue";
 import CollapseButton from "@views/dashboard/works/Components/CollapseButton.vue";
 import WorkAudioInput from "@views/dashboard/works/Components/WorkAudioInput.vue";
@@ -11,6 +10,7 @@ import CollapseTransition from "@components/CollapseTransition.vue";
 import {storeToRefs} from "pinia";
 
 const apiUrl = import.meta.env.VITE_API_URL + '/api'
+const artistsStore = useArtistsStore();
 const audioStore = useAudioStore();
 const emit = defineEmits(['TagSelectorToggled'])
 const isMobile = ref(false)
@@ -23,9 +23,9 @@ onMounted(async () => {
   checkScreenSize()
   window.addEventListener('resize', checkScreenSize)
   window.addEventListener('click', handleClickOutside)
-  await audioStore.fetchAudios()
-  audioStore.artists.sort((a, b) => a.order - b.order)
-  audioStore.artists.forEach(artist => {
+  await artistsStore.fetchArtists("dashboard")
+  artistsStore.artists.sort((a, b) => a.order - b.order)
+  artistsStore.artists.forEach(artist => {
     artist.albums.sort((a, b) => a.order - b.order)
     artist.albums.forEach(album => {
       album.tracks.sort((a, b) => a.trackNumber - b.trackNumber)
@@ -51,11 +51,11 @@ const handleClickOutside = () => {
 
 // Add a new artist with a random slug and empty albums and tracks, order is set to the last artist's order + 1
 const addArtist = () => {
-  audioStore.artists.push({
+  artistsStore.artists.push({
+    slug: '',
     _id: '',
-    slug: uuidv4(),
     title: '',
-    order: audioStore.artists.length + 1,
+    order: artistsStore.artists.length + 1,
     albums: []
   });
 }
@@ -63,7 +63,7 @@ const addArtist = () => {
 // Add a new album to a given artist with a random slug and empty tracks, order is set to the last album's order + 1
 const addAlbum = (artist: Artist) => {
   artist.albums.push({
-    slug: uuidv4(),
+    slug: '',
     title: '',
     order: artist.albums.length + 1,
     tracks: []
@@ -82,8 +82,8 @@ const addTrack = (album: Album) => {
 
 // Delete an artist and all its albums and tracks
 const deleteArtist = (artist: Artist) => {
-  const index = audioStore.artists.indexOf(artist);
-  audioStore.artists.splice(index, 1);
+  const index = artistsStore.artists.indexOf(artist);
+  artistsStore.artists.splice(index, 1);
 }
 
 // Delete an album and all its tracks
@@ -115,7 +115,7 @@ const toggleAlbumCollapse = (slug: string) => {
 
 // Handle drag and drop reordering of artists
 const reorderArtists = () => {
-  audioStore.artists.forEach((artist, index) => {
+  artistsStore.artists.forEach((artist, index) => {
     artist.order = index + 1
   })
 }
@@ -135,13 +135,13 @@ const reorderTracks = (album: Album) => {
 }
 
 const refreshKey = ref(0);
-const {fetchStatus} = storeToRefs(audioStore);
+const {fetchStatus} = storeToRefs(artistsStore);
 
 // Save audios then metadata to the database, then refresh the page if it succeeds
 const onSave = async () => {
   try {
-    if (await audioStore.saveAudios()) {
-      await audioStore.fetchAudios()
+    if (await artistsStore.saveAudios()) {
+      await artistsStore.fetchArtists("dashboard")
       refreshKey.value += 1;
     }
   } catch (error) {
@@ -167,13 +167,13 @@ const onSave = async () => {
     <!-- DESKTOP -->
     <div v-if="!isMobile">
       <VueDraggable
-          v-model="audioStore.artists"
+          v-model="artistsStore.artists"
           handle=".drag-handle"
           group="artists"
           @update="reorderArtists()"
           class="flex flex-col gap-2">
         <!-- ARTISTS -->
-        <div v-for="(artist, artistIndex) in audioStore.artists" class="mt-2" :key="refreshKey">
+        <div v-for="(artist, artistIndex) in artistsStore.artists" class="mt-2" :key="refreshKey">
           <div class="flex items-center justify-between">
             <div class="flex grow items-center">
               <!-- Collapse button -->
@@ -281,7 +281,7 @@ const onSave = async () => {
           <span class="text-sm font-semibold">An error occurred. Some files may not have been uploaded.</span>
         </div>
         <button v-if="fetchStatus == 'idle' || fetchStatus == 'error'" @click="onSave"
-                :class="audioStore.hasDuplicates() ? 'cursor-not-allowed! bg-gray-400/70' : 'bg-blue-500 hover:bg-blue-600 transition'"
+                :class="artistsStore.hasDuplicates() ? 'cursor-not-allowed! bg-gray-400/70' : 'bg-blue-500 hover:bg-blue-600 transition'"
                 class="px-6 py-2 text-white rounded-2xl flex items-center gap-2">
           <Save class="w-6 h-6"/>
           <span class="font-unbounded">Save</span>
@@ -296,13 +296,13 @@ const onSave = async () => {
 
     <!-- MOBILE -->
     <div v-else class="flex flex-col">
-      <VueDraggable v-model="audioStore.artists"
+      <VueDraggable v-model="artistsStore.artists"
                     handle=".drag-handle"
                     group="artists"
                     @update="reorderArtists()"
                     class="flex flex-col">
         <!-- ARTISTS -->
-        <div v-for="(artist, artistIndex) in audioStore.artists" :key="refreshKey">
+        <div v-for="(artist, artistIndex) in artistsStore.artists" :key="refreshKey">
           <div
               class="flex items-center outline-none bg-primary-500/20 focus:bg-primary-500/40 hover:bg-primary-500/30 border border-primary-900/20 transition py-3 px-1">
             <label class="drag-handle" aria-label="Reorder artists">

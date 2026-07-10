@@ -1,6 +1,9 @@
+import re
 import pytest
 
 from models.artist import Artist, Album, Track
+
+_UUID4_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')
 
 _VALID_TRACK = {"trackNumber": 1, "title": "Track 1", "src": "track.mp3", "tags": []}
 _VALID_ALBUM = {"slug": "album-1", "title": "Album 1", "order": 1, "tracks": [_VALID_TRACK]}
@@ -9,8 +12,9 @@ _NONEXISTENT_ID = "000000000000000000000001"
 
 
 @pytest.fixture
-def test_artist():
+def test_artist(test_artist_user):
     return Artist(
+        user=test_artist_user,
         slug="artist-1",
         title="Artist 1",
         order=1,
@@ -78,7 +82,15 @@ class TestUpdateArtists:
         response = client.put("/api/artists", json=[_VALID_ARTIST_PAYLOAD],
                               headers=auth_headers)
         assert response.status_code == 200
-        assert response.get_json() == {"updated": True}
+        data = response.get_json()
+        assert isinstance(data, list)
+        assert len(data) == 1
+        assert data[0]["title"] == "Artist 1"
+        assert data[0]["_id"]
+        assert _UUID4_RE.match(data[0]["slug"])
+        assert _UUID4_RE.match(data[0]["albums"][0]["slug"])
+        track_src = data[0]["albums"][0]["tracks"][0]["src"]
+        assert _UUID4_RE.match(track_src.removesuffix(".mp3"))
         assert Artist.objects.count() == 1
 
     def test_updates_existing_artist(self, client, auth_headers, test_artist):

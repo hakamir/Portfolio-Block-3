@@ -1,8 +1,11 @@
-from mongoengine import Document, StringField, DateTimeField, BooleanField
+from mongoengine import Document, StringField, DateTimeField, BooleanField, ReferenceField
 from datetime import datetime, timezone
+
+from models.user import User
 
 
 class Message(Document):
+    user = ReferenceField(User, required=True)
     name = StringField(required=True, max_length=100)
     email = StringField(required=True)
     message = StringField(required=True)
@@ -16,4 +19,5 @@ class Message(Document):
     def to_json_dict(self):
         data = self.to_mongo().to_dict()
         data['_id'] = str(data['_id'])
+        data.pop('user')
         return data

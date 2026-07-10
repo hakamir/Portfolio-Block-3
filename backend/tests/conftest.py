@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 from app import create_app
 from config import Settings
+from models.user import User
 
 
 class TestSettings(Settings):
@@ -48,9 +49,46 @@ def client(app):
 
 
 @pytest.fixture
-def auth_headers(app):
+def test_artist_user(app):
     with app.app_context():
-        token = create_access_token(identity="test-user")
+        user = User(
+            email="artist@test.com",
+            password="hashed_password",
+            role="artist",
+            is_active=True
+        ).save()
+    return user
+
+
+@pytest.fixture
+def test_admin_user(app):
+    with app.app_context():
+        user = User(
+            email="admin@test.com",
+            password="hashed_password",
+            role="admin",
+            is_active=False
+        ).save()
+    return user
+
+
+@pytest.fixture
+def auth_headers(app, test_artist_user):
+    with app.app_context():
+        token = create_access_token(
+            identity=str(test_artist_user.id),
+            additional_claims={'role': 'artist'}
+        )
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def admin_auth_headers(app, test_admin_user):
+    with app.app_context():
+        token = create_access_token(
+            identity=str(test_admin_user.id),
+            additional_claims={'role': 'admin'}
+        )
     return {"Authorization": f"Bearer {token}"}
 
 

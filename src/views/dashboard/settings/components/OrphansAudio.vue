@@ -1,128 +1,82 @@
 <script setup lang="ts">
-import {useAudioStore} from '@stores'
-import type {OrphanAudioRaw} from '@stores'
+import type {OrphanAudio} from '@stores'
 import {Trash2, Music, Music2, Disc, PackageOpen, Download, RotateCcw} from '@lucide/vue'
 import {computed, onMounted, ref} from "vue";
 import Tooltip from "@components/layout/Tooltip.vue";
+import {useOrphansStore} from "@stores";
 
-interface OrphanAudio {
-  artist: string;
-  album: string;
-  track: string;
-  src: string;
-  metadata: OrphanAudioRaw['metadata'];
-}
-
-const audioStore = useAudioStore()
+const orphansStore = useOrphansStore()
 const selectedOrphans = ref<string[]>([])
 const emit = defineEmits<{
-  requestDelete: [srcs: string[]],
-  requestRollback: [srcs: string[]]
+  requestDelete: [ids: string[]],
+  requestRollback: [ids: string[]]
 }>()
 
 const apiUrl = import.meta.env.VITE_API_URL + '/api'
-const orphans = ref<OrphanAudio[]>([])
 
-// Fetch orphan audio files from store and transform them into structured data for UI
 onMounted(async () => {
-  await audioStore.fetchOrphans()
-      .then(() => {
-        formatData()
-      })
-      .catch(error => console.error('Error fetching orphans:', error))
+  await orphansStore.fetchOrphans()
 })
 
-// Group orphan tracks by artist, then by album for hierarchical display
+const orphans = computed(() => orphansStore.orphanAudios)
+
+// Group orphan tracks by artist_title, then by album_title
 const groupedOrphans = computed(() => {
   return orphans.value.reduce((acc, orphan) => {
-    if (!acc[orphan.artist]) acc[orphan.artist] = {}
-    if (!acc[orphan.artist][orphan.album]) acc[orphan.artist][orphan.album] = []
-    acc[orphan.artist][orphan.album].push(orphan)
+    if (!acc[orphan.artist_title]) acc[orphan.artist_title] = {}
+    if (!acc[orphan.artist_title][orphan.album_title]) acc[orphan.artist_title][orphan.album_title] = []
+    acc[orphan.artist_title][orphan.album_title].push(orphan)
     return acc
   }, {} as Record<string, Record<string, OrphanAudio[]>>)
 })
 
-// Toggle selection of all tracks
 const toggleSelectAll = () => {
   if (selectedOrphans.value.length === orphans.value.length) {
     selectedOrphans.value = []
   } else {
-    selectedOrphans.value = orphans.value.map(o => o.src)
+    selectedOrphans.value = orphans.value.map(o => o._id)
   }
 }
 
-// Toggle selection of all tracks for a given artist
 const toggleSelectArtist = (artistName: string) => {
-  const artistSrcs = Object.values(groupedOrphans.value[artistName])
-      .flat()
-      .map(o => o.src)
-  const allSelected = artistSrcs.every(src => selectedOrphans.value.includes(src))
+  const artistIds = Object.values(groupedOrphans.value[artistName]).flat().map(o => o._id)
+  const allSelected = artistIds.every(id => selectedOrphans.value.includes(id))
   if (allSelected) {
-    selectedOrphans.value = selectedOrphans.value.filter(src => !artistSrcs.includes(src))
+    selectedOrphans.value = selectedOrphans.value.filter(id => !artistIds.includes(id))
   } else {
-    selectedOrphans.value = [...new Set([...selectedOrphans.value, ...artistSrcs])]
+    selectedOrphans.value = [...new Set([...selectedOrphans.value, ...artistIds])]
   }
 }
 
-// Toggle selection of all tracks for a given album
 const toggleSelectAlbum = (artistName: string, albumName: string) => {
-  const albumSrcs = groupedOrphans.value[artistName][albumName].map(o => o.src)
-  const allSelected = albumSrcs.every(src => selectedOrphans.value.includes(src))
+  const albumIds = groupedOrphans.value[artistName][albumName].map(o => o._id)
+  const allSelected = albumIds.every(id => selectedOrphans.value.includes(id))
   if (allSelected) {
-    selectedOrphans.value = selectedOrphans.value.filter(src => !albumSrcs.includes(src))
+    selectedOrphans.value = selectedOrphans.value.filter(id => !albumIds.includes(id))
   } else {
-    selectedOrphans.value = [...new Set([...selectedOrphans.value, ...albumSrcs])]
+    selectedOrphans.value = [...new Set([...selectedOrphans.value, ...albumIds])]
   }
 }
 
-// Toggle selection of a single track
-const toggleSelectTrack = (src: string) => {
-  if (selectedOrphans.value.includes(src)) {
-    selectedOrphans.value = selectedOrphans.value.filter(s => s !== src)
+const toggleSelectTrack = (id: string) => {
+  if (selectedOrphans.value.includes(id)) {
+    selectedOrphans.value = selectedOrphans.value.filter(s => s !== id)
   } else {
-    selectedOrphans.value = [...selectedOrphans.value, src]
+    selectedOrphans.value = [...selectedOrphans.value, id]
   }
 }
 
-// Check if all tracks of an artist are currently selected
 const isArtistSelected = (artistName: string) => {
-  const artistSrcs = Object.values(groupedOrphans.value[artistName]).flat().map(o => o.src)
-  return artistSrcs.every(src => selectedOrphans.value.includes(src))
+  const artistIds = Object.values(groupedOrphans.value[artistName]).flat().map(o => o._id)
+  return artistIds.every(id => selectedOrphans.value.includes(id))
 }
 
-// Check if all tracks of an album are currently selected
 const isAlbumSelected = (artistName: string, albumName: string) => {
-  const albumSrcs = groupedOrphans.value[artistName][albumName].map(o => o.src)
-  return albumSrcs.every(src => selectedOrphans.value.includes(src))
+  const albumIds = groupedOrphans.value[artistName][albumName].map(o => o._id)
+  return albumIds.every(id => selectedOrphans.value.includes(id))
 }
 
-// Indicates if all selected orphans have ID3 metadata available for rollback
-const canRollback = computed(() =>
-    selectedOrphans.value.length > 0 &&
-    selectedOrphans.value.every(src =>
-        orphans.value.find(o => o.src === src)?.metadata !== null
-    )
-)
-
-const toLabel = (slug: string) => slug
-    .replace(/\.[^.]+$/, '')
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
-
-// Convert raw API response into structured objects with human-readable labels
-const formatData = () => {
-  orphans.value = audioStore.orphans.map((orphan: OrphanAudioRaw) => {
-    const [artistSlug, albumSlug, trackSrc] = orphan.file.split('/')
-    return {
-      artist: orphan.metadata?.artist || toLabel(artistSlug),
-      album: orphan.metadata?.album || toLabel(albumSlug),
-      track: orphan.metadata?.title || toLabel(trackSrc),
-      src: orphan.file,
-      metadata: orphan.metadata ?? null
-    } as OrphanAudio
-  })
-}
+const canRollback = computed(() => selectedOrphans.value.length > 0)
 </script>
 
 <template>
@@ -158,7 +112,7 @@ const formatData = () => {
         <!-- Rollback selected -->
         <div class="flex gap-2 justify-between">
           <button
-              v-if="selectedOrphans.length > 0 && canRollback"
+              v-if="canRollback"
               @click="emit('requestRollback', selectedOrphans)"
               class="flex items-center gap-2 px-4 py-2 rounded-xl bg-lime-200 text-lime-800 font-semibold border border-green-200 hover:bg-lime-600 hover:text-white transition group">
             <RotateCcw class="w-6 h-6"/>
@@ -207,14 +161,14 @@ const formatData = () => {
           </div>
 
           <!-- Tracks -->
-          <div v-for="orphan in tracks" :key="orphan.src"
-               @click="toggleSelectTrack(orphan.src)"
+          <div v-for="orphan in tracks" :key="orphan._id"
+               @click="toggleSelectTrack(orphan._id)"
                class="flex items-center gap-3 px-8 py-2 hover:bg-orange-100 transition border-b border-gray-100 last:border-0 cursor-pointer select-none"
-               :class="selectedOrphans.includes(orphan.src) ? 'bg-orange-200/80' : 'bg-orange-200/50'">
+               :class="selectedOrphans.includes(orphan._id) ? 'bg-orange-200/80' : 'bg-orange-200/50'">
             <Music2 class="shrink-0 rounded-full p-1 w-8 h-8 border-blue-500 transition"
-                    :class="selectedOrphans.includes(orphan.src) ? 'border-2 text-blue-500 bg-blue-100' : 'text-gray-400'"/>
-            <span :class="selectedOrphans.includes(orphan.src) ? 'font-semibold' : 'font-medium'">{{
-                orphan.track
+                    :class="selectedOrphans.includes(orphan._id) ? 'border-2 text-blue-500 bg-blue-100' : 'text-gray-400'"/>
+            <span :class="selectedOrphans.includes(orphan._id) ? 'font-semibold' : 'font-medium'">{{
+                orphan.track_title
               }}</span>
             <div class="ml-auto" @click.stop>
               <Tooltip message="Download audio file" side="bottom" :icon="Download" iconBgColor="bg-lime-600">
@@ -222,7 +176,9 @@ const formatData = () => {
                     class="flex gap-2 items-center group bg-blue-100 lg:bg-transparent hover:bg-blue-100 hover:font-semibold transition px-3 py-2 rounded-full">
                   <Download :size="18" class="text-blue-600 md:text-gray-700 group-hover:text-blue-600"/>
                   <a :href="`${apiUrl}/upload/audio/${orphan.src}?download=true`"
-                     class="hidden md:block text-xs text-gray-700 font-mono group-hover:text-blue-600">{{ orphan.src }}</a>
+                     class="hidden md:block text-xs text-gray-700 font-mono group-hover:text-blue-600">{{
+                      orphan.src
+                    }}</a>
                 </div>
               </Tooltip>
             </div>

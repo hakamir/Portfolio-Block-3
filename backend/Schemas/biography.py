@@ -1,16 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
-
-
-class ImageSizeIn(BaseModel):
-    sm: str
-    md: str
-    lg: str
-
-    model_config = {
-        "extra": "forbid",
-    }
-
+from typing import List, Optional
 
 class SectionIn(BaseModel):
     title: str
@@ -23,9 +12,17 @@ class SectionIn(BaseModel):
 class BiographyIn(BaseModel):
     id: str = Field(alias="_id")
     title: str
-    image: ImageSizeIn
     sections: List[SectionIn]
 
+    model_config = {
+        "extra": "forbid",
+        "populate_by_name": True
+    }
+
+class BiographyCreateIn(BaseModel):
+    title: str
+    sections: List[SectionIn]
+    user_id: str
     model_config = {
         "extra": "forbid",
         "populate_by_name": True

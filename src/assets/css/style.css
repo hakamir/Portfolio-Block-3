@@ -2,6 +2,7 @@
 
 @theme {
     --font-unbounded: 'Unbounded', sans-serif;
+    --font-teachers: 'Teachers', sans-serif;
     --color-success: #28a745;
     --color-primary-50: #fbffe0;
     --color-primary-100: #f6ffc2;
@@ -241,6 +242,15 @@ button {
     font-family: 'Unbounded';
     src: url('../fonts/Unbounded/Unbounded-VariableFont_wght.woff2') format('woff2');
     font-weight: 300 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* TEACHERS */
+@font-face {
+    font-family: 'Teachers';
+    src: url('../fonts/Teachers/Teachers-VariableFont_wght.woff2') format('woff2');
+    font-weight: 400;
     font-style: normal;
     font-display: swap;
 }

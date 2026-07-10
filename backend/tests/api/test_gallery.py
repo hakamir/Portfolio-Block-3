@@ -1,7 +1,11 @@
+import re
+
 import pytest
 from datetime import datetime, timezone
 
 from models.gallery import Gallery, GalleryImage
+
+_UUID4_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')
 
 _VALID_IMAGE = {
     "src": "gallery-1_a296a2f6-5ff9-4e49-bd5a-23d16b34b863.webp",
@@ -21,11 +25,12 @@ _NONEXISTENT_ID = "000000000000000000000001"
 
 
 @pytest.fixture
-def test_gallery():
+def test_gallery(test_artist_user):
     return Gallery(
         slug="gallery-1",
         title="Gallery 1",
         order=1,
+        user=test_artist_user,
         images=[GalleryImage(
             src="gallery-1_a296a2f6-5ff9-4e49-bd5a-23d16b34b863.webp",
             title="Image 1",
@@ -74,15 +79,6 @@ class TestUpdateGalleries:
                               headers=auth_headers)
         assert response.status_code == 400
 
-    def test_returns_400_when_image_slug_mismatches_gallery_slug(self, client, auth_headers):
-        # src slug is "other-gallery" but gallery slug is "gallery-1"
-        mismatched_image = {**_VALID_IMAGE,
-                            "src": "other-gallery_a296a2f6-5ff9-4e49-bd5a-23d16b34b863.webp"}
-        response = client.put("/api/gallery",
-                              json=[{**_VALID_GALLERY_PAYLOAD, "images": [mismatched_image]}],
-                              headers=auth_headers)
-        assert response.status_code == 400
-
     def test_returns_404_when_gallery_not_found(self, client, auth_headers):
         response = client.put("/api/gallery",
                               json=[{**_VALID_GALLERY_PAYLOAD, "_id": _NONEXISTENT_ID}],
@@ -94,8 +90,16 @@ class TestUpdateGalleries:
         response = client.put("/api/gallery", json=[_VALID_GALLERY_PAYLOAD],
                               headers=auth_headers)
         assert response.status_code == 200
-        assert response.get_json() == {"updated": True}
+        data = response.get_json()
+        assert isinstance(data, list)
+        assert len(data) == 1
+        assert data[0]["title"] == "Gallery 1"
+        assert data[0]["_id"]
+        assert _UUID4_RE.match(data[0]["slug"])
+        image_src = data[0]["images"][0]["src"]
+        assert _UUID4_RE.match(image_src.removesuffix(".webp"))
         assert Gallery.objects.count() == 1
+
 
     def test_updates_existing_gallery(self, client, auth_headers, test_gallery):
         payload = {**_VALID_GALLERY_PAYLOAD, "_id": str(test_gallery.id), "title": "Updated Gallery"}

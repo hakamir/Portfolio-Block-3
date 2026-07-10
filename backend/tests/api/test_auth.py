@@ -18,7 +18,7 @@ def test_user():
 @pytest.fixture
 def user_auth_headers(app, test_user):
     with app.app_context():
-        token = create_access_token(identity=str(test_user.id))
+        token = create_access_token(identity=str(test_user.id), additional_claims={'role': test_user.role})
     return {"Authorization": f"Bearer {token}"}
 
 
@@ -69,8 +69,12 @@ class TestRefresh:
 
 
 class TestLogout:
-    def test_returns_200(self, client):
+    def test_returns_401_without_token(self, client):
         response = client.post("/api/auth/logout")
+        assert response.status_code == 401
+
+    def test_returns_200(self, client, user_auth_headers):
+        response = client.post("/api/auth/logout", headers=user_auth_headers)
         assert response.status_code == 200
         assert response.get_json() == {"logged_out": True}
 

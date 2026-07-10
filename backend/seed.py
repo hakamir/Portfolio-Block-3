@@ -4,11 +4,12 @@ from urllib.parse import quote_plus
 from mongoengine import connect
 
 from models.user import User
-from models.biography import Biography, ImageSize, Section
+from models.biography import Biography, Section
 import dotenv
 
 dotenv.load_dotenv()
 
+user_type = ('artist', 'admin')
 
 def get_uri():
     user = os.environ.get('MONGODB_USER')
@@ -20,12 +21,18 @@ def get_uri():
     return f"mongodb://{user}:{password}@{host}:{port}/{db}?authSource={db}&serverSelectionTimeoutMS={timeout}"
 
 
-def seed_user():
-    email = os.environ.get('TEST_USER_EMAIL')
-    password = os.environ.get('TEST_USER_PASSWORD')
+def seed_user(user_role: str = 'artist', is_active: bool = False):
+    if user_role not in user_type:
+        raise ValueError(f"Invalid user type: {user_role}")
+    if user_role == 'artist':
+        email = os.environ.get('TEST_USER_EMAIL')
+        password = os.environ.get('TEST_USER_PASSWORD')
+    else:
+        email = os.environ.get('ADMIN_EMAIL')
+        password = os.environ.get('ADMIN_PASSWORD')
 
     if not email or not password:
-        print("TEST_USER_EMAIL or TEST_USER_PASSWORD not set — skipping user seed")
+        print(f"[{user_role.upper()}] email or password not set — skipping user seed")
         return
 
     if User.objects(email=email).first():
@@ -33,7 +40,7 @@ def seed_user():
         return
 
     hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt(rounds=12))
-    User(email=email, password=hashed.decode('utf-8')).save()
+    User(email=email, password=hashed.decode('utf-8'), role=user_role, is_active=is_active).save()
     print(f"Created user: {email}")
 
 
@@ -41,24 +48,21 @@ def seed_biography():
     if Biography.objects.first():
         print("Biography already exists — skipping")
         return
-
+    artist = User.objects(role='artist', is_active=True).first()
     Biography(
         title="Biography",
-        image=ImageSize(
-            sm="/biography/biography-1-512.webp",
-            md="/biography/biography-1-1024.webp",
-            lg="/biography/biography-1-2048.webp",
-        ),
         sections=[
             Section(title="Section Title", paragraphs=["Example paragraph"])
         ],
+        user=artist
     ).save()
     print("Created biography")
 
 
 def seed():
     connect(host=get_uri())
-    seed_user()
+    seed_user(user_role='artist', is_active=True)
+    seed_user(user_role='admin', is_active=False)
     seed_biography()
 
 
