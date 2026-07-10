@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import {useAudioStore} from '@stores'
 import type {OrphanAudioRaw} from '@stores'
 import {Trash2, Music, Music2, Disc, PackageOpen, Download, RotateCcw} from '@lucide/vue'
 import {computed, onMounted, ref} from "vue";
 import Tooltip from "@components/layout/Tooltip.vue";
+import {useOrphansStore} from "@stores";
 
 interface OrphanAudio {
   artist: string;
@@ -13,7 +13,7 @@ interface OrphanAudio {
   metadata: OrphanAudioRaw['metadata'];
 }
 
-const audioStore = useAudioStore()
+const orphansStore = useOrphansStore()
 const selectedOrphans = ref<string[]>([])
 const emit = defineEmits<{
   requestDelete: [srcs: string[]],
@@ -25,7 +25,7 @@ const orphans = ref<OrphanAudio[]>([])
 
 // Fetch orphan audio files from store and transform them into structured data for UI
 onMounted(async () => {
-  await audioStore.fetchOrphans()
+  await orphansStore.fetchOrphans()
       .then(() => {
         formatData()
       })
@@ -112,7 +112,7 @@ const toLabel = (slug: string) => slug
 
 // Convert raw API response into structured objects with human-readable labels
 const formatData = () => {
-  orphans.value = audioStore.orphans.map((orphan: OrphanAudioRaw) => {
+  orphans.value = orphansStore.orphans.map((orphan: OrphanAudioRaw) => {
     const [artistSlug, albumSlug, trackSrc] = orphan.file.split('/')
     return {
       artist: orphan.metadata?.artist || toLabel(artistSlug),
@@ -222,7 +222,9 @@ const formatData = () => {
                     class="flex gap-2 items-center group bg-blue-100 lg:bg-transparent hover:bg-blue-100 hover:font-semibold transition px-3 py-2 rounded-full">
                   <Download :size="18" class="text-blue-600 md:text-gray-700 group-hover:text-blue-600"/>
                   <a :href="`${apiUrl}/upload/audio/${orphan.src}?download=true`"
-                     class="hidden md:block text-xs text-gray-700 font-mono group-hover:text-blue-600">{{ orphan.src }}</a>
+                     class="hidden md:block text-xs text-gray-700 font-mono group-hover:text-blue-600">{{
+                      orphan.src
+                    }}</a>
                 </div>
               </Tooltip>
             </div>

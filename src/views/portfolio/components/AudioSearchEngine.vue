@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import {ref, computed} from 'vue'
 import {Search, X, Music, User, Disc, Tag} from '@lucide/vue'
-import {useAudioStore} from '@stores/audio'
+import {useArtistsStore} from '@stores/artists'
 import {useSearchStore} from '@stores/search'
 import {useSearchIndex} from '@composables/useSearchIndex'
 import type {SearchResult} from '@composables/useSearchIndex'
 
-const audioStore = useAudioStore()
+const artistsStore = useArtistsStore()
 const searchStore = useSearchStore()
 const query = ref('')
 const showResults = ref(false)
-const {search} = useSearchIndex(() => audioStore.artists)
+const {search} = useSearchIndex(() => artistsStore.artists)
 const results = computed(() => search(query.value))
 const focusedIndex = ref(-1)
 

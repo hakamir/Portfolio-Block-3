@@ -2,19 +2,19 @@
 import Card from "@views/portfolio/components/Card.vue"
 import AudioPlayer from "@components/AudioPlayer.vue"
 import {LoaderCircle, Ban} from "@lucide/vue"
-import {useAudioStore} from "@stores/audio.ts"
+import {useArtistsStore} from "@stores/artists.ts"
 import {useSearchStore} from "@stores/search.ts"
 import {onMounted, computed} from "vue"
 import AudioSearchEngine from "@views/portfolio/components/AudioSearchEngine.vue"
 
 const apiUrl = import.meta.env.VITE_API_URL + '/api'
-const audioStore = useAudioStore()
+const artistsStore = useArtistsStore()
 const searchStore = useSearchStore()
 
 onMounted(async () => {
-  await audioStore.fetchArtists("public")
-  audioStore.artists.sort((a, b) => a.order - b.order)
-  audioStore.artists.forEach(artist => {
+  await artistsStore.fetchArtists("public")
+  artistsStore.artists.sort((a, b) => a.order - b.order)
+  artistsStore.artists.forEach(artist => {
     artist.albums.sort((a, b) => a.order - b.order)
     artist.albums.forEach(album => {
       album.tracks.sort((a, b) => a.trackNumber - b.trackNumber)
@@ -26,7 +26,7 @@ const filteredArtists = computed(() => {
   const filters = searchStore.activeFilters
 
   // Show all artists if no filters are active
-  if (filters.length === 0) return audioStore.artists
+  if (filters.length === 0) return artistsStore.artists
 
   // Partition active filters by type into Sets for O(1) lookups below.
   // Each Set is empty when no filter of that type is active, which signals
@@ -36,7 +36,7 @@ const filteredArtists = computed(() => {
   const trackIds  = new Set(filters.filter(f => f.type === 'track').map(f => f.id))
   const tagNames  = new Set(filters.filter(f => f.type === 'tag').map(f => f.name))
 
-  return audioStore.artists
+  return artistsStore.artists
     // Keep artists that are explicitly selected, or all if no artist filter is active
     .filter(artist => artistIds.size === 0 || artistIds.has(artist._id))
     .map(artist => ({
@@ -70,7 +70,7 @@ const filteredArtists = computed(() => {
     </h2>
     <AudioSearchEngine/>
 
-    <template v-if="audioStore.fetchStatus === 'loading'">
+    <template v-if="artistsStore.fetchStatus === 'loading'">
       <Card title="">
         <div class="flex items-center justify-center gap-2">
           <LoaderCircle class="animate-spin"/>
@@ -79,7 +79,7 @@ const filteredArtists = computed(() => {
       </Card>
     </template>
 
-    <template v-else-if="audioStore.fetchStatus === 'error'">
+    <template v-else-if="artistsStore.fetchStatus === 'error'">
       <Card title="Error">
         <div class="flex gap-4">
           <Ban/>

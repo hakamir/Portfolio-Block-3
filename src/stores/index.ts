@@ -6,3 +6,5 @@ export * from "./audio";
 export * from "./audioPlayer";
 export * from "./search";
 export * from "./user";
+export * from "./orphans";
+export * from "./artists";

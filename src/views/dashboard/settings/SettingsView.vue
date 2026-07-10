@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import OrphansAudio from "@views/dashboard/settings/components/OrphansAudio.vue";
 import {ref} from "vue";
-import {useAudioStore} from "@stores";
+import {useOrphansStore} from "@stores";
 import {Trash2, RotateCcw} from "@lucide/vue";
 import Modal from "@components/Modal.vue";
 import ChangePassword from "@views/dashboard/settings/components/ChangePassword.vue";
@@ -9,7 +9,7 @@ import OrphansGallery from "@views/dashboard/settings/components/OrphansGallery.
 import Backgrounds from "@views/dashboard/settings/components/Backgrounds.vue";
 import {useGalleriesStore} from "@stores/gallery.ts";
 
-const audioStore = useAudioStore()
+const orphansStore = useOrphansStore()
 const showAudioDeleteModal = ref(false)
 const orphansAudioToDelete = ref<string[]>([])
 const orphansAudioRefreshKey = ref(0);
@@ -25,7 +25,7 @@ const onAudioRequestDelete = (srcs: string[]) => {
 
 // Confirm deletion, call store, then reset modal state and trigger list refresh
 const onAudioConfirmDelete = async () => {
-  await audioStore.deleteOrphans(orphansAudioToDelete.value)
+  await orphansStore.deleteOrphans(orphansAudioToDelete.value)
   showAudioDeleteModal.value = false
   orphansAudioToDelete.value = []
   orphansAudioRefreshKey.value += 1;
@@ -55,7 +55,7 @@ const onAudioRequestRollback = (srcs: string[]) => {
 }
 
 const onAudioConfirmRollback = async () => {
-  const result = await audioStore.rollbackOrphans(orphansAudioToRollback.value)
+  const result = await orphansStore.rollbackOrphans(orphansAudioToRollback.value)
   showAudioRollbackModal.value = false
   rollbackResult.value = result
   orphansAudioToRollback.value = []

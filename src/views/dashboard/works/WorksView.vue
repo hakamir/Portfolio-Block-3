@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AudioSection from "@views/dashboard/works/Components/AudioSection.vue";
 import GallerySection from "@views/dashboard/works/Components/GallerySection.vue";
-import {type Track, useAudioStore} from "@stores";
+import {type Track, useArtistsStore} from "@stores";
 import {ref, toRaw} from "vue";
 import {Tag, Plus, X} from "@lucide/vue";
 import Modal from "@components/Modal.vue";
@@ -12,13 +12,13 @@ const selectedTrack = ref<Track | null>(null)
 const tempTrack = ref<Track | null>(null)
 const showTagEditionModal = ref(false)
 const newTag = ref('')
-const audioStore = useAudioStore()
+const artistsStore = useArtistsStore()
 const galleriesStore = useGalleriesStore()
 const showUnsavedChangesModal = ref(false)
 let resolveNavigation: ((confirm: boolean) => void) | null = null
 
 onBeforeRouteLeave(() => {
-  if (!audioStore.isDirty && !galleriesStore.isDirty) return true
+  if (!artistsStore.isDirty && !galleriesStore.isDirty) return true
 
   showUnsavedChangesModal.value = true
   return new Promise(resolve => {
