@@ -3,7 +3,7 @@ from mongoengine import ReferenceField, Document, ObjectIdField, StringField, In
 from models.user import User
 
 
-class Orphan(Document):
+class OrphanAudio(Document):
     user = ReferenceField(User, required=True)
     artist_id = ObjectIdField(null=True)
     artist_slug = StringField(required=True)
@@ -15,7 +15,7 @@ class Orphan(Document):
     track_number = IntField(required=True)
     tags = ListField(StringField())
     deleted_at = DateTimeField(required=True)
-    meta = {'collection': 'orphans'}
+    meta = {'collection': 'orphan_audios'}
 
     @property
     def relative_path(self):

@@ -7,4 +7,5 @@ export default {
   uploadImage: `/api/upload/gallery`,
   getOrphans: `/api/orphans/gallery`,
   deleteOrphans: `/api/orphans/gallery`,
+  rollbackOrphans: `/api/orphans/gallery/rollback`,
 }

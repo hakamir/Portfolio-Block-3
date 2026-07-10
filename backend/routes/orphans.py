@@ -4,21 +4,24 @@ from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import get_jwt_identity
 from mongoengine import DoesNotExist
 from middleware.roles import roles_required
-from models.orphan import Orphan
+from models.orphan_audio import OrphanAudio
+from models.orphan_gallery import OrphanGallery
 from models.user import User
-from models.gallery import Gallery
 from services.audio_service import upsert_track
-from utils.filesystem import cleanup_empty_dirs, get_files
+from services.gallery_service import upsert_image
+from utils.filesystem import cleanup_empty_dirs
 
 orphans_bp = Blueprint('orphans', __name__)
 
+
+# Audio orphans
 
 @orphans_bp.route('/orphans/audio', methods=['GET'])
 @roles_required('artist', 'admin')
 def get_orphan_audio():
     identity = get_jwt_identity()
     user = User.objects(id=identity).first()
-    orphans = Orphan.objects(user=user).order_by('artist_title', 'album_title', 'track_number')
+    orphans = OrphanAudio.objects(user=user).order_by('artist_title', 'album_title', 'track_number')
     return jsonify([o.to_json_dict() for o in orphans]), 200
 
 
@@ -38,7 +41,7 @@ def delete_orphan_audio():
         if not ObjectId.is_valid(raw_id):
             continue
         try:
-            orphan = Orphan.objects.get(id=raw_id, user=user)
+            orphan = OrphanAudio.objects.get(id=raw_id, user=user)
         except DoesNotExist:
             continue
         file_path = os.path.join(settings.upload_folder, 'audio', orphan.relative_path)
@@ -70,7 +73,7 @@ def rollback_orphan_audio():
             failed.append({'id': raw_id, 'title': raw_id, 'error': 'Invalid id'})
             continue
         try:
-            orphan = Orphan.objects.get(id=raw_id, user=user)
+            orphan = OrphanAudio.objects.get(id=raw_id, user=user)
         except DoesNotExist:
             failed.append({'id': raw_id, 'title': raw_id, 'error': 'Orphan not found'})
             continue
@@ -98,33 +101,89 @@ def rollback_orphan_audio():
     return jsonify({'restored': restored, 'failed': failed}), 200
 
 
+# Gallery orphans
+
 @orphans_bp.route('/orphans/gallery', methods=['GET'])
 @roles_required('artist', 'admin')
 def get_orphan_gallery():
-    settings = current_app.config['settings']
-    tracked_files = set()
-    for gallery in Gallery.objects():
-        for image in gallery.images:
-            path = os.path.join(gallery.slug, image.src)
-            tracked_files.add(path)
-            tracked_files.add(path.replace('\\', '/'))
-
-    orphans = get_files(os.path.join(settings.upload_folder, 'gallery'), tracked_files)
-    return jsonify(orphans), 200
+    identity = get_jwt_identity()
+    user = User.objects(id=identity).first()
+    orphans = OrphanGallery.objects(user=user).order_by('gallery_title', 'image_order')
+    return jsonify([o.to_json_dict() for o in orphans]), 200
 
 
 @orphans_bp.route('/orphans/gallery', methods=['DELETE'])
 @roles_required('artist', 'admin')
 def delete_orphan_gallery():
     settings = current_app.config['settings']
+    identity = get_jwt_identity()
+    user = User.objects(id=identity).first()
     data = request.get_json()
-    files = data.get('files', [])
+
+    if not data or 'ids' not in data or not isinstance(data['ids'], list):
+        return jsonify({'error': 'Expected a list of ids'}), 400
+
     deleted = []
-    for file in files:
-        full_path = os.path.join(settings.upload_folder, 'gallery', file)
-        if os.path.exists(full_path):
-            os.remove(full_path)
-            deleted.append(file)
+    for raw_id in data['ids']:
+        if not ObjectId.is_valid(raw_id):
+            continue
+        try:
+            orphan = OrphanGallery.objects.get(id=raw_id, user=user)
+        except DoesNotExist:
+            continue
+        file_path = os.path.join(settings.upload_folder, 'gallery', orphan.relative_path)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        orphan.delete()
+        deleted.append(raw_id)
 
     cleanup_empty_dirs(os.path.join(settings.upload_folder, 'gallery'))
-    return jsonify({'deleted': True}), 200
+    return jsonify({'deleted': deleted}), 200
+
+
+@orphans_bp.route('/orphans/gallery/rollback', methods=['POST'])
+@roles_required('artist', 'admin')
+def rollback_orphan_gallery():
+    settings = current_app.config['settings']
+    identity = get_jwt_identity()
+    user = User.objects(id=identity).first()
+    data = request.get_json()
+
+    if not data or 'ids' not in data or not isinstance(data['ids'], list):
+        return jsonify({'error': 'Expected a list of ids'}), 400
+
+    restored = []
+    failed = []
+
+    for raw_id in data['ids']:
+        if not ObjectId.is_valid(raw_id):
+            failed.append({'id': raw_id, 'title': raw_id, 'error': 'Invalid id'})
+            continue
+        try:
+            orphan = OrphanGallery.objects.get(id=raw_id, user=user)
+        except DoesNotExist:
+            failed.append({'id': raw_id, 'title': raw_id, 'error': 'Orphan not found'})
+            continue
+
+        file_path = os.path.join(settings.upload_folder, 'gallery', orphan.relative_path)
+        if not os.path.exists(file_path):
+            failed.append({'id': raw_id, 'title': orphan.image_title, 'error': 'File not found'})
+            continue
+
+        metadata = {
+            'gallery_title': orphan.gallery_title,
+            'title': orphan.image_title,
+            'location': orphan.image_location,
+            'date': orphan.image_date,
+            'alt': orphan.image_alt,
+            'order': orphan.image_order,
+        }
+
+        try:
+            upsert_image(user, orphan.gallery_slug, orphan.image_src, metadata)
+            orphan.delete()
+            restored.append(raw_id)
+        except Exception as e:
+            failed.append({'id': raw_id, 'title': orphan.image_title, 'error': str(e)})
+
+    return jsonify({'restored': restored, 'failed': failed}), 200

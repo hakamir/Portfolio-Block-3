@@ -2,6 +2,7 @@ import {defineStore} from "pinia";
 import {ref} from "vue";
 import {instance} from "@api/axios.ts";
 import audiosApi from "@api/audios.ts";
+import galleryApi from "@api/gallery.ts";
 
 export interface OrphanAudio {
     _id: string;
@@ -14,13 +15,27 @@ export interface OrphanAudio {
     deleted_at: string;
 }
 
-export const useOrphansStore = defineStore('orphans', () => {
-    const orphans = ref<OrphanAudio[]>([])
+export interface OrphanGallery {
+    _id: string;
+    gallery_title: string;
+    image_title: string;
+    image_location: string | null;
+    image_date: string | null;
+    image_alt: string | null;
+    image_order: number;
+    src: string;
+    deleted_at: string;
+}
 
+export const useOrphansStore = defineStore('orphans', () => {
+    const orphanAudios = ref<OrphanAudio[]>([])
+    const orphanGalleries = ref<OrphanGallery[]>([])
+
+    // Audio
     const fetchOrphans = async () => {
         try {
             const res = await instance.get(audiosApi.getOrphans)
-            orphans.value = res.data
+            orphanAudios.value = res.data
         } catch (err) {
             console.error('Error fetching orphans:', err)
         }
@@ -46,10 +61,44 @@ export const useOrphansStore = defineStore('orphans', () => {
         }
     }
 
+    // Gallery
+    const fetchOrphanGalleries = async () => {
+        try {
+            const res = await instance.get(galleryApi.getOrphans)
+            orphanGalleries.value = res.data
+        } catch (err) {
+            console.error('Error fetching gallery orphans:', err)
+        }
+    }
+
+    const deleteOrphanGalleries = async (ids: string[]) => {
+        try {
+            await instance.delete(galleryApi.deleteOrphans, {data: {ids}})
+            await fetchOrphanGalleries()
+        } catch (err) {
+            console.error('Error deleting gallery orphans:', err)
+        }
+    }
+
+    const rollbackOrphanGalleries = async (ids: string[]) => {
+        try {
+            const res = await instance.post(galleryApi.rollbackOrphans, {ids})
+            await fetchOrphanGalleries()
+            return res.data as { restored: string[], failed: { id: string, title: string, error: string }[] }
+        } catch (err) {
+            console.error('Error rolling back gallery orphans:', err)
+            return null
+        }
+    }
+
     return {
-        orphans,
+        orphanAudios,
         fetchOrphans,
         deleteOrphans,
-        rollbackOrphans
+        rollbackOrphans,
+        orphanGalleries,
+        fetchOrphanGalleries,
+        deleteOrphanGalleries,
+        rollbackOrphanGalleries,
     }
 })

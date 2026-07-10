@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from models.artist import Album, Track
-from models.orphan import Orphan
+from models.orphan_audio import OrphanAudio
 from utils.filesystem import write_id3_tags
 
 
@@ -36,7 +36,7 @@ def _orphan_if_file_exists(user, artist, album, track, upload_folder, now, artis
     file_path = os.path.join(upload_folder, 'audio', artist.slug, album.slug, track.src)
     if not os.path.exists(file_path):
         return
-    Orphan(
+    OrphanAudio(
         user=user,
         artist_id=artist.id if artist_id is ... else artist_id,
         artist_slug=artist.slug,

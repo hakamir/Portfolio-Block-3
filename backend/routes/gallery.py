@@ -1,12 +1,14 @@
 from bson import ObjectId
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from flask_jwt_extended import get_jwt_identity
 from mongoengine import DoesNotExist, ValidationError as MongoEngineValidationError
 from pydantic import ValidationError as PydanticValidationError
 from Schemas.gallery import GalleryIn
 from middleware.roles import roles_required
-from models.gallery import Gallery, GalleryImage
+from models.gallery import Gallery
 from models.user import User
+from services.gallery_service import orphan_removed_images, orphan_all_images, build_images
+from uuid import uuid4
 
 gallery_bp = Blueprint('gallery', __name__)
 
@@ -49,26 +51,29 @@ def update_owned_galleries():
         identity = get_jwt_identity()
         user = User.objects(id=identity).first()
 
-        galleries = [GalleryIn.model_validate(g) for g in payload]
+        galleries_input = [GalleryIn.model_validate(g) for g in payload]
+        settings = current_app.config['settings']
 
-        for g in galleries:
-            images = [GalleryImage(**img.model_dump()) for img in g.images]
+        result = []
+        for g in galleries_input:
             if g.id:
                 gallery = Gallery.objects.get(id=g.id, user=user)
-                gallery.slug = g.slug
+                orphan_removed_images(user, gallery, g.images, settings.upload_folder)
                 gallery.title = g.title
                 gallery.order = g.order
-                gallery.images = images
+                gallery.images = build_images(g.images, gallery)
                 gallery.save()
             else:
-                Gallery(
+                gallery = Gallery(
                     user=user,
-                    slug=g.slug,
+                    slug=str(uuid4()),
                     title=g.title,
                     order=g.order,
-                    images=images
-                ).save()
-        return jsonify({'updated': True}), 200
+                    images=build_images(g.images),
+                )
+                gallery.save()
+            result.append(gallery.to_json_dict())
+        return jsonify(result), 200
     except PydanticValidationError as e:
         errors = []
         for err in e.errors():
@@ -93,6 +98,8 @@ def delete_gallery(id):
     user = User.objects(id=identity).first()
     try:
         gallery = Gallery.objects.get(id=id, user=user)
+        settings = current_app.config['settings']
+        orphan_all_images(user, gallery, settings.upload_folder)
         gallery.delete()
         return jsonify({'deleted': True}), 200
     except DoesNotExist:

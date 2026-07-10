@@ -18,7 +18,7 @@ onMounted(async () => {
   await orphansStore.fetchOrphans()
 })
 
-const orphans = computed(() => orphansStore.orphans)
+const orphans = computed(() => orphansStore.orphanAudios)
 
 // Group orphan tracks by artist_title, then by album_title
 const groupedOrphans = computed(() => {

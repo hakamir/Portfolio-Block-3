@@ -7,8 +7,6 @@ import Modal from "@components/Modal.vue";
 import ChangePassword from "@views/dashboard/settings/components/ChangePassword.vue";
 import OrphansGallery from "@views/dashboard/settings/components/OrphansGallery.vue";
 import Backgrounds from "@views/dashboard/settings/components/Backgrounds.vue";
-import {useGalleriesStore} from "@stores/gallery.ts";
-
 const orphansStore = useOrphansStore()
 const showAudioDeleteModal = ref(false)
 const orphansAudioToDelete = ref<string[]>([])
@@ -31,22 +29,36 @@ const onAudioConfirmDelete = async () => {
   orphansAudioRefreshKey.value += 1;
 }
 
-const galleryStore = useGalleriesStore()
 const showGalleryDeleteModal = ref(false)
 const orphansGalleryToDelete = ref<string[]>([])
 const orphansGalleryRefreshKey = ref(0);
+const showGalleryRollbackModal = ref(false)
+const orphansGalleryToRollback = ref<string[]>([])
+const rollbackGalleryResult = ref<{ restored: string[], failed: { id: string, title: string, error: string }[] } | null>(null)
 
-const onGalleryRequestDelete = (srcs: string[]) => {
-  orphansGalleryToDelete.value = srcs
-  console.log(orphansGalleryToDelete.value)
+const onGalleryRequestDelete = (ids: string[]) => {
+  orphansGalleryToDelete.value = ids
   showGalleryDeleteModal.value = true
 }
 
 const onGalleryConfirmDelete = async () => {
-  await galleryStore.deleteOrphans(orphansGalleryToDelete.value)
+  await orphansStore.deleteOrphanGalleries(orphansGalleryToDelete.value)
   showGalleryDeleteModal.value = false
   orphansGalleryToDelete.value = []
-  orphansGalleryRefreshKey.value += 1;
+  orphansGalleryRefreshKey.value += 1
+}
+
+const onGalleryRequestRollback = (ids: string[]) => {
+  orphansGalleryToRollback.value = ids
+  showGalleryRollbackModal.value = true
+}
+
+const onGalleryConfirmRollback = async () => {
+  const result = await orphansStore.rollbackOrphanGalleries(orphansGalleryToRollback.value)
+  showGalleryRollbackModal.value = false
+  rollbackGalleryResult.value = result
+  orphansGalleryToRollback.value = []
+  orphansGalleryRefreshKey.value += 1
 }
 
 const onAudioRequestRollback = (srcs: string[]) => {
@@ -70,7 +82,8 @@ const onAudioConfirmRollback = async () => {
       <ChangePassword/>
       <OrphansAudio @request-delete="onAudioRequestDelete" @request-rollback="onAudioRequestRollback"
                     :key="orphansAudioRefreshKey"/>
-      <OrphansGallery @request-delete="onGalleryRequestDelete" :key="orphansGalleryRefreshKey"/>
+      <OrphansGallery @request-delete="onGalleryRequestDelete" @request-rollback="onGalleryRequestRollback"
+                    :key="orphansGalleryRefreshKey"/>
       <Backgrounds/>
     </div>
     <!-- Modal for audio deletion confirmation -->
@@ -107,6 +120,53 @@ const onAudioConfirmRollback = async () => {
           orphansGalleryToDelete.length > 1 ? 's' : ''
         }}</span>.
       This action cannot be undone.
+    </Modal>
+
+    <!-- Modal for gallery rollback confirmation -->
+    <Modal
+        v-if="showGalleryRollbackModal"
+        :icon="RotateCcw"
+        :buttons="[
+          { label: 'Cancel', color: 'white', action: () => showGalleryRollbackModal = false },
+          { label: 'Restore', color: 'green', action: onGalleryConfirmRollback }
+        ]"
+        @close="showGalleryRollbackModal = false"
+    >
+      <template #header>Confirm restore</template>
+      You are about to restore
+      <span class="font-semibold text-green-600">{{ orphansGalleryToRollback.length }} image{{
+          orphansGalleryToRollback.length > 1 ? 's' : ''
+        }}</span>
+      to the database.<br><br> Their metadata will be reconstructed from the previous versions.
+    </Modal>
+
+    <!-- Modal for gallery rollback result -->
+    <Modal
+        v-if="rollbackGalleryResult"
+        :icon="RotateCcw"
+        :buttons="[
+          { label: 'Close', color: 'white', action: () => rollbackGalleryResult = null }
+        ]"
+        @close="rollbackGalleryResult = null"
+    >
+      <template #header>Restore complete</template>
+      <div class="flex flex-col gap-2">
+        <p>
+          <span class="font-semibold text-green-600">{{ rollbackGalleryResult.restored.length }} image{{
+              rollbackGalleryResult.restored.length > 1 ? 's' : ''
+            }} restored</span> successfully.
+        </p>
+        <div v-if="rollbackGalleryResult?.failed.length > 0">
+          <p class="font-semibold text-red-600 mb-1">
+            {{ rollbackGalleryResult.failed.length }} image{{ rollbackGalleryResult.failed.length > 1 ? 's' : '' }} failed :
+          </p>
+          <ul class="text-sm text-red-500 list-disc list-inside">
+            <li v-for="f in rollbackGalleryResult?.failed" :key="f.id">
+              <span class="font-mono">{{ f.title }}</span> — {{ f.error }}
+            </li>
+          </ul>
+        </div>
+      </div>
     </Modal>
 
     <!-- Modal for audio rollback confirmation -->

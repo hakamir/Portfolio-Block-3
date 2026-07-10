@@ -27,7 +27,6 @@ export const useGalleriesStore = defineStore('galleries', () => {
     const pendingUploads = ref<Map<Image, File>>(new Map())
     const fetchStatus = ref<'idle' | 'loading' | 'error'>('idle')
     const uploadedFileName = ref<string | undefined>(undefined);
-    const orphans = ref<string[]>([])
     const isDirty = ref(false)
     let isInitialized = false
     const isSubmitted = ref(false);
@@ -44,13 +43,10 @@ export const useGalleriesStore = defineStore('galleries', () => {
         isDirty.value = false
     }
 
-    const toSlug = (str: string) => str.toLowerCase().trim().replace(/\s+/g, '_')
-
     watch(() => galleries.value, (galleries) => {
         isSubmitted.value = false;
         if (isInitialized) isDirty.value = true
         galleries.forEach(gallery => {
-            gallery.slug = toSlug(gallery.title)
             gallery.images.forEach(image => {
                 const year = image.date ? new Date(image.date).getFullYear() : ''
                 image.alt = [image.title, image.location, year].filter(Boolean).join(', ')
@@ -69,22 +65,40 @@ export const useGalleriesStore = defineStore('galleries', () => {
     }
 
     const saveGalleries = async () => {
-        // Mark form as submitted and set loading state
-        isSubmitted.value = true;
+        isSubmitted.value = true
 
-        // Abort if validation fails
         if (hasEmptyFields() || hasDuplicates()) {
             return false
         }
         fetchStatus.value = 'loading'
 
-        // Upload pending galleries
+        // Delete galleries removed from the UI
+        const existingIds = (await instance.get(galleryApi.getGalleriesDashboard)).data
+            .map((g: Gallery) => g._id)
+        const currentIds = galleries.value.map(g => g._id).filter(id => id)
+        const toDelete = existingIds.filter((id: string) => !currentIds.includes(id))
+        for (const id of toDelete) {
+            await instance.delete(galleryApi.deleteGallery(id))
+        }
+
+        // PUT metadata — server assigns UUID slugs for new galleries and srcs for new images
+        const saved: Gallery[] = (await instance.put(galleryApi.updateGalleries, galleries.value)).data
+
+        // Patch local galleries in-place to preserve Map<Image, File> references
+        galleries.value.forEach((gallery, gi) => {
+            const serverGallery = saved[gi]
+            gallery._id = serverGallery._id
+            gallery.slug = serverGallery.slug
+            gallery.images.forEach((image, ii) => {
+                image.src = serverGallery.images[ii].src
+            })
+        })
+
+        // Upload pending images using server-assigned slugs and srcs
         for (const [image, file] of pendingUploads.value.entries()) {
             const gallery = galleries.value.find(g => g.images.includes(image))
             if (!gallery) continue
-            uploadedFileName.value = pendingUploads.value.get(image)?.name;
-            // Get random name prefix by gallery slug
-            image.src = `${gallery.slug}_${crypto.randomUUID()}.webp`
+            uploadedFileName.value = file.name
 
             const formData = new FormData()
             formData.append('file', file)
@@ -94,44 +108,17 @@ export const useGalleriesStore = defineStore('galleries', () => {
             await instance.post(galleryApi.uploadImage, formData)
         }
         pendingUploads.value.clear()
-        uploadedFileName.value = undefined;
-        // Delete galleries that no longer exist
-        const existingIds = (await instance.get(galleryApi.getGalleriesDashboard)).data
-            .map((g: Gallery) => g._id)
-        const currentIds = galleries.value.map(g => g._id).filter(id => id)
-        const toDelete = existingIds.filter((id: string) => !currentIds.includes(id))
-        for (const id of toDelete) {
-            await instance.delete(galleryApi.deleteGallery(id))
-        }
+        uploadedFileName.value = undefined
 
-        // Save galleries
-        await instance.put(galleryApi.updateGalleries, galleries.value)
         fetchStatus.value = 'idle'
         isDirty.value = false
         return true
     }
 
-    const fetchOrphans = async () => {
-        try {
-            const res = await instance.get(galleryApi.getOrphans)
-            orphans.value = res.data
-        } catch (err) {
-            console.error('Error fetching orphans:', err)
-        }
-    }
-
-    const deleteOrphans = async (files: string[]) => {
-        try {
-            await instance.delete(galleryApi.deleteOrphans, {data: {files}})
-            await fetchOrphans()
-        } catch (err) {
-            console.error('Error deleting orphans:', err)
-        }
-    }
-
     const isGalleryDuplicate = (gallery: Gallery): boolean => {
-        if (!gallery.title?.trim()) return false // Avoid UI to trigger duplication check if empty
-        return galleries.value.filter(a => a.slug === gallery.slug).length > 1
+        if (!gallery.title?.trim()) return false
+        const normalized = gallery.title.trim().toLowerCase()
+        return galleries.value.filter(g => g.title.trim().toLowerCase() === normalized).length > 1
     }
 
     const hasDuplicates = (): boolean => {
@@ -149,7 +136,7 @@ export const useGalleriesStore = defineStore('galleries', () => {
     }
 
     return {
-        galleries, orphans, pendingUploads, fetchStatus, uploadedFileName, isDirty, isSubmitted,
-        fetchGalleries, saveGalleries, checkImageExists, fetchOrphans, deleteOrphans, isGalleryDuplicate
+        galleries, pendingUploads, fetchStatus, uploadedFileName, isDirty, isSubmitted,
+        fetchGalleries, saveGalleries, checkImageExists, isGalleryDuplicate
     }
 });

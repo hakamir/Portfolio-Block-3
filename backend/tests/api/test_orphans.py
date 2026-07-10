@@ -4,12 +4,18 @@ from unittest.mock import patch
 
 from models.artist import Artist, Album, Track
 from models.gallery import Gallery, GalleryImage
-from models.orphan import Orphan
+from models.orphan_audio import OrphanAudio
+from models.orphan_gallery import OrphanGallery
 
+# AUDIO
 _ARTIST_SLUG = "artist-uuid-1"
 _ALBUM_SLUG = "album-uuid-1"
 _TRACK_SRC = "track-uuid-1.mp3"
 _ORPHAN_SRC = "orphan-uuid.mp3"
+
+# GALLERY
+_GALLERY_SLUG = "gallery-uuid-1"
+_IMAGE_SRC = "image-uuid-1.webp"
 
 
 @pytest.fixture
@@ -47,8 +53,8 @@ def test_gallery(test_artist_user):
 
 
 @pytest.fixture
-def test_orphan(test_artist_user):
-    return Orphan(
+def test_orphan_audio(test_artist_user):
+    return OrphanAudio(
         user=test_artist_user,
         artist_id=None,
         artist_slug=_ARTIST_SLUG,
@@ -63,6 +69,22 @@ def test_orphan(test_artist_user):
     ).save()
 
 
+@pytest.fixture
+def test_orphan_gallery(test_artist_user):
+    return OrphanGallery(
+        user=test_artist_user,
+        gallery_slug=_GALLERY_SLUG,
+        gallery_title="Gallery 1",
+        image_src=_IMAGE_SRC,
+        image_title="Image 1",
+        image_location="Somewhere",
+        image_date=datetime.now(timezone.utc),
+        image_alt="Image 1, Paris, 2024",
+        image_order=1,
+        deleted_at=datetime.now(timezone.utc),
+    ).save()
+
+
 class TestGetOrphanAudio:
     def test_requires_authentication(self, client):
         response = client.get("/api/orphans/audio")
@@ -73,12 +95,12 @@ class TestGetOrphanAudio:
         assert response.status_code == 200
         assert response.get_json() == []
 
-    def test_returns_orphan_records(self, client, auth_headers, test_orphan):
+    def test_returns_orphan_records(self, client, auth_headers, test_orphan_audio):
         response = client.get("/api/orphans/audio", headers=auth_headers)
         assert response.status_code == 200
         data = response.get_json()
         assert len(data) == 1
-        assert data[0]['_id'] == str(test_orphan.id)
+        assert data[0]['_id'] == str(test_orphan_audio.id)
         assert data[0]['artist_title'] == 'Artist 1'
         assert data[0]['album_title'] == 'Album 1'
         assert data[0]['track_title'] == 'Orphan Track'
@@ -102,52 +124,52 @@ class TestRollbackOrphanAudio:
         )
         assert response.status_code == 400
 
-    def test_fails_if_file_not_found(self, client, auth_headers, test_orphan):
+    def test_fails_if_file_not_found(self, client, auth_headers, test_orphan_audio):
         with patch('os.path.exists', return_value=False):
             response = client.post(
                 "/api/orphans/audio/rollback",
-                json={"ids": [str(test_orphan.id)]},
+                json={"ids": [str(test_orphan_audio.id)]},
                 headers=auth_headers
             )
         assert response.status_code == 200
         data = response.get_json()
         assert data['restored'] == []
-        assert data['failed'][0]['id'] == str(test_orphan.id)
+        assert data['failed'][0]['id'] == str(test_orphan_audio.id)
         assert data['failed'][0]['error'] == 'File not found'
-        assert Orphan.objects.count() == 1
+        assert OrphanAudio.objects.count() == 1
 
-    def test_restores_orphan_creating_new_artist(self, client, auth_headers, test_orphan):
+    def test_restores_orphan_creating_new_artist(self, client, auth_headers, test_orphan_audio):
         with patch('os.path.exists', return_value=True):
             response = client.post(
                 "/api/orphans/audio/rollback",
-                json={"ids": [str(test_orphan.id)]},
+                json={"ids": [str(test_orphan_audio.id)]},
                 headers=auth_headers
             )
         assert response.status_code == 200
         data = response.get_json()
-        assert str(test_orphan.id) in data['restored']
+        assert str(test_orphan_audio.id) in data['restored']
         assert data['failed'] == []
-        assert Orphan.objects.count() == 0
+        assert OrphanAudio.objects.count() == 0
         artist = Artist.objects(slug=_ARTIST_SLUG).first()
         assert artist is not None
         assert artist.albums[0].tracks[0].src == _ORPHAN_SRC
 
-    def test_restores_orphan_into_existing_artist(self, client, auth_headers, test_artist, test_orphan):
+    def test_restores_orphan_into_existing_artist(self, client, auth_headers, test_artist, test_orphan_audio):
         with patch('os.path.exists', return_value=True):
             response = client.post(
                 "/api/orphans/audio/rollback",
-                json={"ids": [str(test_orphan.id)]},
+                json={"ids": [str(test_orphan_audio.id)]},
                 headers=auth_headers
             )
         assert response.status_code == 200
         data = response.get_json()
-        assert str(test_orphan.id) in data['restored']
+        assert str(test_orphan_audio.id) in data['restored']
         artist = Artist.objects(slug=_ARTIST_SLUG).first()
         srcs = [t.src for t in artist.albums[0].tracks]
         assert _ORPHAN_SRC in srcs
 
     def test_skips_already_existing_track(self, client, auth_headers, test_artist, test_artist_user):
-        orphan = Orphan(
+        orphan = OrphanAudio(
             user=test_artist_user,
             artist_id=test_artist.id,
             artist_slug=_ARTIST_SLUG,
@@ -173,8 +195,8 @@ class TestRollbackOrphanAudio:
         srcs = [t.src for t in artist.albums[0].tracks]
         assert srcs.count(_TRACK_SRC) == 1
 
-    def test_partial_failure_returns_200(self, client, auth_headers, test_orphan, test_artist_user):
-        missing_orphan = Orphan(
+    def test_partial_failure_returns_200(self, client, auth_headers, test_orphan_audio, test_artist_user):
+        missing_orphan = OrphanAudio(
             user=test_artist_user,
             artist_id=None,
             artist_slug=_ARTIST_SLUG,
@@ -194,7 +216,7 @@ class TestRollbackOrphanAudio:
         with patch('os.path.exists', side_effect=file_exists):
             response = client.post(
                 "/api/orphans/audio/rollback",
-                json={"ids": [str(test_orphan.id), str(missing_orphan.id)]},
+                json={"ids": [str(test_orphan_audio.id), str(missing_orphan.id)]},
                 headers=auth_headers
             )
         assert response.status_code == 200
@@ -218,29 +240,29 @@ class TestDeleteOrphanAudio:
         assert response.status_code == 200
         assert response.get_json() == {"deleted": []}
 
-    def test_deletes_orphan_doc_and_file(self, client, auth_headers, test_orphan):
+    def test_deletes_orphan_doc_and_file(self, client, auth_headers, test_orphan_audio):
         with patch('os.path.exists', return_value=True), patch('os.remove') as mock_remove:
             response = client.delete(
                 "/api/orphans/audio",
-                json={"ids": [str(test_orphan.id)]},
+                json={"ids": [str(test_orphan_audio.id)]},
                 headers=auth_headers
             )
         assert response.status_code == 200
-        assert str(test_orphan.id) in response.get_json()['deleted']
+        assert str(test_orphan_audio.id) in response.get_json()['deleted']
         assert mock_remove.call_count == 1
-        assert Orphan.objects.count() == 0
+        assert OrphanAudio.objects.count() == 0
 
-    def test_deletes_orphan_doc_even_if_file_missing(self, client, auth_headers, test_orphan):
+    def test_deletes_orphan_doc_even_if_file_missing(self, client, auth_headers, test_orphan_audio):
         with patch('os.path.exists', return_value=False), patch('os.remove') as mock_remove:
             response = client.delete(
                 "/api/orphans/audio",
-                json={"ids": [str(test_orphan.id)]},
+                json={"ids": [str(test_orphan_audio.id)]},
                 headers=auth_headers
             )
         assert response.status_code == 200
-        assert str(test_orphan.id) in response.get_json()['deleted']
+        assert str(test_orphan_audio.id) in response.get_json()['deleted']
         mock_remove.assert_not_called()
-        assert Orphan.objects.count() == 0
+        assert OrphanAudio.objects.count() == 0
 
     def test_skips_invalid_id_format(self, client, auth_headers):
         response = client.delete("/api/orphans/audio", json={"ids": ["not-valid"]}, headers=auth_headers)
@@ -254,17 +276,19 @@ class TestGetOrphanGallery:
         assert response.status_code == 401
 
     def test_returns_empty_list_when_no_orphans(self, client, auth_headers):
-        with patch('routes.orphans.get_files', return_value=[]):
-            response = client.get("/api/orphans/gallery", headers=auth_headers)
+        response = client.get("/api/orphans/gallery", headers=auth_headers)
         assert response.status_code == 200
         assert response.get_json() == []
 
-    def test_returns_orphan_files(self, client, auth_headers, test_gallery):
-        orphan_files = ["gallery-1/orphan.webp"]
-        with patch('routes.orphans.get_files', return_value=orphan_files):
-            response = client.get("/api/orphans/gallery", headers=auth_headers)
+    def test_returns_orphan_records(self, client, auth_headers, test_orphan_gallery):
+        response = client.get("/api/orphans/gallery", headers=auth_headers)
         assert response.status_code == 200
-        assert response.get_json() == orphan_files
+        data = response.get_json()
+        assert len(data) == 1
+        assert data[0]['_id'] == str(test_orphan_gallery.id)
+        assert data[0]['gallery_title'] == 'Gallery 1'
+        assert data[0]['image_title'] == 'Image 1'
+        assert data[0]['src'] == f'{_GALLERY_SLUG}/{_IMAGE_SRC}'
 
 
 class TestDeleteOrphanGallery:
@@ -272,30 +296,40 @@ class TestDeleteOrphanGallery:
         response = client.delete("/api/orphans/gallery", json={"files": []})
         assert response.status_code == 401
 
-    def test_returns_deleted_true_on_empty_list(self, client, auth_headers):
-        with patch('routes.orphans.cleanup_empty_dirs'):
-            response = client.delete("/api/orphans/gallery", json={"files": []},
-                                     headers=auth_headers)
-        assert response.status_code == 200
-        assert response.get_json() == {"deleted": True}
+    def test_returns_400_on_missing_ids(self, client, auth_headers):
+        response = client.delete("/api/orphans/gallery", json={}, headers=auth_headers)
+        assert response.status_code == 400
 
-    def test_deletes_existing_files(self, client, auth_headers):
-        files = ["gallery-1/image.webp"]
-        with patch('os.path.exists', return_value=True), \
-                patch('os.remove') as mock_remove, \
-                patch('routes.orphans.cleanup_empty_dirs'):
-            response = client.delete("/api/orphans/gallery", json={"files": files},
-                                     headers=auth_headers)
+    def test_returns_empty_deleted_on_empty_ids(self, client, auth_headers):
+        response = client.delete("/api/orphans/gallery", json={"ids": []}, headers=auth_headers)
         assert response.status_code == 200
-        assert response.get_json() == {"deleted": True}
+        assert response.get_json() == {"deleted": []}
+
+    def test_deletes_orphan_doc_and_file(self, client, auth_headers, test_orphan_gallery):
+        with patch('os.path.exists', return_value=True), patch('os.remove') as mock_remove:
+            response = client.delete(
+                "/api/orphans/gallery",
+                json={"ids": [str(test_orphan_gallery.id)]},
+                headers=auth_headers
+            )
+        assert response.status_code == 200
+        assert str(test_orphan_gallery.id) in response.get_json()['deleted']
         assert mock_remove.call_count == 1
+        assert OrphanGallery.objects.count() == 0
 
-    def test_skips_nonexistent_files(self, client, auth_headers):
-        files = ["gallery-1/missing.webp"]
-        with patch('os.path.exists', return_value=False), \
-                patch('os.remove') as mock_remove, \
-                patch('routes.orphans.cleanup_empty_dirs'):
-            response = client.delete("/api/orphans/gallery", json={"files": files},
-                                     headers=auth_headers)
+    def test_deletes_orphan_doc_even_if_file_missing(self, client, auth_headers, test_orphan_gallery):
+        with patch('os.path.exists', return_value=False), patch('os.remove') as mock_remove:
+            response = client.delete(
+                "/api/orphans/gallery",
+                json={"ids": [str(test_orphan_gallery.id)]},
+                headers=auth_headers
+            )
         assert response.status_code == 200
-        assert mock_remove.call_count == 0
+        assert str(test_orphan_gallery.id) in response.get_json()['deleted']
+        mock_remove.assert_not_called()
+        assert OrphanGallery.objects.count() == 0
+
+    def test_skips_invalid_id_format(self, client, auth_headers):
+        response = client.delete("/api/orphans/gallery", json={"ids": ["not-valid"]}, headers=auth_headers)
+        assert response.status_code == 200
+        assert response.get_json()['deleted'] == []
