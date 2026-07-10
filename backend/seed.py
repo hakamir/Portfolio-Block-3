@@ -4,7 +4,7 @@ from urllib.parse import quote_plus
 from mongoengine import connect
 
 from models.user import User
-from models.biography import Biography, ImageSize, Section
+from models.biography import Biography, Section
 import dotenv
 
 dotenv.load_dotenv()
@@ -51,11 +51,6 @@ def seed_biography():
     artist = User.objects(role='artist', is_active=True).first()
     Biography(
         title="Biography",
-        image=ImageSize(
-            sm="/biography/biography-1-512.webp",
-            md="/biography/biography-1-1024.webp",
-            lg="/biography/biography-1-2048.webp",
-        ),
         sections=[
             Section(title="Section Title", paragraphs=["Example paragraph"])
         ],

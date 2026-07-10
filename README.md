@@ -35,14 +35,19 @@ backend, with **MongoDB** as the database.
 - **Gallery** — Multi-gallery image viewer with progressive loading
 - **Contact** — Rate-limited contact form
 
-### Admin Dashboard (protected)
+### User Dashboard (protected)
 
 - **Works** — Full CRUD for artists → albums → tracks; drag-and-drop reordering; audio file upload
 - **Gallery** — Full CRUD for galleries and images; image upload (WebP)
 - **Biography** — Content editor
 - **Messages** — Inbox with read/unread status, trash and bulk actions
-- **Settings** — Change password; orphaned gallery and audio cleanup; orphaned audio rollback from ID3 metadata; change
-  background images
+- **Settings** — Change password; orphan management: inspect, rollback and permanently delete assets; 
+orphaned audio rollback from ID3 metadata; change background images
+
+### Admin Dashboard (protected)
+
+- **Users** — CRUD for users; user roles; user activity log; user activation
+- **Settings** — Change admin password; change background images
 
 ---
 
@@ -107,8 +112,8 @@ flowchart TB
     Router --> Pinia
     Pinia --> Axios
     Axios -->|HTTP/JSON| Auth & Artists & Gallery & Bio & Messages & Uploads & Orphans & User
-    Auth & Artists & Gallery & Bio & Messages & User --> Mongo
-    Uploads & Orphans --> FS
+    Auth & Artists & Gallery & Bio & Messages & User & Orphans --> Mongo
+    Uploads --> FS
 ```
 
 ---
@@ -172,18 +177,18 @@ sequenceDiagram
 ---
 
 ### Data model
-
-MongoDB stores five collections. Three of them use nested documents: `artists` embeds albums and tracks, `galleries`
-embeds images, and `biography` embeds sections. `messages` and `users` are flat collections. `artists`, `biography`, 
-`galleries` and `messages` reference `users` via a `user_id` field, linking content to its owner artist.
+MongoDB stores seven collections. Three of them use nested documents: `artists` embeds albums and tracks, `galleries`
+embeds images, and `biography` embeds sections. `messages`, `users`, `orphans`, and `orphan_galleries` are flat 
+collections. `artists`, `biography`, `galleries` and `messages` reference `users` via a `user_id` field, linking content
+to its owner artist.
 ```mermaid
 erDiagram
     ARTIST {
         ObjectId _id
+        ObjectId user
         string slug
         string title
         int order
-        ObjectId user
     }
     ALBUM {
         string slug
@@ -198,6 +203,7 @@ erDiagram
     }
     GALLERY {
         ObjectId _id
+        ObjectId user
         string slug
         string title
         int order
@@ -212,9 +218,9 @@ erDiagram
     }
     BIOGRAPHY {
         ObjectId _id
+        ObjectId user
         string title
         datetime updated_at
-        ObjectId user
     }
     SECTION {
         string title
@@ -222,6 +228,7 @@ erDiagram
     }
     MESSAGE {
         ObjectId _id
+        ObjectId user
         string name
         string email
         string message
@@ -230,7 +237,6 @@ erDiagram
         bool trashed
         bool replied
         datetime replied_at
-        ObjectId user
     }
     USER {
         ObjectId _id
@@ -238,6 +244,33 @@ erDiagram
         string password
         string role
         bool is_active
+    }
+    ORPHAN_AUDIOS {
+        ObjectId _id
+        ObjectId user
+        ObjectId artist_id
+        string artist_slug
+        string artist_title
+        string album_slug
+        string album_title
+        string track_title
+        string track_src
+        int track_number
+        Array tags
+        datetime deleted_at
+    }
+    ORPHAN_GALLERIES {
+        ObjectId _id
+        ObjectId user
+        string gallery_slug
+        string gallery_title
+        string image_src
+        string image_title
+        string image_location
+        datetime image_date
+        string image_alt
+        int image_order
+        datetime deleted_at
     }
 
     ARTIST ||--o{ ALBUM: contains
@@ -248,35 +281,48 @@ erDiagram
     USER ||--o{ ARTIST: owns
     USER ||--o{ GALLERY: owns
     USER ||--o{ MESSAGE: receives
+    USER ||--o{ ORPHAN_AUDIOS: owns
+    USER ||--o{ ORPHAN_GALLERIES: owns
 ```
 
 ---
 
 ### File upload & orphan lifecycle
 
-Binary files (audio, images) and their metadata are stored independently — the file in the uploads folder, the metadata
-in MongoDB. This means deleting an artist or gallery via the API removes the metadata but leaves the file on disk. These
-files are called orphans. A dedicated endpoint pair (`GET` + `DELETE /orphans/*`) allows the admin to inspect and clean
-them up from the dashboard.
+Binary files (audio and images) are stored on disk while their published metadata lives in MongoDB. When an artist or
+gallery is deleted, the published metadata is removed but an orphan record is created in a dedicated MongoDB collection
+(`orphan_audios` or `orphan_galleries`). These orphan records preserve enough information to restore or permanently 
+delete the files later from the admin dashboard.
 
 ```mermaid
 flowchart LR
-    classDef cyan fill: #033, stroke: #0aa 
-    classDef blue fill: #024, stroke: #06a
-    Upload["POST /upload/audio\nor /upload/gallery"]:::cyan
-    Meta["PUT /artists\nor PUT /gallery"]:::cyan
-    DeleteDoc["DELETE /artists/:id\nor /gallery/:id"]:::cyan
+    classDef cyan fill:#033,stroke:#0aa
+    classDef blue fill:#024,stroke:#06a
+    classDef green fill:#030,stroke:#0a0
+
+    Upload["POST /upload/audio<br/>or /upload/gallery"]:::cyan
+    Save["PUT /artists<br/>or PUT /gallery"]:::cyan
+    Delete["DELETE /artists/:id<br/>DELETE /gallery/:id"]:::cyan
+
     FS[(Uploads Folder)]:::blue
-    DB[(MongoDB)]:::blue
-    Upload -->|saves file| FS
-    Meta -->|saves metadata| DB
-    FS & DB -->|both present| Published[Visible in Portfolio]
-    DeleteDoc -->|removes metadata| DB
-    DB -.->|file remains| Orphan[Orphaned file in /uploads]
-    Orphan -->|GET /orphans/audio\nor /orphans/gallery| List[List orphans]
-    List -->|DELETE /orphans/audio\nor /orphans/gallery| Cleaned[File deleted from /uploads]
-    List -->|GET /upload/filepath?download = true| Download[Download file]
-    List -->|POST /orphans/audio/rollback| Rollback[Rollback metadata]
+    DB[(MongoDB<br/>Artists / Galleries)]:::blue
+    ORPHANS[(MongoDB<br/>Orphans)]:::green
+
+    Upload -->|Save binary file| FS
+    Save -->|Save published metadata| DB
+
+    FS --> Published[Visible in portfolio]
+    DB --> Published
+
+    Delete -->|Remove published metadata| DB
+    Delete -->|Create orphan entry| ORPHANS
+
+    ORPHANS -->|GET /orphans/audio<br/>GET /orphans/gallery| List[List orphan entries]
+
+    List -->|Download file| FS
+    List -->|POST rollback| DB
+    List -->|DELETE orphan| ORPHANS
+    List -->|DELETE orphan| FS
 ```
 
 ---
@@ -541,13 +587,15 @@ Both `docker-compose.yml` and `docker-compose.prod.yml` should be specified for 
 
 MongoDB collections, created automatically on the first Docker startup:
 
-| Collection  | Description                              |
-|-------------|------------------------------------------|
-| `users`     | Users account                            |
-| `artists`   | Nested document: artist → album → tracks |
-| `galleries` | Nested document: gallery → images        |
-| `biography` | Single document                          |
-| `messages`  | Contact form submissions                 |
+| Collection         | Description                              |
+|--------------------|------------------------------------------|
+| `users`            | Users account                            |
+| `artists`          | Nested document: artist → album → tracks |
+| `galleries`        | Nested document: gallery → images        |
+| `biography`        | Single document                          |
+| `messages`         | Contact form submissions                 |
+| `orphan_audios`    | Orphaned audio files                     |
+| `orphan_galleries` | Orphaned gallery files                   |
 
 Flask Limiter creates two additional collections automatically: `counter` and `windows`, used to store rate-limits by IP
 address and request.
@@ -639,7 +687,7 @@ All seven API controllers are covered. Tests are located in `backend/tests/integ
 | `test_artists.py`   | `routes/artists.py`   | GET, bulk upsert, delete, MongoEngine validation                |
 | `test_gallery.py`   | `routes/gallery.py`   | GET, bulk upsert, slug/image consistency validation, delete     |
 | `test_messages.py`  | `routes/messages.py`  | GET (JWT), create, update (read/replied/replied_at), delete     |
-| `test_orphans.py`   | `routes/orphans.py`   | List and delete orphaned audio and gallery files                |
+| `test_orphans.py`   | `routes/orphans.py`   | List, rollback and delete orphaned audio and gallery files      |
 | `test_uploads.py`   | `routes/uploads.py`   | Audio upload with conversion, gallery upload, background upload |
 
 ### Notable test patterns
@@ -769,13 +817,15 @@ All routes are prefixed with `/api`.
 
 ### [Orphaned files management](#orphaned-files)
 
-| Method | Path                                                           | Auth                    | Description                  |
-|-------:|----------------------------------------------------------------|-------------------------|------------------------------|
-|    GET | [`/api/orphans/audio`](#get-apiorphansaudio)                   | JWT (`artist`, `admin`) | List orphaned audio files    |
-|   POST | [`/api/orphans/audio/rollback`](#post-apiorphansaudiorollback) | JWT (`artist`, `admin`) | Restore orphaned audio files |
-| DELETE | [`/api/orphans/audio`](#delete-apiorphansaudio)                | JWT (`artist`, `admin`) | Delete orphaned audio files  |
-|    GET | [`/api/orphans/gallery`](#get-apiorphansgallery)               | JWT (`artist`, `admin`) | List orphaned image files    |
-| DELETE | [`/api/orphans/gallery`](#delete-apiorphansgallery)            | JWT (`artist`, `admin`) | Delete orphaned image files  |
+| Method | Path                                                              | Auth                    | Description                                    |
+|-------:|-------------------------------------------------------------------|-------------------------|------------------------------------------------|
+|    GET | [`/api/orphans/audio`](#get-apiorphansaudio)                      | JWT (`artist`, `admin`) | List orphaned audio files                      |
+|    GET | [`/api/orphans/audio/<user_id>`](#get-apiorphansaudiouser_id)     | JWT (`admin`)           | List orphaned audio files of a specific user   |
+|   POST | [`/api/orphans/audio/rollback`](#post-apiorphansaudiorollback)    | JWT (`artist`, `admin`) | Restore orphaned audio files                   |
+| DELETE | [`/api/orphans/audio`](#delete-apiorphansaudio)                   | JWT (`artist`, `admin`) | Delete orphaned audio files                    |
+|    GET | [`/api/orphans/gallery`](#get-apiorphansgallery)                  | JWT (`artist`, `admin`) | List orphaned image files                      |
+|    GET | [`/api/orphans/gallery/<user_id>`](#get-apiorphansgalleryuser_id) | JWT (`admin`)           | List orphaned gallery files of a specific user |
+| DELETE | [`/api/orphans/gallery`](#delete-apiorphansgallery)               | JWT (`artist`, `admin`) | Delete orphaned image files                    |
 
 ---
 
@@ -1527,48 +1577,44 @@ destination: <destination> (hero | portfolio | biography)
 
 ## `GET /api/orphans/audio`
 
-Returns a list of audio files present on the server but not linked to any artist in the database. Each entry includes
-the relative file path and ID3 metadata if available. JWT required.
+Returns orphaned audio entries stored in the `orphans` collection. Each orphan contains the metadata required to restore
+the corresponding artist, album and track without reading the audio file again.
 
 **Response `200`:**
 
 ```json
 [
   {
-    "file": "artist_slug/album_slug/track.mp3",
-    "metadata": {
-      "artist": "Artist Title",
-      "album": "Album Title",
-      "title": "Track Title",
-      "track_number": 1
-    }
-  },
-  {
-    "file": "artist_slug/album_slug/track_no_tags.mp3",
-    "metadata": null
+    "_id": "6a5111dbb8aeff8549807566",
+    "album_title": "test album",
+    "artist_title": "test artist",
+    "deleted_at": "Fri, 10 Jul 2026 15:38:03 GMT",
+    "src": "bdb0bfb0-c9f1-4c71-92cd-5d1c5e85dcca/e160d2c0-3286-485e-ab21-d7878af13625/3ede5ea9-47ce-4845-9af1-7d2ee7269ad0.mp3",
+    "tags": [
+      "tag 1"
+    ],
+    "track_number": 4,
+    "track_title": "test orphan track"
   }
 ]
 ```
 
-`metadata` is `null` if the file has no ID3 tags (e.g., uploaded before ID3 support was introduced). Files with `null`
-metadata cannot be restored via the rollback endpoint and must be re-uploaded. Track tags are automatically saved in
-files with ID3 tags on `PUT /api/artists`.
+## `GET /api/orphans/audio/<user_id>`
+
+Similar to [`GET /api/orphans/audio`](#get-apiartists), except it returns the orphans from a specific user. Authentication is
+required with an admin role.
 
 ## `POST /api/orphans/audio/rollback`
 
-Restores orphaned audio files to the database by reading their ID3 tags and upserting the corresponding artist → album →
-track structure into MongoDB. JWT required.
-
-Only files with valid ID3 metadata can be restored. If the artist or album does not exist, they are created with
-`order: 1` and the slug derived from the file path. If the track already exists in the database, it is skipped.
+Restores selected orphaned audio entries using the metadata stored in the `orphans` collection.
 
 **Request body:**
 
 ```json
 {
-  "files": [
-    "artist_slug/album_slug/track.mp3",
-    "artist_slug/album_slug/track2.mp3"
+  "ids": [
+    "6a511cf7b8aeff8549807575",
+    "6a511cf7b8aeff8549807574"
   ]
 }
 ```
@@ -1578,14 +1624,10 @@ Only files with valid ID3 metadata can be restored. If the artist or album does 
 ```json
 {
   "restored": [
-    "artist_slug/album_slug/track.mp3"
+    "6a511cf7b8aeff8549807575",
+    "6a511cf7b8aeff8549807574"
   ],
-  "failed": [
-    {
-      "file": "artist_slug/album_slug/track2.mp3",
-      "error": "No ID3 metadata found"
-    }
-  ]
+  "failed": []
 }
 ```
 
@@ -1603,10 +1645,9 @@ Deletes selected orphaned audio files. JWT required.
 
 ```json
 {
-  "files": [
-    "artist/album/track1.mp3",
-    "artist/album/track2.mp3",
-    "artist/album/track3.mp3"
+  "ids": [
+    "6a5111dbb8aeff8549807565",
+    "6a5111dbb8aeff8549807566"
   ]
 }
 ```
@@ -1615,7 +1656,10 @@ Deletes selected orphaned audio files. JWT required.
 
 ```json
 {
-  "deleted": true
+  "deleted": [
+    "6a5111dbb8aeff8549807565",
+    "6a5111dbb8aeff8549807566"
+  ]
 }
 ```
 
@@ -1624,6 +1668,39 @@ Deletes selected orphaned audio files. JWT required.
 ## `GET /api/orphans/gallery`
 
 Returns a list of image files that are not associated with any gallery. JWT required.
+
+**Response `200`:**
+```json
+[
+  {
+    "_id": "6a511291b8aeff854980756b",
+    "deleted_at": "Fri, 10 Jul 2026 15:41:05 GMT",
+    "gallery_title": "test gallery",
+    "image_alt": "test orphan image, somewhere, 2026",
+    "image_date": "2026-07-10T00:00:00",
+    "image_location": "somewhere",
+    "image_order": 2,
+    "image_title": "test orphan image",
+    "src": "45c6bebb-cb34-4d3c-af13-af69f0c396ae/bc555eaa-5634-410f-8b14-19de4ddea32b.webp"
+  },
+  {
+    "_id": "6a511291b8aeff854980756a",
+    "deleted_at": "Fri, 10 Jul 2026 15:41:05 GMT",
+    "gallery_title": "test orphan gallery",
+    "image_alt": "test orphan image from orphan gallery, elsewhere, 2026",
+    "image_date": "2026-07-10T00:00:00",
+    "image_location": "elsewhere",
+    "image_order": 1,
+    "image_title": "test orphan image from orphan gallery",
+    "src": "924555a0-7c34-4555-9ab3-9f3ef24e4e19/ddec2091-dfec-44cc-9a89-9f44c8e0f7e6.webp"
+  }
+]
+```
+
+## `GET /api/orphans/gallery/<user_id>`
+
+Similar to [`GET /api/orphans/gallery`](#get-apiartists), except it returns the orphans from a specific user. Authentication is
+required with an admin role.
 
 ## `DELETE /api/orphans/gallery`
 
