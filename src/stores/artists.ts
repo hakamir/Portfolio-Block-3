@@ -34,20 +34,9 @@ export const useArtistsStore = defineStore('artists', () => {
     const isDirty = ref(false)
     let isInitialized = false
 
-    const toSlug = (str: string) => str.toLowerCase().trim().replace(/\s+/g, '_')
-
-    watch(() => artists.value, (artists) => {
+    watch(() => artists.value, () => {
         isSubmitted.value = false
         if (isInitialized) isDirty.value = true
-        artists.forEach(artist => {
-            artist.slug = toSlug(artist.title)
-            artist.albums.forEach(album => {
-                album.slug = toSlug(album.title)
-                album.tracks.forEach(track => {
-                    track.src = `${toSlug(track.title)}.mp3`
-                })
-            })
-        })
     }, {deep: true})
 
     const fetchArtists = async (section: Section) => {
@@ -79,19 +68,21 @@ export const useArtistsStore = defineStore('artists', () => {
         )
     }
 
+    const normalize = (s: string) => s.toLowerCase().trim()
+
     const isArtistDuplicate = (artist: Artist): boolean => {
         if (!artist.title?.trim()) return false
-        return artists.value.filter(a => a.slug === artist.slug).length > 1
+        return artists.value.filter(a => normalize(a.title) === normalize(artist.title)).length > 1
     }
 
     const isAlbumDuplicate = (album: Album, artist: Artist): boolean => {
         if (!album.title?.trim()) return false
-        return artist.albums.filter(a => a.slug === album.slug).length > 1
+        return artist.albums.filter(a => normalize(a.title) === normalize(album.title)).length > 1
     }
 
     const isTrackDuplicate = (track: Track, album: Album): boolean => {
         if (!track.title?.trim()) return false
-        return album.tracks.filter(t => t.src === track.src).length > 1
+        return album.tracks.filter(t => normalize(t.title) === normalize(track.title)).length > 1
     }
 
     const hasDuplicates = (): boolean => {
@@ -134,7 +125,33 @@ export const useArtistsStore = defineStore('artists', () => {
         }
         fetchStatus.value = 'loading'
 
-        // Lazy import avoids a circular module dependency at init time
+        // Delete artists removed from the user as it is Mongo's documents
+        await syncDeletedArtists()
+
+        // Save metadata, server assigns definitive slugs
+        const response = await instance.put(artistsApi.updateArtists, artists.value)
+        const serverArtists: Artist[] = response.data
+
+        // Patch local objects to preserve references of Map<Track, File>
+        // Server returns artists in the same order as they were sent
+        artists.value.forEach((localArtist, i) => {
+            const serverArtist = serverArtists[i]
+            if (!serverArtist) return
+            if (!localArtist._id) localArtist._id = serverArtist._id
+            localArtist.slug = serverArtist.slug
+            localArtist.albums.forEach((localAlbum, j) => {
+                const serverAlbum = serverArtist.albums[j]
+                if (!serverAlbum) return
+                localAlbum.slug = serverAlbum.slug
+                localAlbum.tracks.forEach((localTrack, k) => {
+                    const serverTrack = serverAlbum.tracks[k]
+                    if (!serverTrack) return
+                    localTrack.src = serverTrack.src
+                })
+            })
+        })
+
+        // Upload files awaiting upload with path assigned by the server
         const {useAudioStore} = await import('@stores/audio')
         const audioStore = useAudioStore()
         await audioStore.uploadPendingAudios()
@@ -144,9 +161,6 @@ export const useArtistsStore = defineStore('artists', () => {
             fetchStatus.value = 'error'
             return false
         }
-
-        await syncDeletedArtists()
-        await instance.put(artistsApi.updateArtists, artists.value)
 
         fetchStatus.value = 'idle'
         isDirty.value = false

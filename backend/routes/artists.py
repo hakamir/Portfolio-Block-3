@@ -9,6 +9,7 @@ from middleware.roles import roles_required
 from models.artist import Artist, Track, Album
 from models.user import User
 from utils.filesystem import write_id3_tags
+from uuid import uuid4
 
 artists_bp = Blueprint('artists', __name__)
 
@@ -53,48 +54,88 @@ def update_owned_artists():
     try:
         identity = get_jwt_identity()
         user = User.objects(id=identity).first()
+        artist_input = [ArtistIn.model_validate(artist) for artist in payload]
 
-        artists = [ArtistIn.model_validate(artist) for artist in payload]
-        for item in artists:
-            albums = [
-                Album(
-                    slug=al.slug,
-                    title=al.title,
-                    order=al.order,
-                    tracks=[Track(**t.model_dump()) for t in al.tracks]
-                ) for al in item.albums
-            ]
+        result = []
+        for item in artist_input:
+            # Resolve artist slug
             if item.id:
                 artist = Artist.objects.get(id=item.id, user=user)
-                artist.slug = item.slug
+                artist_slug = artist.slug
+            else:
+                artist_slug = str(uuid4())
+                artist = None
+
+            # Build album with slug resolution
+            existing_album_slug = {album.slug: album for album in artist.albums} if artist else {}
+
+            albums = []
+            for album in item.albums:
+                if album.slug and album.slug in existing_album_slug:
+                    album_slug = album.slug
+                    existing_track = {track.src: track for track in existing_album_slug[album.slug].tracks}
+                else:
+                    album_slug = str(uuid4())
+                    existing_track = {}
+
+                # Build tracks with src resolution
+                tracks = []
+                for track in album.tracks:
+                    if track.src and track.src in existing_track:
+                        track_src = track.src
+                    else:
+                        track_src = str(uuid4()) + '.mp3'
+
+                    tracks.append(Track(
+                        trackNumber=track.trackNumber,
+                        title=track.title,
+                        src=track_src,
+                        tags=track.tags,
+                    ))
+                albums.append(Album(
+                    slug=album_slug,
+                    title=album.title,
+                    order=album.order,
+                    tracks=tracks,
+                ))
+
+            # Save artist
+            if artist:
+                artist.slug = artist_slug
                 artist.title = item.title
                 artist.order = item.order
                 artist.albums = albums
                 artist.save()
             else:
-                Artist(
+                artist = Artist(
                     user=user,
-                    slug=item.slug,
+                    slug=artist_slug,
                     title=item.title,
                     order=item.order,
-                    albums=albums
-                ).save()
+                    albums=albums,
+                )
+                artist.save()
 
-            # Include metadata in audio files
-            for album in item.albums:
+            # Write ID3 tags in existing files
+            settings = current_app.config['settings']
+            for album in artist.albums:
                 for track in album.tracks:
-                    settings = current_app.config['settings']
-                    file_path = os.path.join(settings.upload_folder, 'audio', item.slug, album.slug, track.src)
+                    file_path = os.path.join(
+                        settings.upload_folder, 'audio',
+                        artist.slug, album.slug, track.src
+                    )
                     if os.path.exists(file_path):
                         write_id3_tags(file_path, {
-                            'artist': item.title,
+                            'artist': artist.title,
                             'album': album.title,
                             'title': track.title,
                             'track_number': str(track.trackNumber),
-                            'tags': ",".join(track.tags),
+                            'tags': ','.join(track.tags),
                         })
 
-        return jsonify({'updated': True}), 200
+            result.append(artist.to_json_dict())
+
+        return jsonify(result), 200
     except PydanticValidationError:
         return jsonify({'error': 'Invalid payload'}), 400
     except MongoEngineValidationError:

@@ -2,7 +2,6 @@
 import {useArtistsStore, useAudioStore, type Artist, type Album, type Track} from "@stores";
 import {onMounted, onUnmounted, ref} from "vue";
 import {LoaderCircle, Plus, Save, Ban, GripVertical, ChevronDown, Trash2, MoreHorizontal} from "@lucide/vue";
-import {v4 as uuidv4} from 'uuid';
 import DeleteButton from "@views/dashboard/works/Components/DeleteButton.vue";
 import CollapseButton from "@views/dashboard/works/Components/CollapseButton.vue";
 import WorkAudioInput from "@views/dashboard/works/Components/WorkAudioInput.vue";
@@ -53,8 +52,8 @@ const handleClickOutside = () => {
 // Add a new artist with a random slug and empty albums and tracks, order is set to the last artist's order + 1
 const addArtist = () => {
   artistsStore.artists.push({
+    slug: '',
     _id: '',
-    slug: uuidv4(),
     title: '',
     order: artistsStore.artists.length + 1,
     albums: []
@@ -64,7 +63,7 @@ const addArtist = () => {
 // Add a new album to a given artist with a random slug and empty tracks, order is set to the last album's order + 1
 const addAlbum = (artist: Artist) => {
   artist.albums.push({
-    slug: uuidv4(),
+    slug: '',
     title: '',
     order: artist.albums.length + 1,
     tracks: []
