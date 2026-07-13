@@ -7,6 +7,8 @@ from models.user import User
 from models.biography import Biography, Section
 import dotenv
 
+from utils.background import create_default_background
+
 dotenv.load_dotenv()
 
 user_type = ('artist', 'admin')
@@ -59,11 +61,21 @@ def seed_biography():
     print("Created biography")
 
 
+def seed_background():
+    artist = User.objects(role="artist", is_active=True).first()
+    if not artist:
+        print("No artist user found — skipping background seed")
+        return
+    create_default_background(artist)
+    print(f"Created background for user: {artist.email}")
+
+
 def seed():
     connect(host=get_uri())
     seed_user(user_role='artist', is_active=True)
     seed_user(user_role='admin', is_active=False)
     seed_biography()
+    seed_background()
 
 
 if __name__ == '__main__':

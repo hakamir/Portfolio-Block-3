@@ -3,13 +3,16 @@ import {useBiographyStore} from "@stores/biography.ts";
 import {onMounted} from "vue";
 import {storeToRefs} from "pinia";
 import ProgressiveImage from "@components/ProgressiveImage.vue";
+import {useBackgroundStore} from "@stores/background.ts";
 
-const store = useBiographyStore()
-let {biography} = storeToRefs(store)
-const baseURL = import.meta.env.VITE_API_URL + '/api'
+const biographyStore = useBiographyStore()
+let {biography} = storeToRefs(biographyStore)
+
+const backgroundStore = useBackgroundStore()
+const {biographyBg} = storeToRefs(backgroundStore)
 
 onMounted(async () => {
-  await store.fetchBiography()
+  await biographyStore.fetchBiography()
 })
 
 </script>
@@ -19,9 +22,9 @@ onMounted(async () => {
            aria-labelledby="biography-title">
     <div class="grid grid-cols-1 md:landscape:grid-cols-1 lg:landscape:grid-cols-2 min-h-screen">
       <div class="lg:sticky lg:top-0 lg:h-screen lg:w-full">
-        <ProgressiveImage :src512="`${baseURL}/upload/background/biography/biography-512.webp`"
-                          :src1024="`${baseURL}/upload/background/biography/biography-1024.webp`"
-                          :src2048="`${baseURL}/upload/background/biography/biography-2048.webp`"
+        <ProgressiveImage :src512="biographyBg.sm"
+                          :src1024="biographyBg.md"
+                          :src2048="biographyBg.lg"
                           alt="Taylor Spark portrait"
                           :responsive=true
                           class="w-full h-full object-cover"

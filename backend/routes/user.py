@@ -6,6 +6,7 @@ from pydantic import ValidationError as PydanticValidationError
 from Schemas.user import CreateUser
 from middleware.roles import roles_required
 from models.user import User
+from utils.background import create_default_background
 
 user_bp = Blueprint('users', __name__)
 
@@ -58,6 +59,10 @@ def create_user():
         )
         user.validate()
         user.save()
+
+        if user.role == 'artist':
+            create_default_background(user)
+
         return jsonify({'created': True}), 201
     except MongoEngineValidationError:
         return jsonify({'error': 'Invalid data'}), 400

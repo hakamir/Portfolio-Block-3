@@ -1,7 +1,11 @@
 import os
 from flask import Blueprint, jsonify, request, send_from_directory, current_app
+from flask_jwt_extended import get_jwt_identity
+from jinja2.runtime import identity
 from werkzeug.utils import secure_filename
 from middleware.roles import roles_required
+from models.background import Background, BackgroundImage
+from models.user import User
 from utils.AudioConverter import AudioConverter
 from utils.filesystem import write_id3_tags
 from utils.image_validation import is_valid_webp
@@ -106,23 +110,57 @@ def upload_background():
     if not destination or not file_2048 or not file_1024 or not file_512:
         return jsonify({'error': 'Missing required fields'}), 400
 
+    if destination not in ['hero', 'portfolio', 'biography']:
+        return jsonify({'error': 'Invalid destination'}), 400
+
     files = [file_2048, file_1024, file_512]
     if not all(is_valid_webp(f) for f in files):
         return jsonify({'error': 'Invalid file'}), 400
 
     settings = current_app.config['settings']
+    identity = get_jwt_identity()
+    user = User.objects(id=identity).first()
 
-    if destination == 'hero' or destination == 'portfolio':
-        dest = os.path.join(settings.upload_folder, 'background/', destination)
-        file_2048.save(f'{dest}/{destination}-2048.webp')
-        file_1024.save(f'{dest}/{destination}-1024.webp')
-        file_512.save(f'{dest}/{destination}-512.webp')
-        return jsonify({'uploaded': True}), 201
-    elif destination == 'biography':
-        dest = os.path.join(settings.upload_folder, f'/{destination}')
-        file_2048.save(f'{dest}/{destination}-1-2048.webp')
-        file_1024.save(f'{dest}/{destination}-1-1024.webp')
-        file_512.save(f'{dest}/{destination}-1-512.webp')
-        return jsonify({'uploaded': True}), 201
-    else:
-        return jsonify({'error': 'Invalid destination'}), 400
+    dest = os.path.join(settings.upload_folder, 'background', user.storage_id, destination)
+
+    os.makedirs(dest, exist_ok=True)
+
+    file_2048.save(os.path.join(dest, f'{destination}-2048.webp'))
+    file_1024.save(os.path.join(dest, f'{destination}-1024.webp'))
+    file_512.save(os.path.join(dest, f'{destination}-512.webp'))
+
+    background = Background.objects(user=user).first()
+    if not background:
+        background = Background(user=user)
+
+    image_obj = BackgroundImage(
+        sm=f'/upload/background/{user.storage_id}/{destination}/{destination}-512.webp',
+        md=f'/upload/background/{user.storage_id}/{destination}/{destination}-1024.webp',
+        lg=f'/upload/background/{user.storage_id}/{destination}/{destination}-2048.webp'
+    )
+    setattr(background, destination, image_obj)
+    background.save()
+
+    return jsonify({'uploaded': True}), 201
+
+
+@uploads_bp.route('/upload/background', methods=['GET'])
+def get_active_backgrounds():
+    active_user = User.objects(role='artist', is_active=True).first()
+    if not active_user:
+        return jsonify({'error': 'No active artist found'}), 404
+    background = Background.objects(user=active_user).first()
+    if not background:
+        return jsonify({'error': 'No background found'}), 404
+    return jsonify(background.to_json_dict()), 200
+
+
+@uploads_bp.route('/upload/background/dashboard', methods=['GET'])
+@roles_required('artist', 'admin')
+def get_owned_backgrounds():
+    identity = get_jwt_identity()
+    user = User.objects(id=identity).first()
+    background = Background.objects(user=user).first()
+    if background is None:
+        return jsonify({'error': 'No background found'}), 404
+    return jsonify(background.to_json_dict()), 200

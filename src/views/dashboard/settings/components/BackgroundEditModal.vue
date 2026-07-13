@@ -17,12 +17,6 @@ const emit = defineEmits<{
   (e: 'save', destination: string): void
 }>()
 
-const imageTimestamps = ref<Record<string, number>>({
-  hero: Date.now(),
-  biography: Date.now(),
-  portfolio: Date.now(),
-})
-
 interface PreviewItem {
   size: number // Image size in pixels (square)
   canvas: HTMLCanvasElement
@@ -284,9 +278,6 @@ const save = async (): Promise<void> => {
     // Signal to the parent component that the background has been saved
     emit('save', props.background.destination)
 
-    // Update the timestamp of the image key (image cache invalidation, force image reload)
-    imageTimestamps.value[props.background.destination] = Date.now()
-
     // Close the modal
     emit('close')
 
@@ -316,7 +307,7 @@ onBeforeUnmount(() => {
 
         <!-- Background image -->
         <div v-if="!imageObjectUrl" class="absolute inset-0 z-0">
-          <img :src="`${background.srcFull}?t=${imageTimestamps[background.key]}`"
+          <img :src="background.srcFull"
                :alt="background.label"
                class="w-full h-full object-cover"/>
         </div>

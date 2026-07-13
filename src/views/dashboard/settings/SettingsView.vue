@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import OrphansAudio from "@views/dashboard/settings/components/OrphansAudio.vue";
 import {ref} from "vue";
-import {useOrphansStore} from "@stores";
+import {useAuthStore, useOrphansStore} from "@stores";
 import {Trash2, RotateCcw} from "@lucide/vue";
 import Modal from "@components/Modal.vue";
 import ChangePassword from "@views/dashboard/settings/components/ChangePassword.vue";
@@ -73,6 +73,9 @@ const onAudioConfirmRollback = async () => {
   orphansAudioToRollback.value = []
   orphansAudioRefreshKey.value += 1
 }
+
+const authStore = useAuthStore()
+const role = authStore.payload?.role ?? ""
 </script>
 
 <template>
@@ -80,11 +83,11 @@ const onAudioConfirmRollback = async () => {
     <h1 class="text-4xl font-bold font-unbounded mb-8">Settings</h1>
     <div class="flex flex-col gap-8">
       <ChangePassword/>
-      <OrphansAudio @request-delete="onAudioRequestDelete" @request-rollback="onAudioRequestRollback"
+      <OrphansAudio v-if="role !== 'admin'" @request-delete="onAudioRequestDelete" @request-rollback="onAudioRequestRollback"
                     :key="orphansAudioRefreshKey"/>
-      <OrphansGallery @request-delete="onGalleryRequestDelete" @request-rollback="onGalleryRequestRollback"
+      <OrphansGallery v-if="role !== 'admin'"  @request-delete="onGalleryRequestDelete" @request-rollback="onGalleryRequestRollback"
                     :key="orphansGalleryRefreshKey"/>
-      <Backgrounds/>
+      <Backgrounds v-if="role !== 'admin'" />
     </div>
     <!-- Modal for audio deletion confirmation -->
     <Modal
@@ -187,7 +190,7 @@ const onAudioConfirmRollback = async () => {
       to the database.<br><br> Their metadata will be reconstructed from the previous versions.
     </Modal>
 
-    <!-- Modal for rollback result -->
+    <!-- Modal for audio rollback result -->
     <Modal
         v-if="rollbackResult"
         :icon="RotateCcw"
