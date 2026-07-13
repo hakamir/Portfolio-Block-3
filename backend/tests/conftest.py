@@ -4,6 +4,7 @@ from flask_jwt_extended import create_access_token
 from mongoengine import connect as me_connect, disconnect
 from mongoengine.connection import get_db
 from unittest.mock import patch
+from pydantic_settings import SettingsConfigDict
 
 from app import create_app
 from config import Settings
@@ -26,13 +27,18 @@ class TestSettings(Settings):
     jwt_cookie_samesite: str = "Lax"
     jwt_cookie_csrf_protect: bool = False
 
-    class Config:
-        env_file = None
-        case_sensitive = False
+    model_config = SettingsConfigDict(
+        env_file=None,
+        case_sensitive=False,
+    )
 
 
 def _init_db_mock(_settings):
-    me_connect('testdb', mongo_client_class=mongomock.MongoClient)
+    me_connect(
+        'testdb',
+        mongo_client_class=mongomock.MongoClient,
+        uuidRepresentation="standard",
+    )
 
 
 @pytest.fixture(scope="session")
