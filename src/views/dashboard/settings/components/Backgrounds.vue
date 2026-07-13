@@ -31,9 +31,9 @@ const backgrounds: Background[] = [
   {
     key: 'biography',
     label: 'Biography',
-    src: `${apiUrl}/upload/biography/biography-1-512.webp`,
+    src: `${apiUrl}/upload/background/biography/biography-512.webp`,
     destination: 'biography',
-    srcFull: `${apiUrl}/upload/biography/biography-1-2048.webp`,
+    srcFull: `${apiUrl}/upload/background/biography/biography-2048.webp`,
   },
   {
     key: 'portfolio',
