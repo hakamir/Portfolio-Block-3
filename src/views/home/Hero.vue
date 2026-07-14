@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import {vWave} from "@directives/wave.js";
 import ProgressiveImage from "@components/ProgressiveImage.vue";
+import {useBackgroundStore} from "@stores/background.ts";
+import {storeToRefs} from "pinia";
 
-const apiUrl = import.meta.env.VITE_API_URL + '/api'
+const backgroundStore = useBackgroundStore()
+const {heroBg} = storeToRefs(backgroundStore)
 
 </script>
 
@@ -11,9 +14,9 @@ const apiUrl = import.meta.env.VITE_API_URL + '/api'
       class="grid grid-rows-2 sm:relative bg-black text-white overflow-hidden lg:min-h-screen lg:h-screen sm:flex sm:items-center sm:snap-start" aria-labelledby="hero-title">
     <!-- Hero Image -->
     <div class="sm:absolute sm:right-0 sm:top-0 sm:w-2/3 sm:h-full z-0">
-      <ProgressiveImage :src512="`${apiUrl}/upload/background/hero/hero-512.webp`"
-                        :src1024="`${apiUrl}/upload/background/hero/hero-1024.webp`"
-                        :src2048="`${apiUrl}/upload/background/hero/hero-2048.webp`" alt=""
+      <ProgressiveImage :src512="heroBg.sm"
+                        :src1024="heroBg.md"
+                        :src2048="heroBg.lg" alt=""
                         blur
                         :responsive=true
                         class="w-full h-full object-cover"

@@ -41,8 +41,8 @@ backend, with **MongoDB** as the database.
 - **Gallery** — Full CRUD for galleries and images; image upload (WebP)
 - **Biography** — Content editor
 - **Messages** — Inbox with read/unread status, trash and bulk actions
-- **Settings** — Change password; orphan management: inspect, rollback and permanently delete assets; 
-orphaned audio rollback from ID3 metadata; change background images
+- **Settings** — Change password; orphan management: inspect, rollback, and permanently delete assets;
+  orphaned audio rollback from ID3 metadata; change background images
 
 ### Admin Dashboard (protected)
 
@@ -177,10 +177,12 @@ sequenceDiagram
 ---
 
 ### Data model
-MongoDB stores seven collections. Three of them use nested documents: `artists` embeds albums and tracks, `galleries`
-embeds images, and `biography` embeds sections. `messages`, `users`, `orphans`, and `orphan_galleries` are flat 
-collections. `artists`, `biography`, `galleries` and `messages` reference `users` via a `user_id` field, linking content
-to its owner artist.
+
+MongoDB stores eight collections. Four of them use nested documents: `artists` embeds albums and tracks, `galleries`
+embeds images, `biography` embeds sections, and `background` embeds background images. `messages`, `users`, `orphans`,
+and `orphan_galleries` are flat collections. `artists`, `biography`, `galleries`, `messages`, `background` and `orphans`
+reference `users` via a `user_id` field, linking content to its owner artist.
+
 ```mermaid
 erDiagram
     ARTIST {
@@ -272,17 +274,31 @@ erDiagram
         int image_order
         datetime deleted_at
     }
+    BACKGROUND {
+        ObjectId _id
+        ObjectId user
+        BackgroundImage hero
+        BackgroundImage portfolio
+        BackgroundImage biography
+    }
+    BACKGROUND_IMAGE {
+        string sm
+        string md
+        string lg
+    }
 
     ARTIST ||--o{ ALBUM: contains
     ALBUM ||--o{ TRACK: contains
     GALLERY ||--o{ IMAGE: contains
     BIOGRAPHY ||--o{ SECTION: contains
+    BACKGROUND ||--o{ BACKGROUND_IMAGE: contains
     USER ||--o| BIOGRAPHY: owns
     USER ||--o{ ARTIST: owns
     USER ||--o{ GALLERY: owns
     USER ||--o{ MESSAGE: receives
     USER ||--o{ ORPHAN_AUDIOS: owns
     USER ||--o{ ORPHAN_GALLERIES: owns
+    USER ||--o{ BACKGROUND: owns
 ```
 
 ---
@@ -291,34 +307,27 @@ erDiagram
 
 Binary files (audio and images) are stored on disk while their published metadata lives in MongoDB. When an artist or
 gallery is deleted, the published metadata is removed but an orphan record is created in a dedicated MongoDB collection
-(`orphan_audios` or `orphan_galleries`). These orphan records preserve enough information to restore or permanently 
+(`orphan_audios` or `orphan_galleries`). These orphan records preserve enough information to restore or permanently
 delete the files later from the admin dashboard.
 
 ```mermaid
 flowchart LR
-    classDef cyan fill:#033,stroke:#0aa
-    classDef blue fill:#024,stroke:#06a
-    classDef green fill:#030,stroke:#0a0
-
+    classDef cyan fill: #033, stroke: #0aa
+    classDef blue fill: #024, stroke: #06a
+    classDef green fill: #030, stroke: #0a0
     Upload["POST /upload/audio<br/>or /upload/gallery"]:::cyan
     Save["PUT /artists<br/>or PUT /gallery"]:::cyan
     Delete["DELETE /artists/:id<br/>DELETE /gallery/:id"]:::cyan
-
     FS[(Uploads Folder)]:::blue
     DB[(MongoDB<br/>Artists / Galleries)]:::blue
     ORPHANS[(MongoDB<br/>Orphans)]:::green
-
     Upload -->|Save binary file| FS
     Save -->|Save published metadata| DB
-
     FS --> Published[Visible in portfolio]
     DB --> Published
-
     Delete -->|Remove published metadata| DB
     Delete -->|Create orphan entry| ORPHANS
-
     ORPHANS -->|GET /orphans/audio<br/>GET /orphans/gallery| List[List orphan entries]
-
     List -->|Download file| FS
     List -->|POST rollback| DB
     List -->|DELETE orphan| ORPHANS
@@ -680,15 +689,15 @@ pip install -r .\backend\requirements-test.txt
 
 All seven API controllers are covered. Tests are located in `backend/tests/integration/`.
 
-| File                | Controller            | Tests                                                           |
-|---------------------|-----------------------|-----------------------------------------------------------------|
-| `test_auth.py`      | `routes/auth.py`      | Login, refresh (cookie jar), logout, change password            |
-| `test_biography.py` | `routes/biography.py` | GET singleton, PUT with full structure                          |
-| `test_artists.py`   | `routes/artists.py`   | GET, bulk upsert, delete, MongoEngine validation                |
-| `test_gallery.py`   | `routes/gallery.py`   | GET, bulk upsert, slug/image consistency validation, delete     |
-| `test_messages.py`  | `routes/messages.py`  | GET (JWT), create, update (read/replied/replied_at), delete     |
-| `test_orphans.py`   | `routes/orphans.py`   | List, rollback and delete orphaned audio and gallery files      |
-| `test_uploads.py`   | `routes/uploads.py`   | Audio upload with conversion, gallery upload, background upload |
+| File                | Controller            | Tests                                                                      |
+|---------------------|-----------------------|----------------------------------------------------------------------------|
+| `test_auth.py`      | `routes/auth.py`      | Login, refresh (cookie jar), logout, change password                       |
+| `test_biography.py` | `routes/biography.py` | GET singleton, PUT with full structure                                     |
+| `test_artists.py`   | `routes/artists.py`   | GET, bulk upsert, delete, MongoEngine validation                           |
+| `test_gallery.py`   | `routes/gallery.py`   | GET, bulk upsert, slug/image consistency validation, delete                |
+| `test_messages.py`  | `routes/messages.py`  | GET (JWT), create, update (read/replied/replied_at), delete                |
+| `test_orphans.py`   | `routes/orphans.py`   | List, rollback and delete orphaned audio and gallery files                 |
+| `test_uploads.py`   | `routes/uploads.py`   | Audio upload with conversion, gallery upload, background getter and upload |
 
 ### Notable test patterns
 
@@ -808,12 +817,14 @@ All routes are prefixed with `/api`.
 
 ### [Uploads](#uploads-1)
 
-| Method | Path                                                  | Auth                    | Description              |
-|-------:|-------------------------------------------------------|-------------------------|--------------------------|
-|    GET | [`/api/upload/<path>`](#get-apiupload)                | —                       | Serve uploaded files     |
-|   POST | [`/api/upload/audio`](#post-apiuploadaudio)           | JWT (`artist`, `admin`) | Upload audio files       |
-|   POST | [`/api/upload/gallery`](#post-apiuploadgallery)       | JWT (`artist`, `admin`) | Upload gallery images    |
-|   POST | [`/api/upload/background`](#post-apiuploadbackground) | JWT (`artist`, `admin`) | Upload background images |
+| Method | Path                                                                    | Auth                    | Description                            |
+|-------:|-------------------------------------------------------------------------|-------------------------|----------------------------------------|
+|    GET | [`/api/upload/<path>`](#get-apiupload)                                  | —                       | Serve uploaded files                   |
+|   POST | [`/api/upload/audio`](#post-apiuploadaudio)                             | JWT (`artist`, `admin`) | Upload audio files                     |
+|   POST | [`/api/upload/gallery`](#post-apiuploadgallery)                         | JWT (`artist`, `admin`) | Upload gallery images                  |
+|   POST | [`/api/upload/background`](#post-apiuploadbackground)                   | JWT (`artist`, `admin`) | Upload background images               |
+|    GET | [`/api/upload/background`](#get-apiuploadbackground)                    | —                       | Get background images from active user |
+|    GET | [`/api/upload/background/dashboard`](#get-apiuploadbackgrounddashboard) | JWT (`artist`, `admin`) | Get owned background images            |
 
 ### [Orphaned files management](#orphaned-files)
 
@@ -1021,13 +1032,15 @@ Update a user's role. Authentication is required with an admin role.
 
 ## `PUT /api/users/<id>/activate`
 
-Set the given artist as the active account. Only an active artist account can be set as active, has read/write 
+Set the given artist as the active account. Only an active artist account can be set as active, has read/write
 privilege, and is the owner of resources. Authentication is required with an admin role.
 
 **Request body:**
+
 - None
 
 **Response `200`:**
+
 ```json
 {
   "activated": true
@@ -1125,13 +1138,12 @@ Returns all artists with albums and tracks. No authentication required.
 ## `GET /api/artists/dashboard`
 
 Similar to [`GET /api/artists`](#get-apiartists), except it returns the owned artists data instead of active
-(public data). JWT required. 
+(public data). JWT required.
 
 ## `GET /api/artists/<user_id>`
 
 Similar to [`GET /api/artists`](#get-apiartists), except it returns the artists from a specific user. Authentication is
 required with an admin role.
-
 
 ## `PUT /api/artists`
 
@@ -1207,11 +1219,12 @@ The biography is stored as a singleton document. No authentication required.
 ## `GET /api/biography/dashboard`
 
 Similar to [`GET /api/biography`](#get-apiartists), except it returns the biography by the logged user data instead of
-active data (public). JWT required. 
+active data (public). JWT required.
 
 ## `GET /api/biography/<user_id>`
 
-Similar to [`GET /api/biography`](#get-apiartists), except it returns the biography from a specific user. Authentication is
+Similar to [`GET /api/biography`](#get-apiartists), except it returns the biography from a specific user. Authentication
+is
 required with an admin role.
 
 ## `PUT /api/biography`
@@ -1246,6 +1259,7 @@ Create a biography for a specific user. User ID must be provided in the request 
 an admin role.
 
 **Request body:**
+
 ```json
 {
   "title": "Who am I?",
@@ -1263,13 +1277,15 @@ an admin role.
 ```
 
 **Response `201`:**
+
 ```json
 {
   "created": true
 }
 ```
 
-**Errors:** `400` invalid payload - `404` Target user not found - `409` Biography already exists - `415` Invalid content type
+**Errors:** `400` invalid payload - `404` Target user not found - `409` Biography already exists - `415` Invalid content
+type
 
 ## `DELETE /api/biography/<user_id>`
 
@@ -1331,11 +1347,12 @@ Returns all galleries with associated image metadata and URL. No authentication 
 ## `GET /api/gallery/dashboard`
 
 Similar to [`GET /api/gallery`](#get-apigallery), except it returns the owned galleries data instead of active
-(public data). JWT required. 
+(public data). JWT required.
 
 ## `GET /api/gallery/<user_id>`
 
-Similar to [`GET /api/gallery`](#get-apigallery), except it returns the galleries from a specific user. Authentication is
+Similar to [`GET /api/gallery`](#get-apigallery), except it returns the galleries from a specific user. Authentication
+is
 required with an admin role.
 
 ## `PUT /api/gallery`
@@ -1569,6 +1586,46 @@ destination: <destination> (hero | portfolio | biography)
 
 **Errors:** `400` Invalid destination/missing required field/Invalid file
 
+## `GET /api/upload/background`
+
+Get background URL from the active user.
+
+**Response `200`:**
+
+```json
+{
+  "_id": "6a54f46ba6ff97a6fbae14c6",
+  "biography": {
+    "lg": "/upload/background/36acedda-8de9-4f6d-a5d1-bcea42e76541/biography/biography-2048.webp",
+    "md": "/upload/background/36acedda-8de9-4f6d-a5d1-bcea42e76541/biography/biography-1024.webp",
+    "sm": "/upload/background/36acedda-8de9-4f6d-a5d1-bcea42e76541/biography/biography-512.webp"
+  },
+  "hero": {
+    "lg": "/upload/background/36acedda-8de9-4f6d-a5d1-bcea42e76541/hero/hero-2048.webp",
+    "md": "/upload/background/36acedda-8de9-4f6d-a5d1-bcea42e76541/hero/hero-1024.webp",
+    "sm": "/upload/background/36acedda-8de9-4f6d-a5d1-bcea42e76541/hero/hero-512.webp"
+  },
+  "portfolio": {
+    "lg": "/upload/background/36acedda-8de9-4f6d-a5d1-bcea42e76541/portfolio/portfolio-2048.webp",
+    "md": "/upload/background/36acedda-8de9-4f6d-a5d1-bcea42e76541/portfolio/portfolio-1024.webp",
+    "sm": "/upload/background/36acedda-8de9-4f6d-a5d1-bcea42e76541/portfolio/portfolio-512.webp"
+  }
+}
+```
+
+If no image has been changed by the artist user, then URL will use `placeholder` by default :
+
+```
+/upload/background/placeholder/<location>/<location>-<size-in-px>.webp
+```
+
+**Errors:** `400` No active artist found || No background found
+
+## `GET /api/upload/background/dashboard`
+
+Similar to [`GET /api/upload/background`](#get-apiuploadbackground), except it returns the background by the logged user
+data instead of active data (public). JWT required.
+
 ---
 
 ### Orphaned files
@@ -1578,7 +1635,7 @@ destination: <destination> (hero | portfolio | biography)
 ## `GET /api/orphans/audio`
 
 Returns orphaned audio entries stored in the `orphans` collection. Each orphan contains the metadata required to restore
-the corresponding artist, album and track without reading the audio file again.
+the corresponding artist, album, and track without reading the audio file again.
 
 **Response `200`:**
 
@@ -1601,7 +1658,8 @@ the corresponding artist, album and track without reading the audio file again.
 
 ## `GET /api/orphans/audio/<user_id>`
 
-Similar to [`GET /api/orphans/audio`](#get-apiartists), except it returns the orphans from a specific user. Authentication is
+Similar to [`GET /api/orphans/audio`](#get-apiartists), except it returns the orphans from a specific user.
+Authentication is
 required with an admin role.
 
 ## `POST /api/orphans/audio/rollback`
@@ -1670,6 +1728,7 @@ Deletes selected orphaned audio files. JWT required.
 Returns a list of image files that are not associated with any gallery. JWT required.
 
 **Response `200`:**
+
 ```json
 [
   {
@@ -1699,7 +1758,8 @@ Returns a list of image files that are not associated with any gallery. JWT requ
 
 ## `GET /api/orphans/gallery/<user_id>`
 
-Similar to [`GET /api/orphans/gallery`](#get-apiartists), except it returns the orphans from a specific user. Authentication is
+Similar to [`GET /api/orphans/gallery`](#get-apiartists), except it returns the orphans from a specific user.
+Authentication is
 required with an admin role.
 
 ## `DELETE /api/orphans/gallery`

@@ -4,7 +4,8 @@ from datetime import timedelta
 from urllib.parse import quote_plus
 from colorama import Fore, Style
 from pydantic import Field, field_validator, ValidationError
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
 
 def load_settings():
     try:
@@ -18,6 +19,7 @@ def load_settings():
 
         print(f"\n{Fore.RED}App startup aborted.{Style.RESET_ALL}\n")
         sys.exit(1)
+
 
 class Settings(BaseSettings):
     # FRONTEND
@@ -35,7 +37,7 @@ class Settings(BaseSettings):
     # JWT
     jwt_secret_key: str = Field(..., min_length=1)
     jwt_access_token_expires: int = Field(..., gt=0)  # in minutes
-    jwt_refresh_token_expires: int = Field(..., gt=0) # in days
+    jwt_refresh_token_expires: int = Field(..., gt=0)  # in days
     jwt_cookie_secure: bool = Field(...)
     jwt_cookie_samesite: str = Field(..., min_length=1)
     jwt_cookie_csrf_protect: bool = Field(...)
@@ -74,7 +76,8 @@ class Settings(BaseSettings):
     def jwt_refresh_token_expires_delta(self) -> timedelta:
         return timedelta(days=self.jwt_refresh_token_expires)
 
-    class Config:
-        env_file = './.env'
-        case_sensitive = False
-        extra = 'ignore'
+    model_config = SettingsConfigDict(
+        env_file='./.env',
+        case_sensitive=False,
+        extra='ignore',
+    )
