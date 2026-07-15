@@ -156,10 +156,22 @@ class TestUpdateRole:
         assert response.get_json() == {"error": "Invalid ID"}
 
     def test_returns_400_on_invalid_role(self, client, admin_auth_headers, test_artist_user):
-        response = client.put(f"/api/users/{test_artist_user.id}/role", json={"role": "superuser"},
+        inactive = User(
+            email="inactive@test.com",
+            password="hashed",
+            role="artist",
+            is_active=False
+        ).save()
+        response = client.put(f"/api/users/{inactive.id}/role", json={"role": "superuser"},
                               headers=admin_auth_headers)
         assert response.status_code == 400
         assert response.get_json() == {"error": "Invalid role"}
+
+    def test_returns_400_when_updating_role_of_active_user(self, client, admin_auth_headers, test_artist_user):
+        response = client.put(f"/api/users/{test_artist_user.id}/role", json={"role": "admin"},
+                              headers=admin_auth_headers)
+        assert response.status_code == 400
+        assert response.get_json() == {"error": "Cannot update role of active user"}
 
     def test_updates_role(self, client, admin_auth_headers):
         inactive_artist = User(
