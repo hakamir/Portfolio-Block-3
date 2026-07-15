@@ -1,6 +1,6 @@
 import bcrypt
 import pytest
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, decode_token
 
 from models.user import User
 
@@ -50,6 +50,31 @@ class TestLogin:
         assert "token" in data
         assert isinstance(data["token"], str)
 
+    def test_returns_400_on_missing_fields(self, client):
+        response = client.post("/api/auth/login", json={"email": _TEST_EMAIL})
+        assert response.status_code == 401  # captured by except (DoesNotExist, ValidationError)
+
+    def test_returns_token_contains_role_claim(self, app, client, test_user):
+        # Role must be included in token - needed for roles_required
+        response = client.post("/api/auth/login", json={
+            "email": _TEST_EMAIL, "pwd": _TEST_PASSWORD
+        })
+        assert response.status_code == 200
+        token = response.get_json()["token"]
+        set_cookies = " ".join(response.headers.getlist("Set-Cookie"))
+        assert "refresh_token=" in set_cookies
+        with app.app_context():
+            decoded = decode_token(token)
+        assert decoded["role"] == test_user.role
+
+    def test_sets_refresh_cookie_on_login(self, client, test_user):
+        response = client.post("/api/auth/login", json={
+            "email": _TEST_EMAIL, "pwd": _TEST_PASSWORD
+        })
+        assert response.status_code == 200
+        set_cookies = " ".join(response.headers.getlist("Set-Cookie"))
+        assert "refresh_token=" in set_cookies
+
 
 class TestRefresh:
     def test_returns_401_without_refresh_token(self, client):
@@ -67,6 +92,16 @@ class TestRefresh:
         assert "token" in data
         assert isinstance(data["token"], str)
 
+    def test_refresh_token_contains_role(self, app, test_user):
+        # New token must contain role
+        with app.test_client() as c:
+            c.post("/api/auth/login", json={"email": _TEST_EMAIL, "pwd": _TEST_PASSWORD})
+            response = c.post("/api/auth/refresh")
+        assert response.status_code == 200
+        with app.app_context():
+            decoded = decode_token(response.get_json()["token"])
+        assert decoded["role"] == test_user.role
+
 
 class TestLogout:
     def test_returns_401_without_token(self, client):
@@ -77,6 +112,17 @@ class TestLogout:
         response = client.post("/api/auth/logout", headers=user_auth_headers)
         assert response.status_code == 200
         assert response.get_json() == {"logged_out": True}
+
+    def test_unsets_refresh_cookie_on_logout(self, client, user_auth_headers):
+        response = client.post("/api/auth/logout", headers=user_auth_headers)
+        assert response.status_code == 200
+
+        # Get all Set-cookie headers
+        set_cookies = response.headers.getlist("Set-Cookie")
+        cookie_str = " ".join(set_cookies)
+
+        assert "refresh_token=" in cookie_str
+        assert "Expires=Thu, 01 Jan 1970" in cookie_str or "Max-Age=0" in cookie_str
 
 
 class TestUpdatePassword:
@@ -110,3 +156,40 @@ class TestUpdatePassword:
         }, headers=user_auth_headers)
         assert response.status_code == 200
         assert response.get_json() == {"updated": True}
+
+    def test_returns_400_on_missing_fields(self, client, user_auth_headers):
+        response = client.put("/api/auth/password", json={
+            "currentPwd": _TEST_PASSWORD
+            # missing newPwd
+        }, headers=user_auth_headers)
+        assert response.status_code == 400
+
+    def test_password_is_actually_changed_in_db(self, client, test_user, user_auth_headers):
+        client.put("/api/auth/password", json={
+            "currentPwd": _TEST_PASSWORD, "newPwd": _NEW_PASSWORD
+        }, headers=user_auth_headers)
+        # Reload from base and check if hash has changed
+        updated = User.objects.get(id=test_user.id)
+        assert bcrypt.checkpw(_NEW_PASSWORD.encode(), updated.password.encode())
+        assert not bcrypt.checkpw(_TEST_PASSWORD.encode(), updated.password.encode())
+
+    def test_old_password_no_longer_works_after_update(self, client, test_user, user_auth_headers):
+        client.put("/api/auth/password", json={
+            "currentPwd": _TEST_PASSWORD, "newPwd": _NEW_PASSWORD
+        }, headers=user_auth_headers)
+        # Try to log in with old password
+        response = client.post("/api/auth/login", json={
+            "email": _TEST_EMAIL, "pwd": _TEST_PASSWORD
+        })
+        assert response.status_code == 401
+
+    def test_new_password_works_after_update(self, client, test_user, user_auth_headers):
+        client.put("/api/auth/password", json={
+            "currentPwd": _TEST_PASSWORD, "newPwd": _NEW_PASSWORD
+        }, headers=user_auth_headers)
+        # Login with the new password
+        response = client.post("/api/auth/login", json={
+            "email": _TEST_EMAIL, "pwd": _NEW_PASSWORD
+        })
+        assert response.status_code == 200
+        assert "token" in response.get_json()

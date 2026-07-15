@@ -1,7 +1,6 @@
 import os
 from flask import Blueprint, jsonify, request, send_from_directory, current_app
 from flask_jwt_extended import get_jwt_identity
-from jinja2.runtime import identity
 from werkzeug.utils import secure_filename
 from middleware.roles import roles_required
 from models.background import Background, BackgroundImage
@@ -31,12 +30,12 @@ def upload_audio():
     if not file.mimetype.startswith('audio/'):
         return jsonify({'error': 'Invalid mime type'}), 415
 
-    # Champs techniques (sauvegarde du fichier)
+    # Slugs
     artist_slug = secure_filename(request.form.get('artistSlug', ''))
     album_slug = secure_filename(request.form.get('albumSlug', ''))
     track_src = secure_filename(request.form.get('trackSrc', ''))
 
-    # Champs metadata (tags ID3)
+    # Metadata (ID3 tags)
     artist_title = request.form.get('artistTitle', artist_slug)
     album_title = request.form.get('albumTitle', album_slug)
     track_title = request.form.get('trackTitle', track_src.rsplit('.', 1)[0])

@@ -1,10 +1,10 @@
 from datetime import datetime, timezone
-from bson import ObjectId
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import get_jwt_identity
 from mongoengine.errors import ValidationError, DoesNotExist
 from extensions import limiter
 from middleware.roles import roles_required
+from middleware.validators import valid_object_id
 from models.message import Message
 from pydantic import ValidationError as PydanticValidationError
 from Schemas.message import MessageIn, MessageUpdate
@@ -52,9 +52,10 @@ def create_message():
         return jsonify({'error': 'Invalid data'}), 400
 
 
-@messages_bp.route('/messages/<id>', methods=['PATCH'])
+@messages_bp.route('/messages/<message_id>', methods=['PATCH'])
 @roles_required('artist', 'admin')
-def update_message(id):
+@valid_object_id('message_id')
+def update_message(message_id):
     identity = get_jwt_identity()
     user = User.objects(id=identity).first()
 
@@ -74,24 +75,22 @@ def update_message(id):
         updates['replied_at'] = None
 
     try:
-        message = Message.objects.get(id=id, user=user)
+        message = Message.objects.get(id=message_id, user=user)
         message.update(**{f'set__{key}': value for key, value in updates.items()})
         return jsonify({'updated': True}), 200
     except DoesNotExist:
         return jsonify({'error': 'Message not found'}), 404
 
 
-@messages_bp.route('/messages/<id>', methods=['DELETE'])
+@messages_bp.route('/messages/<message_id>', methods=['DELETE'])
 @roles_required('artist', 'admin')
-def delete_message(id):
-    if not ObjectId.is_valid(id):
-        return jsonify({'error': 'Invalid ID'}), 400
-
+@valid_object_id('message_id')
+def delete_message(message_id):
     identity = get_jwt_identity()
     user = User.objects(id=identity).first()
 
     try:
-        message = Message.objects.get(id=id, user=user)
+        message = Message.objects.get(id=message_id, user=user)
         message.delete()
         return jsonify({'deleted': True}), 200
     except DoesNotExist:

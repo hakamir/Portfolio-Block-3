@@ -21,6 +21,11 @@ class TestServeFile:
             response = client.get("/api/upload/artist-1/album-1/track.mp3")
         assert response.status_code == 200
 
+    def test_serves_file_as_attachment(self, client):
+        with patch('routes.uploads.send_from_directory', return_value=Response('', 200)) as mock:
+            client.get("/api/upload/test/file.mp3?download=true")
+        _, kwargs = mock.call_args
+        assert kwargs['as_attachment'] is True
 
 class TestUploadAudio:
     def test_requires_authentication(self, client):
@@ -136,7 +141,8 @@ class TestUploadGallery:
 
 
 class TestUploadBackground:
-    def _make_payload(self, destination):
+    @staticmethod
+    def _make_payload(destination):
         return {
             'destination': destination,
             'image-2048': _image_data('img-2048.webp'),
