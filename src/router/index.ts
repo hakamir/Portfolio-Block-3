@@ -26,6 +26,11 @@ router.beforeEach(async (to) => {
         await authStore.refresh()
     }
 
+    if (authStore.isAuthenticated() && !authStore.payload?.role) {
+        await authStore.logout()
+        return { name: 'login'}
+    }
+
     if (to.meta.requiresAuth && !authStore.isAuthenticated()) {
         return { name: 'login' }
     }
