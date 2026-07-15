@@ -17,7 +17,7 @@ def inactive_artist_user(app):
         ).save()
 
 
-class TestGetBiography:
+class TestGetActiveBiography:
     def test_returns_404_when_no_active_biography(self, client):
         response = client.get("/api/biography")
         assert response.status_code == 404
@@ -39,6 +39,19 @@ class TestGetBiography:
         assert "_id" in data["biography"]
         assert "user" not in data["biography"]
 
+    def test_returns_404_when_no_active_user(self, client):
+        response = client.get("/api/biography")
+        assert response.status_code == 404
+        assert response.get_json() == {"error": "biography not found"}
+
+    def test_does_not_return_inactive_artist_biography(self, client, inactive_artist_user):
+        Biography(
+            user=inactive_artist_user,
+            title="Inactive",
+            sections=[]
+        ).save()
+        response = client.get("/api/biography")
+        assert response.status_code == 404
 
 
 class TestUpdateBiography:
@@ -300,3 +313,21 @@ class TestDeleteBiography:
 
         assert response.status_code == 204
         assert Biography.objects(user=inactive_artist_user).first() is None
+
+    def test_returns_400_on_invalid_id_format(self, client, admin_auth_headers):
+        response = client.delete("/api/biography/not-valid", headers=admin_auth_headers)
+        assert response.status_code == 400
+        assert response.get_json() == {"error": "Invalid ID"}
+
+    def test_cannot_delete_biography_of_active_user(self, client, admin_auth_headers, test_artist_user):
+        Biography(
+            user=test_artist_user,
+            title="Active Bio",
+            sections=[]
+        ).save()
+        # test_artist_user is active
+        response = client.delete(f"/api/biography/{test_artist_user.id}", headers=admin_auth_headers)
+        assert response.status_code == 400
+        assert response.get_json() == {"error": "Cannot delete biography of an active user"}
+        # Biography must not have been deleted
+        assert Biography.objects(user=test_artist_user).first() is not None

@@ -4,6 +4,7 @@ from mongoengine import DoesNotExist, ValidationError as MongoEngineValidationEr
 from pydantic import ValidationError as PydanticValidationError
 from Schemas.biography import BiographyIn, BiographyCreateIn
 from middleware.roles import roles_required
+from middleware.validators import valid_object_id
 from models.biography import Biography, Section
 from datetime import datetime, timezone
 from models.user import User
@@ -35,6 +36,7 @@ def get_owned_biography():
 
 @biography_bp.route('/biography/<user_id>', methods=['GET'])
 @roles_required('admin')
+@valid_object_id('user_id')
 def get_biography_by_user_id(user_id: str):
     """Get the biography of a specific user. Admin only."""
     user = User.objects(id=user_id).first()
@@ -102,6 +104,7 @@ def create_biography():
 
 @biography_bp.route('/biography/<user_id>', methods=['DELETE'])
 @roles_required('admin')
+@valid_object_id('user_id')
 def delete_biography(user_id):
     """Delete a biography of a specific user. Admin only."""
     user = User.objects(id=user_id).first()

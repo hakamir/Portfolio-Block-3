@@ -1,10 +1,10 @@
-from bson import ObjectId
 from flask import Blueprint, jsonify, request, current_app
 from flask_jwt_extended import get_jwt_identity
 from mongoengine import ValidationError as MongoEngineValidationError, DoesNotExist
 from pydantic import ValidationError as PydanticValidationError
 from Schemas.artist import ArtistIn
 from middleware.roles import roles_required
+from middleware.validators import valid_object_id
 from models.artist import Artist
 from models.user import User
 from services.artist_service import orphan_removed_tracks, orphan_all_tracks, build_albums, sync_id3_tags
@@ -33,6 +33,7 @@ def get_owned_artists():
 
 @artists_bp.route('/artists/<user_id>', methods=['GET'])
 @roles_required('admin')
+@valid_object_id('user_id')
 def get_artist_by_user_id(user_id: str):
     """Get tracks from a specific user. Admin only."""
     user = User.objects(id=user_id).first()
@@ -93,16 +94,15 @@ def update_owned_artists():
         return jsonify({'error': 'Artist not found'}), 404
 
 
-@artists_bp.route('/artists/<id>', methods=['DELETE'])
+@artists_bp.route('/artists/<artist_id>', methods=['DELETE'])
 @roles_required('artist', 'admin')
-def delete_artist(id):
+@valid_object_id('artist_id')
+def delete_artist(artist_id):
     """Delete an artist document. Can only delete documents owned by the authenticated user."""
-    if not ObjectId.is_valid(id):
-        return jsonify({'error': 'Invalid ID'}), 400
     identity = get_jwt_identity()
     user = User.objects(id=identity).first()
     try:
-        artist = Artist.objects.get(id=id, user=user)
+        artist = Artist.objects.get(id=artist_id, user=user)
         settings = current_app.config['settings']
         orphan_all_tracks(user, artist, settings.upload_folder)
         artist.delete()

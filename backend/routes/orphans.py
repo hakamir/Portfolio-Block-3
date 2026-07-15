@@ -4,6 +4,7 @@ from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import get_jwt_identity
 from mongoengine import DoesNotExist
 from middleware.roles import roles_required
+from middleware.validators import valid_object_id
 from models.orphan_audio import OrphanAudio
 from models.orphan_gallery import OrphanGallery
 from models.user import User
@@ -26,6 +27,7 @@ def get_orphan_audio():
 
 @orphans_bp.route('/orphans/audio/<user_id>', methods=['GET'])
 @roles_required('admin')
+@valid_object_id('user_id')
 def get_orphan_audio_by_user(user_id):
     user = User.objects(id=user_id).first()
     if user is None:
@@ -121,6 +123,7 @@ def get_orphan_gallery():
 
 @orphans_bp.route('/orphans/gallery/<user_id>', methods=['GET'])
 @roles_required('admin')
+@valid_object_id('user_id')
 def get_orphan_gallery_by_user(user_id):
     user = User.objects(id=user_id).first()
     if user is None:

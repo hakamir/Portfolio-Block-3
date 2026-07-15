@@ -17,6 +17,7 @@ _ORPHAN_SRC = "orphan-uuid.mp3"
 _GALLERY_SLUG = "gallery-uuid-1"
 _IMAGE_SRC = "image-uuid-1.webp"
 
+_NONEXISTENT_ID = "000000000000000000000001"
 
 @pytest.fixture
 def test_artist(test_artist_user):
@@ -106,6 +107,41 @@ class TestGetOrphanAudio:
         assert data[0]['track_title'] == 'Orphan Track'
         assert data[0]['src'] == f'{_ARTIST_SLUG}/{_ALBUM_SLUG}/{_ORPHAN_SRC}'
 
+
+class TestGetOrphanAudioByUserId:
+    def test_requires_authentication(self, client, test_artist_user):
+        response = client.get(f"/api/orphans/audio/{test_artist_user.id}")
+        assert response.status_code == 401
+
+    def test_requires_admin_role(self, client, auth_headers, test_artist_user):
+        response = client.get(f"/api/orphans/audio/{test_artist_user.id}", headers=auth_headers)
+        assert response.status_code == 403
+
+    def test_returns_400_on_invalid_id(self, client, admin_auth_headers):
+        response = client.get("/api/orphans/audio/not-valid", headers=admin_auth_headers)
+        assert response.status_code == 400
+        assert response.get_json() == {"error": "Invalid ID"}
+
+    def test_returns_404_when_user_not_found(self, client, admin_auth_headers):
+        response = client.get(f"/api/orphans/audio/{_NONEXISTENT_ID}", headers=admin_auth_headers)
+        assert response.status_code == 404
+        assert response.get_json() == {"error": "User not found"}
+
+    def test_returns_empty_list_when_user_has_no_orphan_audios(self, client, admin_auth_headers, test_artist_user):
+        response = client.get(f"/api/orphans/audio/{test_artist_user.id}", headers=admin_auth_headers)
+        assert response.status_code == 200
+        assert response.get_json() == []
+
+    def test_returns_orphan_audios_for_user(self, client, admin_auth_headers, test_orphan_audio, test_artist_user):
+        response = client.get(f"/api/orphans/audio/{test_artist_user.id}", headers=admin_auth_headers)
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data) == 1
+        assert data[0]['_id'] == str(test_orphan_audio.id)
+        assert data[0]['artist_title'] == 'Artist 1'
+        assert data[0]['album_title'] == 'Album 1'
+        assert data[0]['track_title'] == 'Orphan Track'
+        assert data[0]['src'] == f'{_ARTIST_SLUG}/{_ALBUM_SLUG}/{_ORPHAN_SRC}'
 
 class TestRollbackOrphanAudio:
     def test_requires_authentication(self, client):
@@ -290,6 +326,72 @@ class TestGetOrphanGallery:
         assert data[0]['image_title'] == 'Image 1'
         assert data[0]['src'] == f'{_GALLERY_SLUG}/{_IMAGE_SRC}'
 
+
+class TestGetOrphanGalleryByUserId:
+    def test_requires_authentication(self, client, test_artist_user):
+        response = client.get(f"/api/orphans/gallery/{test_artist_user.id}")
+        assert response.status_code == 401
+
+    def test_requires_admin_role(self, client, auth_headers, test_artist_user):
+        response = client.get(f"/api/orphans/gallery/{test_artist_user.id}", headers=auth_headers)
+        assert response.status_code == 403
+
+    def test_returns_400_on_invalid_id(self, client, admin_auth_headers):
+        response = client.get("/api/orphans/gallery/not-valid", headers=admin_auth_headers)
+        assert response.status_code == 400
+        assert response.get_json() == {"error": "Invalid ID"}
+
+    def test_returns_404_when_user_not_found(self, client, admin_auth_headers):
+        response = client.get(f"/api/orphans/gallery/{_NONEXISTENT_ID}", headers=admin_auth_headers)
+        assert response.status_code == 404
+        assert response.get_json() == {"error": "User not found"}
+
+    def test_returns_empty_list_when_user_has_no_orphan_galleries(self, client, admin_auth_headers, test_artist_user):
+        response = client.get(f"/api/orphans/gallery/{test_artist_user.id}", headers=admin_auth_headers)
+        assert response.status_code == 200
+        assert response.get_json() == []
+
+    def test_returns_orphan_galleries_for_user(self, client, admin_auth_headers, test_orphan_gallery, test_artist_user):
+        response = client.get(f"/api/orphans/gallery/{test_artist_user.id}", headers=admin_auth_headers)
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data) == 1
+        assert data[0]['_id'] == str(test_orphan_gallery.id)
+        assert data[0]['gallery_title'] == 'Gallery 1'
+        assert data[0]['image_title'] == 'Image 1'
+        assert data[0]['src'] == f'{_GALLERY_SLUG}/{_IMAGE_SRC}'
+
+
+class TestRollbackOrphanGallery:
+    def test_requires_authentication(self, client):
+        response = client.post("/api/orphans/gallery/rollback", json={"ids": []})
+        assert response.status_code == 401
+
+    def test_returns_400_on_missing_ids(self, client, auth_headers):
+        response = client.post("/api/orphans/gallery/rollback", json={}, headers=auth_headers)
+        assert response.status_code == 400
+
+    def test_returns_400_on_invalid_ids_type(self, client, auth_headers):
+        response = client.post(
+            "/api/orphans/gallery/rollback",
+            json={"ids": "not-a-list"},
+            headers=auth_headers
+        )
+        assert response.status_code == 400
+
+    def test_fails_if_file_not_found(self, client, auth_headers, test_orphan_gallery):
+        with patch('os.path.exists', return_value=False):
+            response = client.post(
+                "/api/orphans/gallery/rollback",
+                json={"ids": [str(test_orphan_gallery.id)]},
+                headers=auth_headers
+            )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['restored'] == []
+        assert data['failed'][0]['id'] == str(test_orphan_gallery.id)
+        assert data['failed'][0]['error'] == 'File not found'
+        assert OrphanGallery.objects.count() == 1
 
 class TestDeleteOrphanGallery:
     def test_requires_authentication(self, client):
