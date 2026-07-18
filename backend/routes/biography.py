@@ -60,17 +60,14 @@ def update_biography():
         data = BiographyIn.model_validate(request.get_json())
     except PydanticValidationError:
         return jsonify({"error": "invalid payload"}), 400
-    try:
-        bio = Biography.objects.get(id=data.id, user=user)
-        bio.title = data.title
-        bio.sections = [Section(**s.model_dump()) for s in data.sections]
-        bio.updatedAt = datetime.now(timezone.utc)
-        bio.save()
-        return jsonify({"updated": True}), 200
-    except DoesNotExist:
+    bio = Biography.objects(user=user).first()
+    if bio is None:
         return jsonify({"error": "biography not found"}), 404
-    except MongoEngineValidationError:
-        return jsonify({"error": "invalid ID"}), 400
+    bio.title = data.title
+    bio.sections = [Section(**s.model_dump()) for s in data.sections]
+    bio.updatedAt = datetime.now(timezone.utc)
+    bio.save()
+    return jsonify({"updated": True}), 200
 
 
 @biography_bp.route('/biography', methods=['POST'])

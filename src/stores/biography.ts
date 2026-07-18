@@ -4,8 +4,18 @@ import {instance} from "@api/axios.ts";
 import biographyApi from "@api/biography.ts";
 import type {Section} from "@/types";
 
+interface BiographySection {
+    title: string
+    paragraphs: Array<string>
+}
+
+interface Biography {
+    title: string
+    sections: BiographySection[]
+}
+
 export const useBiographyStore = defineStore("biography", () => {
-    const biography = ref()
+    const biography = ref<Biography | null>(null)
     const isDirty = ref(false)
     let isInitialized = false
 
@@ -16,7 +26,9 @@ export const useBiographyStore = defineStore("biography", () => {
     const fetchBiography = async (section: Section = 'public') => {
         biography.value = null
         const res = await instance.get(section === 'public' ? biographyApi.getBiography : biographyApi.getBiographyDashboard)
-        const {updatedAt, ...rest} = res.data.biography
+        const {updatedAt, _id, ...rest} = res.data.biography
+        console.log(res.data.biography)
+        console.log(rest)
         biography.value = rest
         await nextTick()
         isInitialized = true

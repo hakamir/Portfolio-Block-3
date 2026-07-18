@@ -57,7 +57,6 @@ class TestGetActiveBiography:
 class TestUpdateBiography:
     def test_requires_authentication(self, client):
         response = client.put("/api/biography", json={
-            "_id": _NONEXISTENT_ID,
             "title": "T",
             "sections": _VALID_SECTIONS
         })
@@ -75,18 +74,18 @@ class TestUpdateBiography:
         assert response.status_code == 400
         assert response.get_json() == {"error": "invalid payload"}
 
-    def test_returns_400_on_invalid_id_format(self, client, auth_headers):
+    def test_returns_400_when_id_present_in_body(self, client, auth_headers):
         response = client.put("/api/biography", json={
-            "_id": "not-a-valid-id",
+            "_id": _NONEXISTENT_ID,
             "title": "T",
             "sections": _VALID_SECTIONS
         }, headers=auth_headers)
         assert response.status_code == 400
-        assert response.get_json() == {"error": "invalid ID"}
+        assert response.get_json() == {"error": "invalid payload"}
 
     def test_returns_404_when_biography_not_found(self, client, auth_headers):
+        # test_artist_user has no biography yet
         response = client.put("/api/biography", json={
-            "_id": _NONEXISTENT_ID,
             "title": "T",
             "sections": _VALID_SECTIONS
         }, headers=auth_headers)
@@ -101,7 +100,6 @@ class TestUpdateBiography:
         ).save()
 
         response = client.put("/api/biography", json={
-            "_id": str(bio.id),
             "title": "Updated Title",
             "sections": [{"title": "New Section", "paragraphs": ["New para"]}]
         }, headers=auth_headers)
@@ -110,7 +108,7 @@ class TestUpdateBiography:
         assert response.get_json() == {"updated": True}
         assert Biography.objects.get(id=bio.id).title == "Updated Title"
 
-    def test_artist_cannot_update_other_artist_biography(self, client, auth_headers):
+    def test_update_only_affects_own_biography(self, client, auth_headers, test_artist_user):
         # Create a second artist with his own biography
         other_artist = User(
             email="other@test.com",
@@ -118,21 +116,28 @@ class TestUpdateBiography:
             role="artist",
             is_active=False
         ).save()
-        bio = Biography(
+        other_bio = Biography(
             user=other_artist,
             title="Other Artist Bio",
             sections=[]
         ).save()
 
-        # First artist (test_artist_user) try to modify the biography of the second artist
+        own_bio = Biography(
+            user=test_artist_user,
+            title="My Bio",
+            sections=[]
+        ).save()
+
+        # test_artist_user can only ever update their own biography,
+        # regardless of what's sent — there's no way to target another user's
         response = client.put("/api/biography", json={
-            "_id": str(bio.id),
-            "title": "Hacked Title",
+            "title": "Updated Title",
             "sections": []
         }, headers=auth_headers)
 
-        assert response.status_code == 404
-        assert Biography.objects.get(id=bio.id).title == "Other Artist Bio"
+        assert response.status_code == 200
+        assert Biography.objects.get(id=own_bio.id).title == "Updated Title"
+        assert Biography.objects.get(id=other_bio.id).title == "Other Artist Bio"
 
 
 class TestCreateBiography:
