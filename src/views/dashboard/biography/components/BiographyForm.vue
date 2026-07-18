@@ -9,17 +9,17 @@ const {biography} = storeToRefs(store)
 const saveStatus = ref<'idle' | 'loading' | 'saved' | 'error'>('idle')
 
 const addSection = () => {
-  biography.value.sections.push({title: '', paragraphs: ['']})
+  biography.value?.sections.push({title: '', paragraphs: ['']})
 }
 const removeSection = (sectionIndex: number) => {
-  biography.value.sections.splice(sectionIndex, 1)
+  biography.value?.sections.splice(sectionIndex, 1)
 }
 
 const addParagraph = (sectionIndex: number) => {
-  biography.value.sections[sectionIndex].paragraphs.push('')
+  biography.value?.sections[sectionIndex].paragraphs.push('')
 }
 const removeParagraph = (sectionIndex: number, paragraphIndex: number) => {
-  biography.value.sections[sectionIndex].paragraphs.splice(paragraphIndex, 1)
+  biography.value?.sections[sectionIndex].paragraphs.splice(paragraphIndex, 1)
 }
 
 const save = async () => {

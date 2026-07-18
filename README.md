@@ -1218,12 +1218,12 @@ The biography is stored as a singleton document. No authentication required.
 
 ## `GET /api/biography/dashboard`
 
-Similar to [`GET /api/biography`](#get-apiartists), except it returns the biography by the logged user data instead of
+Similar to [`GET /api/biography`](#get-apibiography), except it returns the biography by the logged user data instead of
 active data (public). JWT required.
 
 ## `GET /api/biography/<user_id>`
 
-Similar to [`GET /api/biography`](#get-apiartists), except it returns the biography from a specific user. Authentication
+Similar to [`GET /api/biography`](#get-apibiography), except it returns the biography from a specific user. Authentication
 is
 required with an admin role.
 
@@ -1235,7 +1235,6 @@ Updates the biography. The whole structure is required. JWT required.
 
 ```json
 {
-  "_id": "b3f435dc399b11f1a3ca244bfe4c7954",
   "title": "Who am I?",
   "sections": [
     {

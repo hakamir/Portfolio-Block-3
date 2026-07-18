@@ -10,7 +10,6 @@ class SectionIn(BaseModel):
 
 
 class BiographyIn(BaseModel):
-    id: str = Field(alias="_id")
     title: str
     sections: List[SectionIn]
 
